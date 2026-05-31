@@ -3099,7 +3099,7 @@ label {
 /* Mobile Devices (Max 768px Viewport Adjustments) */
 @media (max-width: 768px) {
   body {
-    padding-bottom: 38px; /* Space for mobile navigation bar adjusted to match 38px */
+    padding-bottom: 46px; /* Space for mobile navigation bar adjusted to match 46px */
   }
   
   .app-container {
@@ -3136,7 +3136,7 @@ label {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 38px; /* Fixed: Thinned down bottom tab bar to 38px */
+    height: 46px; /* Fixed: Slightly enlarged bottom tab bar to 46px for better usability */
     background-color: var(--surface-dark);
     flex-direction: row;
     justify-content: space-around;
@@ -3163,7 +3163,7 @@ label {
   
   .nav-text-long {
     display: inline !important;
-    font-size: 10px !important; /* Shrunk text for ultra thin navbar */
+    font-size: 12px !important; /* Slightly enlarged text for better readability */
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -3274,7 +3274,7 @@ label {
   }
   
   .floating-add-action {
-    bottom: 85px; /* Raised above the new 38px bottom bar so it is never covered */
+    bottom: 92px; /* Raised above the 46px bottom bar so it is never covered */
     right: 16px;
     width: 48px;
     height: 48px;
