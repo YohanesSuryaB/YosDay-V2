@@ -66,7 +66,7 @@ const State = {
   wrappedActiveSlide: 0,
   openedSubtaskTasks: new Set(), // Keeps track of open subtask lists to avoid closure during update renders
   googleCalendarEvents: null,
-  theme: 'dark',
+  theme: 'light',
   notificationInterval: 'disabled',
   notificationTimer: null
 };
@@ -2253,7 +2253,11 @@ function processAIAgentCommand(promptText) {
 // FORM SUBMISSION & EVENT LISTENERS SETUP
 // ==========================================================================
 
+let appListenersAttached = false;
+
 function setupEventListeners() {
+  if (appListenersAttached) return;
+  appListenersAttached = true;
   
   const sidebar = document.getElementById('app-sidebar');
   const toggleBtn = document.getElementById('sidebar-collapse-trigger');
@@ -2749,6 +2753,14 @@ function initializeTokenClient() {
         localStorage.setItem('yosday_google_token_expiry', expiry);
         
         handleGoogleLoginSuccess(token, googleAuthMode);
+      } else if (tokenResponse && tokenResponse.error) {
+        console.warn("Google Auth token request failed/cancelled:", tokenResponse.error);
+        if (googleAuthMode === 'silent-load' || googleAuthMode === 'silent-backup') {
+          // Silent refresh failed, do not prompt user or show popup.
+          // Set calendar state to error to show disconnected state in UI.
+          State.googleCalendarEvents = 'error';
+          renderCalendarInformation();
+        }
       }
     },
   });
@@ -2758,7 +2770,21 @@ function refreshGoogleTokenSilently() {
   if (typeof google === 'undefined') return;
   initializeTokenClient();
   if (tokenClient) {
-    tokenClient.requestAccessToken({ prompt: '' });
+    const profile = localStorage.getItem('yosday_google_profile');
+    let email = '';
+    if (profile) {
+      try {
+        const profileData = JSON.parse(profile);
+        email = profileData.email || '';
+      } catch (e) {
+        console.error("Error parsing profile for hint:", e);
+      }
+    }
+    const options = { prompt: 'none' };
+    if (email) {
+      options.hint = email;
+    }
+    tokenClient.requestAccessToken(options);
   }
 }
 
@@ -2794,7 +2820,12 @@ function renderGoogleSignedInUI(profile) {
   updateSidebarProfile(profile);
 }
 
+let googleAuthListenersAttached = false;
+
 function setupGoogleAuthEventListeners() {
+  if (googleAuthListenersAttached) return;
+  googleAuthListenersAttached = true;
+
   // Login button click
   const loginBtn = document.getElementById('btn-google-login');
   if (loginBtn) {
@@ -2828,9 +2859,11 @@ function setupGoogleAuthEventListeners() {
       const token = localStorage.getItem('yosday_google_token');
       const expiry = localStorage.getItem('yosday_google_token_expiry');
       if (!token || !expiry || Date.now() > parseInt(expiry)) {
-        googleAuthMode = 'silent-backup';
-        refreshGoogleTokenSilently();
-        alert("Memperbarui sesi Google Anda... Silakan coba klik Backup kembali dalam beberapa detik.");
+        googleAuthMode = 'manual-backup';
+        initializeTokenClient();
+        if (tokenClient) {
+          tokenClient.requestAccessToken();
+        }
         return;
       }
       backupBtn.textContent = "⌛ Menyinkronkan...";
@@ -2854,9 +2887,11 @@ function setupGoogleAuthEventListeners() {
       const token = localStorage.getItem('yosday_google_token');
       const expiry = localStorage.getItem('yosday_google_token_expiry');
       if (!token || !expiry || Date.now() > parseInt(expiry)) {
-        googleAuthMode = 'silent-load';
-        refreshGoogleTokenSilently();
-        alert("Memperbarui sesi Google Anda... Silakan coba klik Restore kembali dalam beberapa detik.");
+        googleAuthMode = 'manual-restore';
+        initializeTokenClient();
+        if (tokenClient) {
+          tokenClient.requestAccessToken();
+        }
         return;
       }
       
@@ -2899,6 +2934,14 @@ async function handleGoogleLoginSuccess(token, mode) {
     
     // Toggle UI views
     renderGoogleSignedInUI(profile);
+
+    // Auto close modal immediately on successful interactive login
+    if (mode === 'interactive') {
+      const loginModal = document.getElementById('google-login-modal');
+      if (loginModal) {
+        loginModal.classList.remove('active');
+      }
+    }
 
     // Load real Google Calendar events silently
     try {
@@ -2951,6 +2994,56 @@ async function handleGoogleLoginSuccess(token, mode) {
     } else if (mode === 'silent-backup') {
       // Direct backup
       await backupDataToDriveSilently(token);
+    } else if (mode === 'manual-backup') {
+      // Direct backup initiated manually after token refresh
+      const backupBtn = document.getElementById('btn-cloud-backup');
+      if (backupBtn) {
+        backupBtn.textContent = "⌛ Menyinkronkan...";
+        backupBtn.disabled = true;
+      }
+      try {
+        await backupDataToDriveSilently(token);
+        alert("Backup Berhasil! Data lokal Anda telah diunggah ke Google Drive.");
+      } catch (err) {
+        alert("Gagal mencadangkan data ke Google Drive: " + err.message);
+      } finally {
+        if (backupBtn) {
+          backupBtn.textContent = "📤 Backup ke Cloud";
+          backupBtn.disabled = false;
+        }
+      }
+    } else if (mode === 'manual-restore') {
+      // Direct restore initiated manually after token refresh
+      const restoreBtn = document.getElementById('btn-cloud-restore');
+      if (restoreBtn) {
+        restoreBtn.textContent = "⌛ Memulihkan...";
+        restoreBtn.disabled = true;
+      }
+      try {
+        const file = await findBackupFile(token);
+        if (!file) {
+          alert("Tidak ditemukan berkas cadangan 'yosday_backup.json' di Google Drive Anda. Silakan klik Backup terlebih dahulu.");
+          return;
+        }
+        const content = await readBackupFileContent(token, file.id);
+        if (content && confirm("Berkas cadangan ditemukan! Apakah Anda yakin ingin memulihkan data tersebut? Semua data lokal saat ini akan tertimpa.")) {
+          State.templates = content.templates || [];
+          State.history = content.history || {};
+          
+          localStorage.setItem('yosday_templates', JSON.stringify(State.templates));
+          localStorage.setItem('yosday_history', JSON.stringify(State.history));
+          
+          initApp();
+          alert("Pemulihan Berhasil! Halaman akan memuat ulang data terbaru.");
+        }
+      } catch (err) {
+        alert("Gagal memulihkan data: " + err.message);
+      } finally {
+        if (restoreBtn) {
+          restoreBtn.textContent = "📥 Restore dari Cloud";
+          restoreBtn.disabled = false;
+        }
+      }
     }
   } catch (err) {
     console.error("Error during Google Sign-in flow:", err);
@@ -3211,7 +3304,7 @@ async function backupDataToDriveSilently(token) {
 // ==========================================================================
 
 function initTheme() {
-  const savedTheme = localStorage.getItem('yosday_theme') || 'dark';
+  const savedTheme = localStorage.getItem('yosday_theme') || 'light';
   setAppTheme(savedTheme);
 }
 

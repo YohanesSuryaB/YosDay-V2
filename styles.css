@@ -3510,8 +3510,18 @@ label {
 .form-row-always-split {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
-  gap: 16px !important;
+  gap: 12px !important;
   width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+.form-row-always-split .form-group {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.form-row-always-split .form-control {
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* Mobile Profile Avatar Trigger in Header */
