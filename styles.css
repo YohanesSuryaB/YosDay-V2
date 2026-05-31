@@ -3123,11 +3123,7 @@ label {
   }
   
   .collapse-chevron {
-    transform: rotate(90deg);
-  }
-  
-  .sidebar.collapsed .collapse-chevron {
-    transform: rotate(-90deg);
+    display: none !important;
   }
   
   /* Mobile Tab Navigation (Fixed Bottom, Minimalist Text only) */
