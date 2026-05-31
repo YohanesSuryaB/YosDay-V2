@@ -130,7 +130,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .logo-text {
   font-family: 'Outfit', sans-serif;
-  font-size: 20px;
+  font-size: 29px; /* Slightly larger than the tab title font (26px) */
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: 0.05em;
@@ -2291,11 +2291,19 @@ label {
   flex-direction: column;
   padding: 40px;
   overflow-y: auto; /* Fixed: enabled scrollability */
+  -webkit-overflow-scrolling: touch;
 }
 
 .focus-mode-overlay.active {
   display: flex;
   animation: fadeIn 0.4s ease;
+}
+
+/* Prevent body scrolling when focus mode is active */
+body.focus-mode-active {
+  overflow: hidden !important;
+  height: 100vh;
+  height: 100dvh;
 }
 
 .focus-background-pulse {
@@ -3131,6 +3139,10 @@ label {
     padding: 12px 16px;
   }
   
+  .sidebar-header .logo-text {
+    font-size: 22px; /* Slightly larger than the mobile tab title (20px) */
+  }
+  
   .collapse-chevron {
     display: none !important;
   }
@@ -3293,11 +3305,15 @@ label {
   /* Focus Mode viewport scaling */
   .focus-mode-overlay {
     padding: 20px 16px;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
   .focus-container {
     grid-template-columns: 1fr;
     gap: 30px;
+    margin: 20px auto; /* Prevent top-clipping and allow vertical flow scrolling */
   }
   
   .focus-timer-ring {

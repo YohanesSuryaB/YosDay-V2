@@ -299,8 +299,7 @@ function startRealtimeClock() {
     const now = new Date();
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    clockElement.textContent = `${hours}:${minutes}:${seconds}`;
+    clockElement.textContent = `${hours}:${minutes}`;
   };
   
   updateClock();
@@ -2184,6 +2183,7 @@ function enterFocusMode() {
   State.focusActiveTaskId = activeTask.id;
   
   document.getElementById('focus-mode-view').classList.add('active');
+  document.body.classList.add('focus-mode-active');
   updateFocusModeDetails();
   
   startFocusTimer(activeTask.endTime);
@@ -2191,6 +2191,7 @@ function enterFocusMode() {
 
 function exitFocusMode() {
   document.getElementById('focus-mode-view').classList.remove('active');
+  document.body.classList.remove('focus-mode-active');
   clearInterval(State.focusTimerInterval);
   State.focusActiveTaskId = null;
   
