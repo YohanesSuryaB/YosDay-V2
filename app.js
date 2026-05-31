@@ -87,12 +87,7 @@ function initApp() {
   setupCurrentDateDisplay();
   startRealtimeClock();
   
-  // Ensure active-tab-title displays by default
-  const tabTitleEl = document.getElementById('active-tab-title');
-  if (tabTitleEl) {
-    tabTitleEl.style.display = 'block';
-    tabTitleEl.textContent = 'Home Dashboard';
-  }
+
   
   checkAndGenerateTodayTasks();
   renderMascot('sidebar-hoot-mascot-target', calculateWeeklyProgressRate());
@@ -106,6 +101,37 @@ function initApp() {
   
   setupEventListeners();
   initGoogleSync();
+  
+  // Restore saved active tab
+  const savedTab = localStorage.getItem('yosday_active_tab') || 'home';
+  switchTab(savedTab);
+}
+
+function switchTab(tabName) {
+  const navItems = document.querySelectorAll('.nav-item');
+  const targetItem = Array.from(navItems).find(item => item.getAttribute('data-tab') === tabName);
+  if (!targetItem) return;
+  
+  navItems.forEach(n => n.classList.remove('active'));
+  targetItem.classList.add('active');
+  
+  State.activeTab = tabName;
+  localStorage.setItem('yosday_active_tab', tabName);
+  
+  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+  const panel = document.getElementById(`tab-${tabName}`);
+  if (panel) panel.classList.add('active');
+  
+  const titles = { 'home': 'Home Dashboard', 'custom': 'Template Center', 'review': 'Review & Analytics' };
+  const tabTitleEl = document.getElementById('active-tab-title');
+  if (tabTitleEl) {
+    tabTitleEl.style.display = 'block';
+    tabTitleEl.textContent = titles[tabName] || 'Home Dashboard';
+  }
+  
+  if (tabName === 'review') {
+    renderReviewTab();
+  }
 }
 
 function loadDataFromStorage() {
@@ -2219,26 +2245,8 @@ function setupEventListeners() {
   navItems.forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
-      
-      navItems.forEach(n => n.classList.remove('active'));
-      item.classList.add('active');
-      
       const tabName = item.getAttribute('data-tab');
-      State.activeTab = tabName;
-      
-      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
-      document.getElementById(`tab-${tabName}`).classList.add('active');
-      
-      const titles = { 'home': 'Home Dashboard', 'custom': 'Template Center', 'review': 'Review & Analytics' };
-      const tabTitleEl = document.getElementById('active-tab-title');
-      if (tabTitleEl) {
-        tabTitleEl.style.display = 'block';
-        tabTitleEl.textContent = titles[tabName];
-      }
-      
-      if (tabName === 'review') {
-        renderReviewTab();
-      }
+      switchTab(tabName);
     });
   });
   
@@ -2253,7 +2261,10 @@ function setupEventListeners() {
   });
   
   // Weekly Review Modal inside review tab
-  document.getElementById('wrapped-btn').addEventListener('click', openYearWrappedModal);
+  const wrappedBtn = document.getElementById('wrapped-btn');
+  if (wrappedBtn) {
+    wrappedBtn.addEventListener('click', openYearWrappedModal);
+  }
   document.getElementById('close-wrapped-modal').addEventListener('click', () => {
     document.getElementById('wrapped-modal').classList.remove('active');
   });
