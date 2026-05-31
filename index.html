@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>YosDay — Personal Life Operating System</title>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Google Identity Services (OAuth Login) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Web SVG Icon / Favicon (Hoot Mascot) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%233b82f6%22/><text x=%2250%25%22 y=%2265%25%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22bold%22>🦉</text></svg>">
+</head>
+<body class="dark-navy-theme">
+
+  <!-- Main Grid Wrapper -->
+  <div class="app-container">
+    
+    <!-- Collapsible Sidebar -->
+    <aside id="app-sidebar" class="sidebar expanded">
+      <div class="sidebar-header">
+        <div class="logo-wrapper" id="logo-sync-trigger" title="Simulasi Google Account & Sync">
+          <div class="logo-icon" id="sidebar-hoot-mascot-target">
+            <!-- Dynamic SVG Mascot of Current Expression rendered here -->
+          </div>
+          <span class="logo-text">YOSDAY</span>
+        </div>
+        <div class="collapse-chevron" id="sidebar-collapse-trigger" title="Klik untuk perkecil/perbesar sidebar">❮</div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-tab="home" id="nav-home">
+          <span class="nav-text-short">H</span>
+          <span class="nav-text-long">Home</span>
+        </a>
+        <a href="#" class="nav-item" data-tab="custom" id="nav-custom">
+          <span class="nav-text-short">C</span>
+          <span class="nav-text-long">Custom</span>
+        </a>
+        <a href="#" class="nav-item" data-tab="review" id="nav-review">
+          <span class="nav-text-short">R</span>
+          <span class="nav-text-long">Review</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer" id="profile-btn" title="Simulasi Google Account & Sync">
+        <div class="profile-avatar">
+          <span class="profile-initial">Y</span>
+          <div class="google-badge-indicator" title="Terhubung dengan Google Calendar"></div>
+        </div>
+        <div class="profile-info">
+          <span class="profile-name">Yohanes</span>
+          <span class="profile-email">yohanes@gmail.com</span>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Navigation / Header -->
+      <header class="content-header">
+        <div class="header-left">
+          <h1 id="active-tab-title" class="tab-title">Home Dashboard</h1>
+          <p class="current-date">
+            <span id="current-date-display">Senin, 31 Mei 2026</span>
+            <span class="clock-separator" style="margin: 0 8px; opacity: 0.5;">•</span>
+            <span id="realtime-clock-display" class="realtime-clock" style="font-weight: 600; color: var(--accent-blue);">12:00:00</span>
+          </p>
+        </div>
+      </header>
+      
+      <!-- TAB 1: HOME PANEL -->
+      <section id="tab-home" class="tab-panel active">
+        <div class="dashboard-grid">
+          
+          <!-- Column 1: Core Daily Flow -->
+          <div class="dashboard-left">
+            
+            <!-- SECTION 1: Weekly Streak -->
+            <div class="card weekly-streak-card">
+              <h2 class="card-title">Weekly Streak <span class="streak-fire-count" id="streak-counter-bubble">🔥 5 Hari</span></h2>
+              <div class="weekly-streak-container" id="weekly-days-list">
+                <!-- Javascript will render weekdays: M T W T F S S with states 🔥 ⭐ ✔ ○ -->
+              </div>
+            </div>
+            
+            <!-- SECTION 2: Daily Verse (Compact and Clean) -->
+            <div class="card daily-verse-card">
+              <div class="verse-content">
+                <div class="verse-tag" id="verse-context-tag">Smart Verse — Ketekunan</div>
+                <blockquote id="bible-verse-text">
+                  "Segala perkara dapat kutanggung di dalam Dia yang memberi kekuatan kepadaku."
+                </blockquote>
+                <cite id="bible-verse-ref">Filipi 4:13</cite>
+              </div>
+            </div>
+            
+            <!-- SECTION 4: Daily Task List -->
+            <div class="card daily-tasks-card">
+              <div class="card-header-flex">
+                <h2 class="card-title">Daftar Tugas</h2>
+                <div class="task-filters">
+                  <span class="filter-label">Urutkan: Smart Sorting</span>
+                  <span class="filter-info-tooltip" title="Urutan otomatis: Aktif Sekarang ➔ Berikutnya ➔ Belum Selesai ➔ Selesai">ℹ️</span>
+                </div>
+              </div>
+              
+              <div class="tasks-list-container" id="daily-tasks-list">
+                <!-- Javascript will inject list of tasks here -->
+              </div>
+            </div>
+
+            <!-- Focus Mode Launcher Banner (Home Tab Context) -->
+            <div class="focus-trigger-card card glow-blue">
+              <div class="focus-trigger-flex">
+                <div class="focus-trigger-info">
+                  <h3 class="focus-trigger-title">🎯 Mode Fokus Tanpa Distraksi</h3>
+                  <p class="focus-trigger-desc">Masuk ke ruang kerja terisolasi untuk menyelesaikan tugas aktif Anda secara bertahap.</p>
+                </div>
+                <button id="focus-mode-btn" class="btn btn-primary btn-glow-blue">Mulai Fokus</button>
+              </div>
+            </div>
+            
+            <!-- SECTION 3: Today's Progress Summary (Moved to Bottom) -->
+            <div class="card today-progress-card">
+              <h2 class="card-title">Progress Hari Ini</h2>
+              <div class="progress-details-wrapper">
+                <div class="progress-left-stats">
+                  <div class="stat-number-large" id="progress-tasks-ratio">18 / 25</div>
+                  <div class="stat-subtitle">Tugas Selesai</div>
+                  
+                  <div class="stat-sub-row">
+                    <div class="stat-sub-item">
+                      <span class="sub-label">Aktif Produktif</span>
+                      <span class="sub-val" id="progress-active-hours">11.0 Jam</span>
+                    </div>
+                    <div class="stat-sub-item">
+                      <span class="sub-label">Skor Hidup</span>
+                      <span class="sub-val text-accent-blue" id="progress-life-score">78</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="progress-right-visual">
+                  <div class="progress-circle-container">
+                    <svg viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="40" class="circle-bg"></circle>
+                      <circle cx="50" cy="50" r="40" class="circle-progress" id="progress-radial-bar" stroke-dasharray="251.2" stroke-dashoffset="70.3"></circle>
+                    </svg>
+                    <div class="circle-percentage-val" id="progress-percentage-val">72%</div>
+                  </div>
+                </div>
+              </div>
+              <div class="progress-bar-linear-container">
+                <div class="linear-progress-bar" id="progress-linear-bar" style="width: 72%;"></div>
+              </div>
+            </div>
+            
+          </div>
+          
+          <!-- Column 2: Sidebar Widgets -->
+          <div class="dashboard-right">
+            
+            <!-- SECTION 5: Calendar Information (Simulated Google Calendar) -->
+            <div class="card calendar-card">
+              <h2 class="card-title">Informasi Kalender <span class="gcal-connected">Google Sync ✔</span></h2>
+              
+              <div class="calendar-widget-section">
+                <div class="widget-sub-title">🔴 Hari Besar Nasional</div>
+                <div class="calendar-item-list" id="calendar-holidays">
+                  <!-- Javascript will insert holidays -->
+                </div>
+              </div>
+              
+              <div class="calendar-widget-section">
+                <div class="widget-sub-title">📅 Acara Terjadwal (Calendar Events)</div>
+                <div class="calendar-item-list" id="calendar-events">
+                  <!-- Javascript will insert calendar events -->
+                </div>
+              </div>
+              
+              <div class="calendar-widget-section">
+                <div class="widget-sub-title">💡 Pengingat Penting (Reminders)</div>
+                <div class="calendar-item-list" id="calendar-reminders">
+                  <!-- Javascript will insert reminders -->
+                </div>
+              </div>
+            </div>
+            
+            <!-- Fast Info Card: Daily Advice -->
+            <div class="card advice-card">
+              <h3 class="advice-heading">💡 Smart Tip Hari Ini</h3>
+              <p class="advice-text" id="daily-smart-advice">
+                Menyelesaikan tugas-tugas sulit di pagi hari (seperti "Kerja" dan "Membaca Alkitab") terbukti meningkatkan Life Score Anda hingga 15% lebih tinggi dibanding ditunda ke malam hari.
+              </p>
+            </div>
+            
+          </div>
+          
+        </div>
+      </section>
+      
+      <!-- TAB 2: CUSTOM TAB (TEMPLATE ENGINE) -->
+      <section id="tab-custom" class="tab-panel">
+        <div class="custom-grid">
+          
+          <!-- Column 1: Template Engine Creator Form -->
+          <div class="custom-left">
+            <div class="card template-form-card">
+              <h2 class="card-title" id="template-editor-title">Buat Template Tugas Baru</h2>
+              <form id="template-creation-form" class="form-grid">
+                <input type="hidden" id="template-edit-id" value="">
+                
+                <div class="form-group full-width">
+                  <label for="template-name">Nama Tugas *</label>
+                  <input type="text" id="template-name" required placeholder="Contoh: Kerja, Olahraga, Belajar Go..." class="form-control">
+                </div>
+                
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="template-start-time">Jam Mulai *</label>
+                    <input type="time" id="template-start-time" required class="form-control">
+                  </div>
+                  <div class="form-group">
+                    <label for="template-end-time">Jam Selesai *</label>
+                    <input type="time" id="template-end-time" required class="form-control">
+                  </div>
+                </div>
+                
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="template-category">Kategori</label>
+                    <select id="template-category" class="form-control">
+                      <option value="Karir">Karir & Pekerjaan</option>
+                      <option value="Kesehatan">Kesehatan & Olahraga</option>
+                      <option value="Spiritual">Spiritual / Ibadah</option>
+                      <option value="Edukasi">Edukasi & Belajar</option>
+                      <option value="Sosial">Sosial & Keluarga</option>
+                      <option value="Rutin">Rutin / Istirahat</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="template-priority">Prioritas</label>
+                    <select id="template-priority" class="form-control">
+                      <option value="Tinggi">🔴 Tinggi</option>
+                      <option value="Sedang" selected>🟡 Sedang</option>
+                      <option value="Rendah">🔵 Rendah</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="form-group full-width">
+                  <label>Hari Aktif</label>
+                  <div class="days-checkbox-grid">
+                    <label class="checkbox-container">
+                      <input type="checkbox" name="active-days" value="1" checked>
+                      <span class="checkbox-label">Sen</span>
+                    </label>
+                    <label class="checkbox-container">
+                      <input type="checkbox" name="active-days" value="2" checked>
+                      <span class="checkbox-label">Sel</span>
+                    </label>
+                    <label class="checkbox-container">
+                      <input type="checkbox" name="active-days" value="3" checked>
+                      <span class="checkbox-label">Rab</span>
+                    </label>
+                    <label class="checkbox-container">
+                      <input type="checkbox" name="active-days" value="4" checked>
+                      <span class="checkbox-label">Kam</span>
+                    </label>
+                    <label class="checkbox-container">
+                      <input type="checkbox" name="active-days" value="5" checked>
+                      <span class="checkbox-label">Jum</span>
+                    </label>
+                    <label class="checkbox-container">
+                      <input type="checkbox" name="active-days" value="6">
+                      <span class="checkbox-label">Sab</span>
+                    </label>
+                    <label class="checkbox-container">
+                      <input type="checkbox" name="active-days" value="0">
+                      <span class="checkbox-label">Min</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <!-- Subtasks Builder -->
+                <div class="form-group full-width">
+                  <label>Subtask Checklist</label>
+                  <div class="subtask-builder-wrapper">
+                    <div id="form-subtasks-list" class="form-subtask-items">
+                      <!-- Subtask rows added dynamically -->
+                    </div>
+                    <button type="button" id="add-subtask-row-btn" class="btn btn-secondary-outline btn-sm">
+                      ➕ Tambah Subtask
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="form-group full-width">
+                  <label for="template-notes">Catatan Tambahan</label>
+                  <textarea id="template-notes" placeholder="Catatan singkat / instruksi..." class="form-control" rows="2"></textarea>
+                </div>
+                
+                <!-- Holiday Exceptions & Rules -->
+                <div class="form-group full-width exception-rules-box">
+                  <div class="widget-sub-title">⚙️ Aturan Lanjutan (Advanced Rules)</div>
+                  
+                  <label class="toggle-container margin-bottom-sm">
+                    <input type="checkbox" id="rule-holiday-exception" checked>
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-label font-bold">☑ Abaikan Saat Hari Libur Nasional (Holiday Exception)</span>
+                  </label>
+                  <p class="toggle-desc">Tugas tidak akan dibuat pada kalender hari libur nasional resmi.</p>
+                  
+                  <div class="rule-dropdowns">
+                    <div class="rule-row">
+                      <span class="rule-text">Jika hari:</span>
+                      <select id="rule-day-cond" class="form-control sm-control">
+                        <option value="none">-- Pilih Aturan --</option>
+                        <option value="0">Minggu</option>
+                        <option value="6">Sabtu</option>
+                        <option value="holiday">Libur Nasional</option>
+                      </select>
+                      <span class="rule-text">maka</span>
+                      <select id="rule-day-action" class="form-control sm-control">
+                        <option value="hide">Jangan Tampilkan Tugas Ini</option>
+                        <option value="rename-family">Ganti Nama Tugas Menjadi "Family Time"</option>
+                        <option value="rename-rest">Ganti Nama Tugas Menjadi "Self Care / Istirahat"</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="form-actions-row">
+                  <button type="submit" id="save-template-btn" class="btn btn-primary">Simpan Template</button>
+                  <button type="button" id="reset-template-form-btn" class="btn btn-secondary">Batal</button>
+                </div>
+                
+              </form>
+            </div>
+          </div>
+          
+          <!-- Column 2: Template Catalog List -->
+          <div class="custom-right">
+            <div class="card template-catalog-card">
+              <h2 class="card-title">Daftar Template Aktif</h2>
+              <p class="section-desc">Task-task ini otomatis ditransfer ke halaman utama setiap harinya sesuai jadwal aktif yang Anda buat.</p>
+              
+              <div class="templates-grid" id="templates-catalog-list">
+                <!-- Javascript will render existing templates -->
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </section>
+      
+      <!-- TAB 3: REVIEW TAB (ANALYTICS & EVALUATION) -->
+      <section id="tab-review" class="tab-panel">
+        <div class="review-grid">
+          
+
+
+          <!-- SECTION 1: Summary Cards Grid -->
+          <div class="summary-cards-container">
+            
+            <div class="card summary-card glow-blue">
+              <div class="summary-card-icon">🎯</div>
+              <div class="summary-card-info">
+                <span class="summary-title">Completion Rate</span>
+                <span class="summary-value" id="review-stat-completion">84.2%</span>
+                <span class="summary-trend trend-up">▲ 4.1% bulan ini</span>
+              </div>
+            </div>
+            
+            <div class="card summary-card glow-green">
+              <div class="summary-card-icon">🔥</div>
+              <div class="summary-card-info">
+                <span class="summary-title">Current Streak</span>
+                <span class="summary-value" id="review-stat-current-streak">5 Hari</span>
+                <span class="summary-trend">Target: 30 Hari</span>
+              </div>
+            </div>
+            
+            <div class="card summary-card glow-gold">
+              <div class="summary-card-icon">👑</div>
+              <div class="summary-card-info">
+                <span class="summary-title">Longest Streak</span>
+                <span class="summary-value" id="review-stat-longest-streak">18 Hari</span>
+                <span class="summary-trend">Tercapai: April 2026</span>
+              </div>
+            </div>
+            
+            <div class="card summary-card">
+              <div class="summary-card-icon">📝</div>
+              <div class="summary-card-info">
+                <span class="summary-title">Total Tugas</span>
+                <span class="summary-value" id="review-stat-total-tasks">620 Tugas</span>
+                <span class="summary-trend text-muted">Dari 30 hari terakhir</span>
+              </div>
+            </div>
+            
+            <div class="card summary-card glow-red">
+              <div class="summary-card-icon">⚠️</div>
+              <div class="summary-card-info">
+                <span class="summary-title">Tugas Terlewat</span>
+                <span class="summary-value" id="review-stat-missed-tasks">98 Tugas</span>
+                <span class="summary-trend text-danger">Bisa ditingkatkan</span>
+              </div>
+            </div>
+            
+            <div class="card summary-card">
+              <div class="summary-card-icon">⏳</div>
+              <div class="summary-card-info">
+                <span class="summary-title">Jam Produktif</span>
+                <span class="summary-value" id="review-stat-productive-hours">284 Jam</span>
+                <span class="summary-trend text-success">Rata-rata 9.4 Jam/hari</span>
+              </div>
+            </div>
+            
+          </div>
+          
+          <!-- Main Review Layout Column Stack -->
+          <div class="review-main-cols">
+            
+            <div class="review-top-row">
+              <!-- SECTION 3: Monthly History Calendar (Moved to top of review widgets) -->
+              <div class="card monthly-calendar-card">
+              <div class="card-header-flex">
+                <h2 class="card-title">Kalender Histori Bulanan</h2>
+                <div class="calendar-month-selector">
+                  <button class="calendar-nav-btn" id="cal-prev-month">◀</button>
+                  <span class="calendar-month-title" id="cal-month-year-label">Mei 2026</span>
+                  <button class="calendar-nav-btn" id="cal-next-month">▶</button>
+                </div>
+              </div>
+              
+              <!-- Legend of Status Icons -->
+              <div class="calendar-status-legend">
+                <span class="status-legend-item" title="100% Selesai">🔥 100%</span>
+                <span class="status-legend-item" title="90%-99% Selesai">⭐ 90%+</span>
+                <span class="status-legend-item" title="70%-89% Selesai">✔ 70%+</span>
+                <span class="status-legend-item" title="Di bawah 70% Selesai">○ Kurang</span>
+              </div>
+              
+              <div class="calendar-days-grid-header">
+                <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
+              </div>
+              <div class="calendar-days-grid" id="monthly-calendar-days">
+                <!-- Rendered dynamically by javascript -->
+              </div>
+            </div>
+            
+            <!-- SECTION 2: Productivity Chart -->
+            <div class="card chart-card">
+              <div class="card-header-flex">
+                <h2 class="card-title">Grafik Produktivitas</h2>
+                <div class="chart-timeframes">
+                  <button class="btn btn-xs btn-secondary-outline active" data-timeframe="7">7 Hari</button>
+                  <button class="btn btn-xs btn-secondary-outline" data-timeframe="30">30 Hari</button>
+                  <button class="btn btn-xs btn-secondary-outline" data-timeframe="90">90 Hari</button>
+                  <button class="btn btn-xs btn-secondary-outline" data-timeframe="365">1 Tahun</button>
+                </div>
+              </div>
+              
+              <div class="chart-display-container">
+                <div class="chart-y-axis">
+                  <span>100%</span>
+                  <span>75%</span>
+                  <span>50%</span>
+                  <span>25%</span>
+                  <span>0%</span>
+                </div>
+                <div class="chart-body-wrapper" id="productivity-chart-canvas">
+                  <!-- Beautiful SVG line chart will be drawn here dynamically -->
+                </div>
+              </div>
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-dot dot-completion"></span> Completion Rate (%)</span>
+                <span class="legend-item"><span class="legend-dot dot-hours"></span> Jam Produktif (Jam)</span>
+                <span class="legend-item"><span class="legend-dot dot-score"></span> Life Score (Skor)</span>
+              </div>
+            </div>
+            </div> <!-- End review-top-row -->
+            
+            <!-- SECTION 5: AI Life Review Card -->
+            <div class="card ai-review-card">
+              <div class="ai-header-wrapper">
+                <div class="ai-icon-brain">🤖</div>
+                <div>
+                  <h2 class="card-title">AI Life Review — Evaluasi Obyektif</h2>
+                  <p class="section-desc">Analisis kecerdasan buatan terhadap kebiasaan dan kedisiplinan Anda berdasarkan data aktual.</p>
+                </div>
+              </div>
+              
+              <div class="ai-content-box">
+                <div class="ai-analysis-indicator" id="ai-review-level-badge">
+                  Tingkat Evaluasi: <span class="badge text-bold bg-warning text-dark">KONSISTENSI MENENGAH</span>
+                </div>
+                <p class="ai-paragraph" id="ai-life-review-text">
+                  Menganalisis data aktivitas Anda selama 30 hari terakhir...
+                </p>
+              </div>
+              
+              <!-- Smart Insights Grid -->
+              <div class="insights-grid-container" id="review-insights-list">
+                <!-- Injected by Javascript -->
+              </div>
+            </div>
+            
+          </div>
+          
+          <!-- SECTION 0: Weekly Review Trigger (Spotify Wrapped style shifted here) -->
+          <div class="card weekly-review-trigger-card glow-gold">
+            <div class="review-trigger-flex">
+              <div class="review-trigger-info">
+                <h3 class="review-trigger-title">🏆 Kilas Balik Mingguan (Weekly Review)</h3>
+              </div>
+              <button id="wrapped-btn" class="btn btn-warning btn-glow-gold">Buka Weekly Review</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+    </main>
+  </div>
+  
+  <!-- FLOATING ACTION / ADD TODAY TASK BUTTON -->
+  <button id="floating-add-btn" class="floating-add-action" title="Tambah tugas manual khusus hari ini">
+    <span class="plus-icon">⊕</span>
+  </button>
+  
+  <!-- ================= MODALS & OVERLAYS ================= -->
+  
+  <!-- 0. ADD CHOICE POPUP MODAL (MANUAL VS AI AGENT) -->
+  <div class="modal-overlay" id="add-choice-modal">
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h3 class="modal-title">Metode Tambah Tugas</h3>
+        <button class="modal-close-btn" id="close-choice-modal">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc text-center">Silakan pilih metode pembuatan tugas hari ini. Anda bisa menulis manual atau menggunakan asisten AI pintar Hoot.</p>
+        <div class="choice-cards-container">
+          <div class="choice-card glow-blue" id="choice-manual-btn">
+            <div class="choice-icon">📝</div>
+            <div class="choice-title">Tambah Tugas Manual</div>
+            <div class="choice-desc">Ketik manual nama tugas, kategori, prioritas, waktu pengerjaan, dan checklist subtask.</div>
+          </div>
+          <div class="choice-card glow-gold" id="choice-ai-btn">
+            <div class="choice-icon">🦉</div>
+            <div class="choice-title">Hoot AI Agent</div>
+            <div class="choice-desc">Tulis perintah bebas (misal: "tambahan fokus pekerjaan hari ini 'menulis film'") dan biarkan Hoot mengaturnya secara otomatis.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 0.1 AI AGENT ASSISTANT MODAL -->
+  <div class="modal-overlay" id="ai-agent-modal">
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h3 class="modal-title">🦉 Hoot AI Agent</h3>
+        <button class="modal-close-btn" id="close-ai-modal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="ai-agent-chat-wrapper">
+          <div class="ai-agent-mascot-status">
+            <div class="ai-mascot-circle" id="ai-agent-mascot-target" style="width: 54px; height: 54px;"></div>
+            <div class="ai-chat-bubble font-bold" id="ai-agent-status-bubble">
+              Halo! Aku Hoot. Tuliskan tugas tambahanmu, aku bisa menambahkannya langsung ke sublist tugas yang sudah ada atau membuat tugas baru lengkap dengan sublist dan waktu pengerjaan!
+            </div>
+          </div>
+          
+          <div class="form-group margin-top-md">
+            <label for="ai-agent-prompt">Perintah / Kebutuhan Tugas Anda</label>
+            <textarea id="ai-agent-prompt" rows="3" placeholder="Contoh: tambahan fokus pekerjaan hari ini 'menulis film' ..." class="form-control"></textarea>
+          </div>
+          
+          <div class="ai-processing-state" id="ai-agent-processing" style="display: none;">
+            <div class="ai-spinner"></div>
+            <span>Hoot sedang menganalisis maksud perintah Anda...</span>
+          </div>
+          
+          <div class="ai-result-feedback" id="ai-agent-feedback" style="display: none;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="ai-agent-cancel-btn">Batal</button>
+        <button class="btn btn-primary" id="ai-agent-submit-btn">Proses Perintah</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. REAL GOOGLE LOGIN & PROFILE MODAL -->
+  <div class="modal-overlay" id="google-login-modal">
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h3 class="modal-title">Google Account Sync</h3>
+        <button class="modal-close-btn" id="close-login-modal">×</button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="modal-large-icon">🦉</div>
+        <h3>Sinkronisasi Cloud Google Drive</h3>
+        <p class="modal-desc">Cadangkan seluruh data ke Google Drive pribadi Anda untuk sinkronisasi antar-perangkat secara gratis dan aman.</p>
+        
+        <!-- SIGNED OUT VIEW -->
+        <div id="google-signed-out-view" class="text-left" style="display: block;">
+          <div class="form-group full-width margin-bottom-md">
+            <label for="google-client-id" class="font-bold">Google Client ID *</label>
+            <input type="text" id="google-client-id" placeholder="Masukkan Client ID Google Cloud Console Anda..." class="form-control">
+            <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <span class="text-xs text-muted">Client ID tersimpan lokal di browser ini.</span>
+              <button class="btn btn-xs btn-secondary-outline" id="btn-toggle-client-id-help">💡 Cara Mendapatkan ID</button>
+            </div>
+          </div>
+
+          <!-- Google Cloud Setup Help Block -->
+          <div id="google-help-block" class="card bg-slate-900" style="display: none; padding: 14px; font-size: 11.5px; line-height: 1.5; border-color: var(--border-color); margin-bottom: 16px;">
+            <h5 class="font-bold text-accent-blue margin-bottom-sm">Cara Membuat Client ID secara Gratis:</h5>
+            <ol style="padding-left: 14px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px;">
+              <li>Buka <a href="https://console.cloud.google.com/" target="_blank" style="color: var(--accent-blue); text-decoration: underline;">Google Cloud Console</a>.</li>
+              <li>Buat Project Baru di bagian header atas.</li>
+              <li>Masuk ke menu <strong>APIs & Services ➔ OAuth Consent Screen</strong>. Pilih tipe User <strong>External</strong>, isi nama aplikasi ("YosDay") dan email Anda. Simpan & lanjutkan.</li>
+              <li>Lalu masuk ke <strong>APIs & Services ➔ Credentials</strong>. Klik <strong>+ Create Credentials ➔ OAuth Client ID</strong>.</li>
+              <li>Pilih Application Type: <strong>Web Application</strong>.</li>
+              <li>Di bagian <strong>Authorized JavaScript origins</strong>, tambahkan URL asal web Anda. Contoh:
+                <ul style="padding-left: 14px; list-style-type: circle; margin-top: 4px;">
+                  <li><code>http://localhost:8080</code> (jika via local server default)</li>
+                  <li><code>http://127.0.0.1:5500</code> (jika via VS Code Live Server)</li>
+                  <li><code>https://yosday-anda.vercel.app</code> (jika sudah di-deploy)</li>
+                </ul>
+                <span class="text-danger" style="font-weight: 600;">Penting: Google melarang protokol <code>file:///</code>, jadi web wajib dijalankan lewat server.</span>
+              </li>
+              <li>Klik <strong>Create</strong>, lalu salin Client ID yang berakhiran <code>.apps.googleusercontent.com</code>.</li>
+            </ol>
+          </div>
+
+          <button class="btn btn-primary full-width btn-glow-blue" id="btn-google-login">🔑 Hubungkan & Masuk dengan Google</button>
+        </div>
+
+        <!-- SIGNED IN VIEW -->
+        <div id="google-signed-in-view" style="display: none;">
+          <div class="login-profile-card margin-bottom-md" style="display: flex; align-items: center; gap: 16px; text-align: left; background-color: var(--surface-dark); padding: 14px; border-radius: 12px; border: 1px solid var(--border-color);">
+            <img id="google-user-avatar" src="" alt="Avatar" class="avatar-large" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%233b82f6%22/><text x=%2250%25%22 y=%2255%25%22 font-size=%2240%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22>Y</text></svg>'">
+            <div class="profile-details-block" style="flex-grow: 1; min-width: 0;">
+              <h4 id="google-user-name" class="font-bold" style="margin: 0; font-size: 15px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Yohanes</h4>
+              <p id="google-user-email" style="margin: 2px 0 6px; font-size: 12px; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">yohanes@gmail.com</p>
+              <span class="status-indicator-badge connected" id="google-sync-status-badge" style="font-size: 10px; padding: 2px 8px; border-radius: 4px; background-color: rgba(34, 197, 94, 0.15); color: var(--success-green); border: 1px solid rgba(34, 197, 94, 0.3);">Tersambung (Cloud Sync Aktif)</span>
+            </div>
+          </div>
+
+          <div class="gcal-manual-sync-section margin-bottom-md text-left card bg-slate-900" style="padding: 14px; border: 1px solid var(--border-color); border-radius: 12px;">
+            <h4 class="text-sm font-bold margin-bottom-sm">🔄 Sinkronisasi Google Drive</h4>
+            <p class="text-xs text-secondary margin-bottom-sm">Pilih aksi di bawah untuk mencadangkan data lokal ke cloud atau memulihkan data dari cloud.</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <button class="btn btn-success btn-sm" id="btn-cloud-backup" title="Kirim data dari perangkat ini untuk menimpa file di cloud Google Drive">📤 Backup ke Cloud</button>
+              <button class="btn btn-warning btn-sm" id="btn-cloud-restore" title="Ambil data dari Google Drive untuk menggantikan data di perangkat ini">📥 Restore dari Cloud</button>
+            </div>
+            <p class="text-xs text-muted margin-top-sm" style="text-align: center;"><em>Sistem mencadangkan data secara otomatis setiap kali Anda melakukan perubahan.</em></p>
+          </div>
+        </div>
+        
+        <div id="seed-management-block" class="seed-control-panel margin-top-md">
+          <h4>Pusat Data Simulasi</h4>
+          <p class="text-xs text-muted margin-bottom-sm">Ingin memuat data demo 30 hari penuh dengan pola evaluasi realistis atau memulai dari nol?</p>
+          <div class="seed-buttons">
+            <button class="btn btn-warning btn-sm" id="btn-seed-data">💾 Muat Ulang 30 Hari Data Demo</button>
+            <button class="btn btn-danger btn-sm" id="btn-clear-data">🗑 Kosongkan Semua Data</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <button class="btn btn-secondary-outline" id="btn-google-logout" style="display: none; border-color: var(--danger-red); color: var(--danger-red);">Keluar Akun</button>
+        <button class="btn btn-primary" id="confirm-sync-btn" style="margin-left: auto;">Tutup</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 2. ADD / EDIT MANUAL TASK FOR TODAY MODAL -->
+  <div class="modal-overlay" id="add-task-modal">
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h3 class="modal-title" id="task-modal-title">Tambah Tugas Khusus Hari Ini</h3>
+        <button class="modal-close-btn" id="close-task-modal">×</button>
+      </div>
+      <form id="add-task-form">
+        <div class="modal-body">
+          <div class="form-group full-width">
+            <label for="task-name">Nama Tugas *</label>
+            <input type="text" id="task-name" required placeholder="Tulis nama tugas..." class="form-control">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="task-start-time">Jam Mulai *</label>
+              <input type="time" id="task-start-time" required class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="task-end-time">Jam Selesai *</label>
+              <input type="time" id="task-end-time" required class="form-control">
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="task-category">Kategori</label>
+              <select id="task-category" class="form-control">
+                <option value="Karir">Karir & Pekerjaan</option>
+                <option value="Kesehatan">Kesehatan & Olahraga</option>
+                <option value="Spiritual">Spiritual / Ibadah</option>
+                <option value="Edukasi">Edukasi & Belajar</option>
+                <option value="Sosial">Sosial & Keluarga</option>
+                <option value="Rutin">Rutin / Istirahat</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="task-priority">Prioritas</label>
+              <select id="task-priority" class="form-control">
+                <option value="Tinggi">🔴 Tinggi</option>
+                <option value="Sedang" selected>🟡 Sedang</option>
+                <option value="Rendah">🔵 Rendah</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Manual Task Subtasks Builder -->
+          <div class="form-group full-width">
+            <label>Subtask Checklist</label>
+            <div class="subtask-builder-wrapper">
+              <div id="modal-subtasks-list" class="form-subtask-items">
+                <!-- Injected dynamically -->
+              </div>
+              <button type="button" id="modal-add-subtask-row-btn" class="btn btn-secondary-outline btn-sm">
+                ➕ Tambah Subtask
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-group full-width">
+            <label for="task-notes">Catatan</label>
+            <input type="text" id="task-notes" placeholder="Catatan singkat..." class="form-control">
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancel-task-modal-btn">Batal</button>
+          <button type="submit" class="btn btn-primary" id="save-task-modal-btn">Tambahkan Tugas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- 3. DEEP DAILY RECORD DETAIL DRAWER (MODAL OVERLAY) -->
+  <div class="modal-overlay" id="day-detail-modal">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <h3 class="modal-title" id="day-detail-title">Histori Harian: 15 Mei 2026</h3>
+        <button class="modal-close-btn" id="close-day-detail-modal">×</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="day-detail-stats-row">
+          <div class="detail-stat-card glow-blue">
+            <span class="lbl">Tingkat Penyelesaian</span>
+            <span class="val" id="day-detail-completion">92%</span>
+          </div>
+          <div class="detail-stat-card glow-green">
+            <span class="lbl">Jam Produktif</span>
+            <span class="val" id="day-detail-productive">10.5 Jam</span>
+          </div>
+          <div class="detail-stat-card">
+            <span class="lbl">Total Tugas</span>
+            <span class="val" id="day-detail-count">12 / 13</span>
+          </div>
+          <div class="detail-stat-card text-center" id="day-detail-mascot-card">
+            <span class="lbl">Kondisi Hoot</span>
+            <div class="detail-mascot-preview" id="day-detail-mascot-svg">
+              <!-- Inline SVG mascot of the day -->
+            </div>
+            <span class="hoot-expression-lbl" id="day-detail-expression">Senang</span>
+          </div>
+        </div>
+        
+        <div class="day-detail-grid-layout">
+          <!-- Left side: tasks done/missed -->
+          <div class="detail-grid-left">
+            <h4>📋 Daftar Tugas Hari Itu</h4>
+            <div class="detail-tasks-history-list" id="day-detail-tasks-list">
+              <!-- Javascript will render historical tasks and their states -->
+            </div>
+          </div>
+          
+          <!-- Right side: verse and daily evaluation -->
+          <div class="detail-grid-right">
+            <div class="card bg-slate-900 margin-bottom-md">
+              <h5 class="widget-sub-title">📖 Ayat Alkitab Hari Itu</h5>
+              <blockquote class="detail-verse-quote" id="day-detail-verse">
+                "Aku dapat melakukan segala sesuatu melalui Dia yang memberi kekuatan kepadaku."
+              </blockquote>
+              <cite class="detail-verse-ref" id="day-detail-verse-ref">Filipi 4:13</cite>
+            </div>
+            
+            <div class="card bg-slate-900">
+              <h5 class="widget-sub-title">📝 Catatan Refleksi & Evaluasi</h5>
+              <div class="form-group">
+                <p class="text-sm text-muted margin-bottom-sm">Refleksi harian untuk hari ini:</p>
+                <textarea id="day-detail-notes-input" class="form-control" rows="4" placeholder="Tulis jurnal pendek tentang produktivitas, hambatan, atau rasa syukur Anda hari ini..."></textarea>
+              </div>
+              <button class="btn btn-primary btn-sm full-width" id="day-detail-save-notes-btn">Simpan Catatan Jurnal</button>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="close-day-detail-footer-btn">Tutup Histori</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 4. FOCUS MODE OVERLAY (FULL SCREEN DETOX MODE) -->
+  <div class="focus-mode-overlay" id="focus-mode-view">
+    <div class="focus-background-pulse"></div>
+    
+    <div class="focus-header">
+      <div class="focus-logo">YOSDAY <span class="focus-tag">FOCUS MODE</span></div>
+      <button class="btn btn-secondary btn-sm" id="exit-focus-btn">Keluar Fokus (Esc)</button>
+    </div>
+    
+    <div class="focus-container">
+      
+      <!-- Left side: Task progress ring -->
+      <div class="focus-visual-block">
+        <div class="focus-timer-ring">
+          <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" class="ring-bg"></circle>
+            <circle cx="50" cy="50" r="45" class="ring-fg" id="focus-countdown-ring" stroke-dasharray="282.7" stroke-dashoffset="0"></circle>
+          </svg>
+          <div class="focus-timer-text-wrap">
+            <span class="focus-timer-label" id="focus-timer-state">TUGAS SEKARANG</span>
+            <span class="focus-timer-clock" id="focus-clock-display">00:00:00</span>
+            <span class="focus-timer-duration" id="focus-duration-display">Sisa Waktu</span>
+          </div>
+        </div>
+        
+        <div class="focus-hoot-box">
+          <div id="focus-hoot-svg" style="width: 54px; height: 54px;">
+            <!-- Render Hoot SVG here, matching current productivity -->
+          </div>
+          <div class="focus-hoot-motivation-text" id="focus-hoot-motivation-text">Keep going! Single-tasking is your superpower.</div>
+        </div>
+      </div>
+      
+      <!-- Right side: Current active task card and subtasks checklist -->
+      <div class="focus-info-block">
+        <div class="card focus-task-card glow-blue">
+          <div class="focus-priority-indicator" id="focus-task-priority">🔴 Tinggi</div>
+          <h2 class="focus-task-name" id="focus-task-title">Mengerjakan Laporan Bulanan Keuangan</h2>
+          <div class="focus-task-time" id="focus-task-time-range">08:00 - 17:00 (Sisa 4 jam 20 menit)</div>
+          
+          <div class="focus-subtasks-section">
+            <h4 class="widget-sub-title">Checklist Subtask:</h4>
+            <div class="focus-subtasks-list" id="focus-subtask-checklist">
+              <!-- Subtasks loaded here as large touch-friendly check elements -->
+            </div>
+          </div>
+          
+          <div class="focus-notes-section" id="focus-task-notes-container">
+            <h4 class="widget-sub-title">Catatan:</h4>
+            <p class="focus-task-notes-text" id="focus-task-notes">Pastikan data pengeluaran dari tim operasional sudah disinkronisasi.</p>
+          </div>
+          
+          <div class="focus-complete-action-wrapper">
+            <button class="btn btn-success btn-large btn-glow-green full-width" id="focus-complete-task-btn">
+              ✔ Selesaikan Tugas Ini
+            </button>
+          </div>
+        </div>
+        
+        <div class="focus-next-up">
+          <span class="next-label">TUGAS BERIKUTNYA:</span>
+          <span class="next-value" id="focus-next-task-name">Belajar Go (19:00 - 21:00)</span>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+  <!-- 5. WEEKLY REVIEW OVERLAY (SPOTIFY WRAPPED STYLE MOCK) -->
+  <div class="modal-overlay year-wrapped-overlay" id="wrapped-modal">
+    <div class="wrapped-container">
+      
+      <!-- Close Button -->
+      <button class="wrapped-close-btn" id="close-wrapped-modal">×</button>
+      
+      <!-- Wrapped Slides Carousels -->
+      <div class="wrapped-slides-wrapper" id="wrapped-slides-container">
+        
+        <!-- Slide 1: Welcome Intro -->
+        <div class="wrapped-slide slide-active text-center slide-intro" data-slide="0">
+          <div class="wrapped-glow-bg glow-purple"></div>
+          <div class="wrapped-logo-hoot" id="wrapped-intro-mascot-target" style="width: 100px; height: 100px;">🦉</div>
+          <h1 class="wrapped-main-title">YosDay Review</h1>
+          <h2 class="wrapped-year-title">Kilas Balik Produktivitas Mingguan</h2>
+          <p class="wrapped-slide-desc margin-top-lg">Perjalanan luar biasa Anda minggu ini dalam merancang kehidupan yang terarah, konsisten, dan bermakna.</p>
+          <div class="wrapped-action-row margin-top-xl">
+            <button class="btn btn-primary btn-glow-blue start-wrapped-btn">Buka Lembaran Anda ➔</button>
+          </div>
+        </div>
+        
+        <!-- Slide 2: Streaks & Consistency -->
+        <div class="wrapped-slide text-center slide-streaks" data-slide="1">
+          <div class="wrapped-glow-bg glow-orange"></div>
+          <span class="wrapped-slide-category">🔥 KONSISTENSI & STREAK</span>
+          <h2 class="wrapped-slide-title">Jiwa yang Tak Terhentikan</h2>
+          
+          <div class="wrapped-stat-display">
+            <span class="wrapped-large-stat text-glow-orange" id="wrapped-val-longest-streak">18</span>
+            <span class="wrapped-stat-lbl">HARI STREAK TERPANJANG</span>
+          </div>
+          
+          <div class="wrapped-bullet-stats">
+            <div class="wrapped-bullet-item">
+              <span class="emoji">🔥</span>
+              <span class="text">Current Streak Anda sekarang adalah <strong id="wrapped-val-current-streak">5</strong> hari.</span>
+            </div>
+            <div class="wrapped-bullet-item">
+              <span class="emoji">⭐</span>
+              <span class="text">Anda mencapai skor kedisiplinan penuh (90%+) sebanyak <strong id="wrapped-val-gold-days">12</strong> kali.</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Slide 3: Time Productive & Score -->
+        <div class="wrapped-slide text-center slide-time" data-slide="2">
+          <div class="wrapped-glow-bg glow-blue"></div>
+          <span class="wrapped-slide-category">⏳ DISTRIBUSI WAKTU</span>
+          <h2 class="wrapped-slide-title">Mengukir Setiap Detik Berharga</h2>
+          
+          <div class="wrapped-stat-display-grid">
+            <div class="wrapped-grid-stat-box">
+              <span class="wrapped-medium-stat text-glow-blue" id="wrapped-val-total-hours">284</span>
+              <span class="wrapped-stat-lbl">TOTAL JAM PRODUKTIF</span>
+            </div>
+            <div class="wrapped-grid-stat-box">
+              <span class="wrapped-medium-stat text-glow-green" id="wrapped-val-avg-life-score">78</span>
+              <span class="wrapped-stat-lbl">RATA-RATA LIFE SCORE</span>
+            </div>
+          </div>
+          
+          <div class="wrapped-bullet-stats">
+            <div class="wrapped-bullet-item">
+              <span class="emoji">📅</span>
+              <span class="text">Hari terbaik Anda adalah <strong id="wrapped-val-best-day">Selasa</strong> dengan tingkat penyelesaian rata-rata <strong id="wrapped-val-best-day-rate">92%</strong>.</span>
+            </div>
+            <div class="wrapped-bullet-item">
+              <span class="emoji">📈</span>
+              <span class="text">Bulan paling produktif Anda adalah <strong id="wrapped-val-best-month">Mei 2026</strong>.</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Slide 4: Habit Insights -->
+        <div class="wrapped-slide text-center slide-habits" data-slide="3">
+          <div class="wrapped-glow-bg glow-green"></div>
+          <span class="wrapped-slide-category">🧠 ANALISIS BIAS & POLA</span>
+          <h2 class="wrapped-slide-title">Kebiasaan Adalah Pondasi Dirimu</h2>
+          
+          <div class="wrapped-habits-comparison">
+            <div class="habit-analysis-card success-card">
+              <div class="habit-card-header">⭐ Kebiasaan Terbaik (Paling Konsisten)</div>
+              <h3 class="habit-name-val" id="wrapped-val-best-habit">Membaca Alkitab</h3>
+              <p class="habit-desc-val">Tingkat penyelesaian luar biasa sebesar <span id="wrapped-val-best-habit-rate">96%</span>. Terus pertahaman!</p>
+            </div>
+            
+            <div class="habit-analysis-card danger-card">
+              <div class="habit-card-header">⚠️ Kebiasaan Terburuk (Perlu Perbaikan)</div>
+              <h3 class="habit-name-val" id="wrapped-val-worst-habit">Olahraga</h3>
+              <p class="habit-desc-val">Hanya diselesaikan sebanyak <span id="wrapped-val-worst-habit-rate">41%</span> dari target. Mari buat lebih realistis!</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Slide 5: Award & Mascot Badge -->
+        <div class="wrapped-slide text-center slide-award" data-slide="4">
+          <div class="wrapped-glow-bg glow-gold"></div>
+          <span class="wrapped-slide-category">👑 EVALUASI AKHIR & LENCANA MINGGUAN</span>
+          <h2 class="wrapped-slide-title">Gelar Spiritual & Mental Anda</h2>
+          
+          <div class="wrapped-badge-showcase">
+            <div class="wrapped-badge-gold-fire" id="wrapped-badge-animation-container">
+              <!-- Golden Fire Hoot SVG loaded here -->
+            </div>
+            <h3 class="wrapped-badge-title" id="wrapped-val-badge-title">Legendary Owl (Burung Hantu Emas)</h3>
+            <p class="wrapped-badge-desc" id="wrapped-val-badge-desc">Luar biasa! Konsistensi 30 hari streak penuh, dengan jiwa dedikasi spiritual yang seimbang. Anda memimpin hidup Anda, bukan hanya sekadar mengalir.</p>
+          </div>
+          
+          <div class="wrapped-action-row margin-top-lg">
+            <button class="btn btn-success" id="wrapped-restart-btn">Lihat Lagi</button>
+            <button class="btn btn-secondary" id="wrapped-finish-btn">Tutup & Terapkan Inspirasi</button>
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- Slide Progress Indicators (Top Dots/Bars) -->
+      <div class="wrapped-progress-indicators" id="wrapped-dots-bar">
+        <div class="progress-indicator-dot active"></div>
+        <div class="progress-indicator-dot"></div>
+        <div class="progress-indicator-dot"></div>
+        <div class="progress-indicator-dot"></div>
+        <div class="progress-indicator-dot"></div>
+      </div>
+      
+      <!-- Slide Navigation Buttons -->
+      <div class="wrapped-navigation-btns">
+        <button class="wrapped-nav-prev" id="wrapped-prev-slide-btn">❮ Sebelum</button>
+        <button class="wrapped-nav-next" id="wrapped-next-slide-btn">Lanjut ❯</button>
+      </div>
+      
+    </div>
+  </div>
+  
+  <!-- Core JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>
