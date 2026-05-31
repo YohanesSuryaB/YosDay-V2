@@ -2599,18 +2599,12 @@ function openEditTaskModal(taskId) {
 // GOOGLE DRIVE CLOUD SYNC & AUTHENTICATION (REAL INTEGRATION)
 // ==========================================================================
 
+const GOOGLE_CLIENT_ID = '5925055907-ehdklak5fnphnjrmjb77gpnkjkaa6726.apps.googleusercontent.com';
 let tokenClient;
 let autoBackupTimeout = null;
 
 function initGoogleSync() {
-  // 1. Load saved Client ID and Token
-  const savedClientId = localStorage.getItem('yosday_google_client_id') || '';
-  const clientIdInput = document.getElementById('google-client-id');
-  if (clientIdInput) {
-    clientIdInput.value = savedClientId;
-  }
-
-  // 2. Initialize setup helpers
+  // 1. Initialize setup helpers
   setupGoogleAuthEventListeners();
 
   // 3. Try auto-restore session if token is still valid
@@ -2626,29 +2620,10 @@ function initGoogleSync() {
 }
 
 function setupGoogleAuthEventListeners() {
-  // Help block toggle
-  const helpBtn = document.getElementById('btn-toggle-client-id-help');
-  if (helpBtn) {
-    helpBtn.addEventListener('click', () => {
-      const helpBlock = document.getElementById('google-help-block');
-      if (helpBlock) {
-        const isHidden = helpBlock.style.display === 'none';
-        helpBlock.style.display = isHidden ? 'block' : 'none';
-      }
-    });
-  }
-
   // Login button click
   const loginBtn = document.getElementById('btn-google-login');
   if (loginBtn) {
     loginBtn.addEventListener('click', () => {
-      const clientId = document.getElementById('google-client-id').value.trim();
-      if (!clientId) {
-        alert("Harap masukkan Google Client ID Anda terlebih dahulu. Silakan klik tombol Bantuan untuk petunjuk pembuatan.");
-        return;
-      }
-      localStorage.setItem('yosday_google_client_id', clientId);
-      
       if (typeof google === 'undefined') {
         alert("Gagal memuat pustaka Google Identity Services. Periksa koneksi internet Anda atau matikan ad-blocker.");
         return;
@@ -2656,7 +2631,7 @@ function setupGoogleAuthEventListeners() {
 
       // Initialize GIS tokenClient
       tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
+        client_id: GOOGLE_CLIENT_ID,
         scope: 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
         callback: (tokenResponse) => {
           if (tokenResponse && tokenResponse.access_token) {

@@ -603,38 +603,9 @@
         <p class="modal-desc">Cadangkan seluruh data ke Google Drive pribadi Anda untuk sinkronisasi antar-perangkat secara gratis dan aman.</p>
         
         <!-- SIGNED OUT VIEW -->
-        <div id="google-signed-out-view" class="text-left" style="display: block;">
-          <div class="form-group full-width margin-bottom-md">
-            <label for="google-client-id" class="font-bold">Google Client ID *</label>
-            <input type="text" id="google-client-id" placeholder="Masukkan Client ID Google Cloud Console Anda..." class="form-control">
-            <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
-              <span class="text-xs text-muted">Client ID tersimpan lokal di browser ini.</span>
-              <button class="btn btn-xs btn-secondary-outline" id="btn-toggle-client-id-help">💡 Cara Mendapatkan ID</button>
-            </div>
-          </div>
-
-          <!-- Google Cloud Setup Help Block -->
-          <div id="google-help-block" class="card bg-slate-900" style="display: none; padding: 14px; font-size: 11.5px; line-height: 1.5; border-color: var(--border-color); margin-bottom: 16px;">
-            <h5 class="font-bold text-accent-blue margin-bottom-sm">Cara Membuat Client ID secara Gratis:</h5>
-            <ol style="padding-left: 14px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px;">
-              <li>Buka <a href="https://console.cloud.google.com/" target="_blank" style="color: var(--accent-blue); text-decoration: underline;">Google Cloud Console</a>.</li>
-              <li>Buat Project Baru di bagian header atas.</li>
-              <li>Masuk ke menu <strong>APIs & Services ➔ OAuth Consent Screen</strong>. Pilih tipe User <strong>External</strong>, isi nama aplikasi ("YosDay") dan email Anda. Simpan & lanjutkan.</li>
-              <li>Lalu masuk ke <strong>APIs & Services ➔ Credentials</strong>. Klik <strong>+ Create Credentials ➔ OAuth Client ID</strong>.</li>
-              <li>Pilih Application Type: <strong>Web Application</strong>.</li>
-              <li>Di bagian <strong>Authorized JavaScript origins</strong>, tambahkan URL asal web Anda. Contoh:
-                <ul style="padding-left: 14px; list-style-type: circle; margin-top: 4px;">
-                  <li><code>http://localhost:8080</code> (jika via local server default)</li>
-                  <li><code>http://127.0.0.1:5500</code> (jika via VS Code Live Server)</li>
-                  <li><code>https://yosday-anda.vercel.app</code> (jika sudah di-deploy)</li>
-                </ul>
-                <span class="text-danger" style="font-weight: 600;">Penting: Google melarang protokol <code>file:///</code>, jadi web wajib dijalankan lewat server.</span>
-              </li>
-              <li>Klik <strong>Create</strong>, lalu salin Client ID yang berakhiran <code>.apps.googleusercontent.com</code>.</li>
-            </ol>
-          </div>
-
-          <button class="btn btn-primary full-width btn-glow-blue" id="btn-google-login">🔑 Hubungkan & Masuk dengan Google</button>
+        <div id="google-signed-out-view" style="display: block;">
+          <p class="modal-desc margin-bottom-md">Anda akan diarahkan ke Google Account untuk otentikasi login aman.</p>
+          <button class="btn btn-primary full-width btn-glow-blue" id="btn-google-login" style="padding: 14px 20px; font-size: 15px;">🔑 Masuk dengan Google</button>
         </div>
 
         <!-- SIGNED IN VIEW -->
