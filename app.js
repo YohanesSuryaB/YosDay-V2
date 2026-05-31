@@ -15,11 +15,34 @@ const State = {
   templates: [],
   history: {}, // Key: "YYYY-MM-DD"
   holidays: [
+    // Public Holidays (Libur Nasional)
     { date: "01-01", name: "Tahun Baru Masehi", type: "holiday" },
     { date: "05-01", name: "Hari Buruh Internasional", type: "holiday" },
-    { date: "05-25", name: "Hari Raya Waisak", type: "holiday" },
+    { date: "06-01", name: "Hari Lahir Pancasila", type: "holiday" },
     { date: "08-17", name: "Hari Kemerdekaan RI", type: "holiday" },
-    { date: "12-25", name: "Hari Raya Natal", type: "holiday" }
+    { date: "12-25", name: "Hari Raya Natal", type: "holiday" },
+    
+    // National Commemorations (Hari Peringatan)
+    { date: "03-11", name: "Hari Supersemar", type: "commemoration" },
+    { date: "03-30", name: "Hari Film Nasional", type: "commemoration" },
+    { date: "04-06", name: "Hari Nelayan Nasional", type: "commemoration" },
+    { date: "04-21", name: "Hari Kartini", type: "commemoration" },
+    { date: "05-02", name: "Hari Pendidikan Nasional", type: "commemoration" },
+    { date: "05-20", name: "Hari Kebangkitan Nasional", type: "commemoration" },
+    { date: "06-29", name: "Hari Keluarga Nasional", type: "commemoration" },
+    { date: "07-23", name: "Hari Anak Nasional", type: "commemoration" },
+    { date: "09-09", name: "Hari Olahraga Nasional", type: "commemoration" },
+    { date: "09-27", name: "Hari Bakti Postel", type: "commemoration" },
+    { date: "10-01", name: "Hari Kesaktian Pancasila", type: "commemoration" },
+    { date: "10-02", name: "Hari Batik Nasional", type: "commemoration" },
+    { date: "10-22", name: "Hari Santri Nasional", type: "commemoration" },
+    { date: "10-24", name: "Hari Dokter Nasional", type: "commemoration" },
+    { date: "10-28", name: "Hari Sumpah Pemuda", type: "commemoration" },
+    { date: "11-10", name: "Hari Pahlawan", type: "commemoration" },
+    { date: "11-12", name: "Hari Kesehatan Nasional", type: "commemoration" },
+    { date: "11-25", name: "Hari Guru Nasional", type: "commemoration" },
+    { date: "12-09", name: "Hari Anti Korupsi Sedunia", type: "commemoration" },
+    { date: "12-22", name: "Hari Ibu Nasional", type: "commemoration" }
   ],
   events: [
     { date: "2026-05-31", title: "Meeting Evaluasi Tim", time: "10:00", type: "event" },
@@ -135,6 +158,15 @@ function switchTab(tabName) {
     tabTitleEl.textContent = titles[tabName] || 'Home Dashboard';
   }
   
+  const floatingAddBtn = document.getElementById('floating-add-btn');
+  if (floatingAddBtn) {
+    if (tabName === 'home' || tabName === 'custom') {
+      floatingAddBtn.style.display = 'flex';
+    } else {
+      floatingAddBtn.style.display = 'none';
+    }
+  }
+
   if (tabName === 'review') {
     renderReviewTab();
   }
@@ -281,13 +313,357 @@ function getISODateString(date) {
   return localISOTime;
 }
 
-// --- Google Holidays Utility ---
-
 function isNationalHoliday(dateStr) {
   const parts = dateStr.split('-');
   const mmdd = `${parts[1]}-${parts[2]}`;
-  const found = State.holidays.find(h => h.date === mmdd);
+  const found = State.holidays.find(h => 
+    (h.date === dateStr || h.date === mmdd) && h.type === 'holiday'
+  );
   return found ? found.name : null;
+}
+
+function getTodayHolidaysAndLeaves(dateStr) {
+  const parts = dateStr.split('-');
+  const mmdd = `${parts[1]}-${parts[2]}`;
+  return State.holidays.filter(h => 
+    (h.date === dateStr || h.date === mmdd)
+  );
+}
+
+// --- Curated Preset Tasks & AI Scheduling Logic ---
+
+const PresetTasksData = {
+  spiritual_pagi: {
+    name: "Meditasi Pagi / Doa",
+    durationHours: 0.5,
+    category: "Spiritual",
+    priority: "Tinggi",
+    notes: "Memulai hari dengan meditasi, ketenangan pikiran, atau doa harian.",
+    subtasks: ["Latihan Pernapasan Tenang", "Merenung & Visualisasi Target", "Membaca Inspirasi Pagi / Doa"],
+    preferredStart: 5,
+    preferredEnd: 8
+  },
+  doa_malam: {
+    name: "Refleksi Malam / Doa",
+    durationHours: 0.5,
+    category: "Spiritual",
+    priority: "Rendah",
+    notes: "Mengakhiri hari dengan refleksi duka/suka dan bersyukur.",
+    subtasks: ["Menulis Evaluasi Harian Singkat", "Berdoa / Meditasi Syukur", "Membaca Bacaan Ringan"],
+    preferredStart: 21,
+    preferredEnd: 23
+  },
+  olahraga_pagi: {
+    name: "Olahraga Pagi",
+    durationHours: 1.0,
+    category: "Kesehatan",
+    priority: "Sedang",
+    notes: "Menjaga kebugaran jasmani.",
+    subtasks: ["Pemanasan 5 menit", "Jogging / Cardio 45 menit", "Peregangan 10 menit"],
+    preferredStart: 6,
+    preferredEnd: 9
+  },
+  peregangan: {
+    name: "Minum Air & Peregangan",
+    durationHours: 0.25,
+    category: "Kesehatan",
+    priority: "Rendah",
+    notes: "Mengembalikan hidrasi dan merelaksasikan otot punggung.",
+    subtasks: ["Minum 500ml Air Hangat", "Latihan Peregangan Punggung & Leher"],
+    preferredStart: 12,
+    preferredEnd: 15
+  },
+  deep_work: {
+    name: "Deep Work Session",
+    durationHours: 3.0,
+    category: "Karir",
+    priority: "Tinggi",
+    notes: "Kerja produktif tanpa gangguan notifikasi.",
+    subtasks: ["Matikan Notifikasi HP", "Fokus Selesaikan Task Utama", "Balas Email/Pesan di Akhir Sesi"],
+    preferredStart: 9,
+    preferredEnd: 15
+  },
+  review_kerja: {
+    name: "Review & Rencana Kerja",
+    durationHours: 0.5,
+    category: "Karir",
+    priority: "Sedang",
+    notes: "Mengevaluasi pekerjaan hari ini dan merencanakan esok.",
+    subtasks: ["Update Task Board (Jira/Trello)", "Tulis 3 Fokus Utama untuk Besok", "Rapikan Workspace"],
+    preferredStart: 16,
+    preferredEnd: 18
+  },
+  membaca_buku: {
+    name: "Membaca Buku",
+    durationHours: 1.0,
+    category: "Edukasi",
+    priority: "Sedang",
+    notes: "Meningkatkan wawasan dengan membaca buku.",
+    subtasks: ["Membaca 10 Halaman", "Mencatat Hal Penting / Bookmark"],
+    preferredStart: 19,
+    preferredEnd: 21
+  },
+  belajar_skill: {
+    name: "Belajar Skill Baru",
+    durationHours: 1.0,
+    category: "Edukasi",
+    priority: "Tinggi",
+    notes: "Investasi waktu untuk upgrade kemampuan diri.",
+    subtasks: ["Tonton 1 Video Pembelajaran", "Praktek Mandiri / Ngoding", "Tulis Review Pendek"],
+    preferredStart: 19,
+    preferredEnd: 22
+  },
+  merapikan_kamar: {
+    name: "Merapikan Kamar & Rumah",
+    durationHours: 0.5,
+    category: "Rutin",
+    priority: "Rendah",
+    notes: "Lingkungan bersih membuat pikiran jernih.",
+    subtasks: ["Merapikan Tempat Tidur", "Menyapu Kamar", "Membuang Sampah"],
+    preferredStart: 7,
+    preferredEnd: 9
+  },
+  jurnal_harian: {
+    name: "Jurnal & Refleksi Harian",
+    durationHours: 0.5,
+    category: "Rutin",
+    priority: "Sedang",
+    notes: "Menulis jurnal harian untuk kesehatan mental.",
+    subtasks: ["Tulis 3 Hal yang Disyukuri", "Evaluasi Aktivitas & Perasaan Hari Ini", "Rencanakan Pola Tidur"],
+    preferredStart: 21,
+    preferredEnd: 23
+  }
+};
+
+function schedulePresetsAI(selectedPresetKeys) {
+  const presetsToSchedule = selectedPresetKeys.map(key => {
+    return Object.assign({ key: key }, PresetTasksData[key]);
+  });
+
+  const existingIntervals = State.templates.map(tpl => {
+    return {
+      start: parseTimeToHours(tpl.startTime),
+      end: parseTimeToHours(tpl.endTime)
+    };
+  });
+
+  const scheduledPresets = [];
+
+  function parseTimeToHours(timeStr) {
+    const parts = timeStr.split(':');
+    return parseInt(parts[0]) + (parseInt(parts[1]) / 60);
+  }
+
+  function formatHoursToTime(hours) {
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  function checkOverlap(start, end, intervals) {
+    for (const int of intervals) {
+      if (start < int.end && end > int.start) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  presetsToSchedule.forEach(preset => {
+    let duration = preset.durationHours;
+    let scheduledStart = null;
+    let scheduledEnd = null;
+
+    // 1. Search in preferred window (at 30-minute intervals)
+    for (let h = preset.preferredStart; h <= preset.preferredEnd - duration; h += 0.5) {
+      const trialStart = h;
+      const trialEnd = h + duration;
+      const allIntervals = existingIntervals.concat(scheduledPresets);
+      if (!checkOverlap(trialStart, trialEnd, allIntervals)) {
+        scheduledStart = trialStart;
+        scheduledEnd = trialEnd;
+        break;
+      }
+    }
+
+    // 2. If not found in preferred window, search the entire day (05:00 - 23:00)
+    if (scheduledStart === null) {
+      for (let h = 5.0; h <= 23.0 - duration; h += 0.5) {
+        const trialStart = h;
+        const trialEnd = h + duration;
+        const allIntervals = existingIntervals.concat(scheduledPresets);
+        if (!checkOverlap(trialStart, trialEnd, allIntervals)) {
+          scheduledStart = trialStart;
+          scheduledEnd = trialEnd;
+          break;
+        }
+      }
+    }
+
+    // 3. Fallback
+    if (scheduledStart === null) {
+      scheduledStart = 8.0;
+      scheduledEnd = 8.0 + duration;
+    }
+
+    scheduledPresets.push({
+      start: scheduledStart,
+      end: scheduledEnd,
+      preset: preset
+    });
+  });
+
+  scheduledPresets.forEach(sp => {
+    const p = sp.preset;
+    const startTimeStr = formatHoursToTime(sp.start);
+    const endTimeStr = formatHoursToTime(sp.end);
+
+    const newTpl = {
+      id: `tpl_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      name: p.name,
+      startTime: startTimeStr,
+      endTime: endTimeStr,
+      category: p.category,
+      priority: p.priority,
+      activeDays: [1, 2, 3, 4, 5, 6, 0], // everyday by default
+      subtasks: p.subtasks,
+      notes: p.notes,
+      holidayException: p.category === 'Karir' || p.category === 'Kesehatan',
+      ruleDayCond: "none",
+      ruleDayAction: "none"
+    };
+
+    State.templates.push(newTpl);
+  });
+
+  saveTemplatesToStorage();
+  syncTodayTasksWithTemplates();
+  renderTemplatesCatalog();
+}
+
+function syncTodayTasksWithTemplates() {
+  const todayStr = getISODateString(State.currentDate);
+  const dayOfWeek = State.currentDate.getDay();
+  const holidayName = isNationalHoliday(todayStr);
+
+  if (!State.history[todayStr]) {
+    checkAndGenerateTodayTasks();
+    return;
+  }
+
+  const record = State.history[todayStr];
+  let tasks = record.tasks || [];
+
+  const activeTemplatesToday = State.templates.filter(tpl => {
+    if (!tpl.activeDays.includes(dayOfWeek)) return false;
+    if (holidayName && tpl.holidayException) {
+      if (tpl.ruleDayCond === 'holiday' && tpl.ruleDayAction === 'hide') {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  const activeTemplatesMap = new Map();
+  activeTemplatesToday.forEach(tpl => {
+    let taskName = tpl.name;
+    let hideTask = false;
+    
+    if (tpl.ruleDayCond === 'holiday' && holidayName) {
+      if (tpl.ruleDayAction === 'rename-family') {
+        taskName = "Family Time (Hari Libur)";
+      } else if (tpl.ruleDayAction === 'rename-rest') {
+        taskName = "Self Care / Istirahat";
+      } else if (tpl.ruleDayAction === 'hide') {
+        hideTask = true;
+      }
+    } else if (tpl.ruleDayCond === String(dayOfWeek)) {
+      if (tpl.ruleDayAction === 'hide') {
+        hideTask = true;
+      } else if (tpl.ruleDayAction === 'rename-family') {
+        taskName = "Family Time";
+      } else if (tpl.ruleDayAction === 'rename-rest') {
+        taskName = "Self Care / Istirahat";
+      }
+    }
+
+    if (!hideTask) {
+      activeTemplatesMap.set(tpl.id, {
+        name: taskName,
+        startTime: tpl.startTime,
+        endTime: tpl.endTime,
+        category: tpl.category,
+        priority: tpl.priority,
+        subtasks: tpl.subtasks,
+        notes: tpl.notes,
+        template: tpl
+      });
+    }
+  });
+
+  const updatedTasks = [];
+  const processedTemplateIds = new Set();
+
+  tasks.forEach(task => {
+    if (task.isFromTemplate) {
+      const tplId = task.templateId;
+      if (activeTemplatesMap.has(tplId)) {
+        const tplData = activeTemplatesMap.get(tplId);
+        
+        task.name = tplData.name;
+        task.startTime = tplData.startTime;
+        task.endTime = tplData.endTime;
+        task.category = tplData.category;
+        task.priority = tplData.priority;
+        task.notes = tplData.notes;
+        
+        const currentSubtasksMap = new Map();
+        task.subtasks.forEach(st => {
+          currentSubtasksMap.set(st.name, st.completed);
+        });
+
+        task.subtasks = tplData.subtasks.map(stName => {
+          return {
+            name: stName,
+            completed: currentSubtasksMap.has(stName) ? currentSubtasksMap.get(stName) : false
+          };
+        });
+
+        updatedTasks.push(task);
+        processedTemplateIds.add(tplId);
+      }
+    } else {
+      updatedTasks.push(task);
+    }
+  });
+
+  activeTemplatesToday.forEach(tpl => {
+    if (activeTemplatesMap.has(tpl.id) && !processedTemplateIds.has(tpl.id)) {
+      const tplData = activeTemplatesMap.get(tpl.id);
+      const instantiatedSubtasks = tplData.subtasks.map(st => ({ name: st, completed: false }));
+      
+      updatedTasks.push({
+        id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+        name: tplData.name,
+        startTime: tplData.startTime,
+        endTime: tplData.endTime,
+        category: tplData.category,
+        priority: tplData.priority,
+        completed: false,
+        subtasks: instantiatedSubtasks,
+        notes: tplData.notes,
+        isFromTemplate: true,
+        templateId: tpl.id
+      });
+    }
+  });
+
+  record.tasks = updatedTasks;
+  saveHistoryToStorage();
+
+  renderDailyTasks();
+  renderTodayProgressSummary();
+  renderWeeklyStreak();
 }
 
 // --- Seed Data Engine (30 Days Simulation) ---
@@ -488,17 +864,17 @@ function calculateMascotExpressionForRate(rate) {
 }
 
 function calculateWeeklyProgressRate() {
-  const monday = new Date(State.currentDate);
-  const day = monday.getDay();
-  const diff = monday.getDate() - day + (day === 0 ? -6 : 1);
-  monday.setDate(diff);
+  const sunday = new Date(State.currentDate);
+  const day = sunday.getDay();
+  const diff = sunday.getDate() - day;
+  sunday.setDate(diff);
   
   let totalTasks = 0;
   let completedTasks = 0;
   
   for (let i = 0; i < 7; i++) {
-    const cur = new Date(monday);
-    cur.setDate(monday.getDate() + i);
+    const cur = new Date(sunday);
+    cur.setDate(sunday.getDate() + i);
     const dateStr = getISODateString(cur);
     
     if (cur > State.currentDate) continue;
@@ -718,18 +1094,18 @@ function renderWeeklyStreak() {
   const weeklyContainer = document.getElementById('weekly-days-list');
   if (!weeklyContainer) return;
   
-  const monday = new Date(State.currentDate);
-  const day = monday.getDay();
-  const diff = monday.getDate() - day + (day === 0 ? -6 : 1);
-  monday.setDate(diff);
+  const sunday = new Date(State.currentDate);
+  const day = sunday.getDay();
+  const diff = sunday.getDate() - day;
+  sunday.setDate(diff);
   
   weeklyContainer.innerHTML = "";
   
-  const dayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+  const dayLabels = ["S", "M", "T", "W", "T", "F", "S"];
   
   for (let i = 0; i < 7; i++) {
-    const curDate = new Date(monday);
-    curDate.setDate(monday.getDate() + i);
+    const curDate = new Date(sunday);
+    curDate.setDate(sunday.getDate() + i);
     const dateStr = getISODateString(curDate);
     const isToday = dateStr === getISODateString(State.currentDate);
     
@@ -1105,15 +1481,14 @@ function recalculateDailyOutputs() {
 // --- SECTION 5: Calendar Information Widget ---
 
 function renderCalendarInformation() {
-  const holidayContainer = document.getElementById('calendar-holidays');
-  const eventContainer = document.getElementById('calendar-events');
-  const reminderContainer = document.getElementById('calendar-reminders');
+  const container = document.getElementById('calendar-all-items');
+  if (!container) return;
   
   const todayStr = getISODateString(State.currentDate);
+  const isLoggedIn = localStorage.getItem('yosday_google_profile') !== null;
   
   // Update Sync status indicator dynamically
   const syncIndicator = document.getElementById('calendar-sync-indicator');
-  const isLoggedIn = localStorage.getItem('yosday_google_profile') !== null;
   if (syncIndicator) {
     if (isLoggedIn && State.googleCalendarEvents !== 'error') {
       syncIndicator.className = 'gcal-connected';
@@ -1124,36 +1499,59 @@ function renderCalendarInformation() {
     }
   }
 
-  holidayContainer.innerHTML = "";
-  const holidayFound = isNationalHoliday(todayStr);
-  if (holidayFound) {
-    holidayContainer.innerHTML = `
-      <div class="calendar-info-item holiday">
-        <span class="cal-item-emoji">🔴</span>
-        <span class="cal-item-text">${holidayFound}</span>
-        <span class="cal-item-time">Hari Ini</span>
-      </div>
-    `;
-  } else {
-    holidayContainer.innerHTML = `<span class="text-xs text-muted">Tidak ada hari libur nasional hari ini.</span>`;
-  }
+  container.innerHTML = "";
   
-  eventContainer.innerHTML = "";
-  if (State.googleCalendarEvents === 'error') {
-    eventContainer.innerHTML = `
-      <div class="calendar-info-item event error" style="border-left-color: var(--danger-red); background: rgba(239, 68, 68, 0.08); padding: 8px 12px; border-radius: 8px; border-left: 3px solid var(--danger-red);">
-        <span class="cal-item-emoji">⚠️</span>
-        <span class="cal-item-text" style="color: var(--danger-red); font-size: 11px; line-height: 1.4;">
-          Gagal memuat Kalender. Pastikan <strong>Google Calendar API</strong> diaktifkan di Google Cloud Console Anda.
-        </span>
-      </div>
-    `;
-  } else {
-    // If not logged in, eventsToRender is empty array (hide mockups)
-    const eventsToRender = State.googleCalendarEvents || [];
-    if (eventsToRender.length > 0) {
+  const htmlItems = [];
+
+  // 1. Holiday & Leaves (National Holiday, Joint Leaves & Commemorations)
+  const todayHolidaysAndLeaves = getTodayHolidaysAndLeaves(todayStr);
+  if (todayHolidaysAndLeaves.length > 0) {
+    todayHolidaysAndLeaves.forEach(h => {
+      let emoji = '🔴';
+      let textStyle = '';
+      let itemStyle = 'border-left-color: var(--danger-red, #ef4444); background: rgba(239, 68, 68, 0.08);';
+      let displayName = h.name;
+
+      if (h.type === 'joint_leave') {
+        emoji = '🟡';
+        itemStyle = 'border-left-color: var(--warning-gold, #f59e0b); background: rgba(245, 158, 11, 0.08);';
+        textStyle = 'color: var(--text-primary); font-style: italic;';
+        displayName = `Cuti Bersama: ${h.name}`;
+      } else if (h.type === 'commemoration') {
+        emoji = '🔵';
+        itemStyle = 'border-left-color: var(--accent-blue, #3b82f6); background: rgba(59, 130, 246, 0.08);';
+        displayName = `Hari Peringatan: ${h.name}`;
+      } else {
+        displayName = `Hari Libur: ${h.name}`;
+      }
+
+      htmlItems.push(`
+        <div class="calendar-info-item holiday" style="${itemStyle}">
+          <span class="cal-item-emoji">${emoji}</span>
+          <span class="cal-item-text" style="${textStyle}">
+            ${displayName}
+          </span>
+          <span class="cal-item-time">Hari Ini</span>
+        </div>
+      `);
+    });
+  }
+
+  // 2. Google Calendar Events & Error handling
+  if (isLoggedIn) {
+    if (State.googleCalendarEvents === 'error') {
+      htmlItems.push(`
+        <div class="calendar-info-item event error" style="border-left-color: var(--danger-red); background: rgba(239, 68, 68, 0.08); padding: 8px 12px; border-radius: 8px; border-left: 3px solid var(--danger-red);">
+          <span class="cal-item-emoji">⚠️</span>
+          <span class="cal-item-text" style="color: var(--danger-red); font-size: 11px; line-height: 1.4;">
+            Gagal memuat Kalender. Pastikan <strong>Google Calendar API</strong> diaktifkan di Google Cloud Console Anda.
+          </span>
+        </div>
+      `);
+    } else {
+      const eventsToRender = State.googleCalendarEvents || [];
       eventsToRender.forEach(e => {
-        eventContainer.insertAdjacentHTML('beforeend', `
+        htmlItems.push(`
           <div class="calendar-info-item event">
             <span class="cal-item-emoji">📅</span>
             <span class="cal-item-text">${e.title}</span>
@@ -1161,31 +1559,29 @@ function renderCalendarInformation() {
           </div>
         `);
       });
-    } else {
-      eventContainer.innerHTML = `<span class="text-xs text-muted">Tidak ada jadwal acara kalender hari ini.</span>`;
     }
-  }
-  
-  reminderContainer.innerHTML = "";
-  // Show reminders only if logged in (hide mockups when not logged in)
-  if (isLoggedIn) {
+
+    // 3. Reminders
     const activeReminders = State.reminders.filter(r => r.date >= todayStr);
-    if (activeReminders.length > 0) {
-      activeReminders.forEach(r => {
-        const isOverdue = r.date === todayStr;
-        reminderContainer.insertAdjacentHTML('beforeend', `
-          <div class="calendar-info-item reminder">
-            <span class="cal-item-emoji">💡</span>
-            <span class="cal-item-text" style="${r.done ? 'text-decoration: line-through;' : ''}">${r.title}</span>
-            <span class="cal-item-time">${isOverdue ? 'Jatuh Tempo Hari Ini' : r.date}</span>
-          </div>
-        `);
-      });
-    } else {
-      reminderContainer.innerHTML = `<span class="text-xs text-muted">Tidak ada pengingat aktif.</span>`;
-    }
+    activeReminders.forEach(r => {
+      const isOverdue = r.date === todayStr;
+      htmlItems.push(`
+        <div class="calendar-info-item reminder">
+          <span class="cal-item-emoji">💡</span>
+          <span class="cal-item-text" style="${r.done ? 'text-decoration: line-through;' : ''}">${r.title}</span>
+          <span class="cal-item-time">${isOverdue ? 'Jatuh Tempo Hari Ini' : r.date}</span>
+        </div>
+      `);
+    });
+  }
+
+  // Render combined items
+  if (htmlItems.length > 0) {
+    htmlItems.forEach(item => {
+      container.insertAdjacentHTML('beforeend', item);
+    });
   } else {
-    reminderContainer.innerHTML = `<span class="text-xs text-muted">Tidak ada pengingat aktif.</span>`;
+    container.innerHTML = `<span class="text-xs text-muted">Tidak ada jadwal acara atau pengingat hari ini.</span>`;
   }
 }
 
@@ -1204,9 +1600,21 @@ function renderTemplatesCatalog() {
       <div class="empty-tasks-view">
         <div class="empty-tasks-icon">⚙️</div>
         <h3>Belum Ada Template Tugas</h3>
-        <p>Gunakan form di sebelah kiri untuk merancang template pekerjaan berulang pertama Anda.</p>
+        <p>Gunakan form di sebelah kiri atau tombol Preset Esensial di kanan atas untuk merancang template pekerjaan berulang pertama Anda.</p>
+      </div>
+      <div class="templates-footer-actions-container" style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 16px; width: 100%;">
+        <button id="btn-add-templates-placeholder" class="btn btn-secondary-outline" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px;">
+          <span>➕</span> Tambahkan Daftar Template
+        </button>
       </div>
     `;
+    
+    const addPlBtn = document.getElementById('btn-add-templates-placeholder');
+    if (addPlBtn) {
+      addPlBtn.addEventListener('click', () => {
+        document.getElementById('preset-templates-modal').classList.add('active');
+      });
+    }
     return;
   }
   
@@ -1269,6 +1677,25 @@ function renderTemplatesCatalog() {
     `;
     container.insertAdjacentHTML('beforeend', cardHTML);
   });
+
+  // Append Save button container at the bottom
+  const footerHTML = `
+    <div class="templates-footer-actions-container" style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 16px; width: 100%; display: flex; justify-content: center;">
+      <button id="btn-save-templates-list" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px;">
+        <span>💾</span> Simpan Daftar Template
+      </button>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', footerHTML);
+
+  const saveBtn = document.getElementById('btn-save-templates-list');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      saveTemplatesToStorage();
+      syncTodayTasksWithTemplates();
+      alert("Daftar template berhasil disimpan dan tugas hari ini diperbarui!");
+    });
+  }
 }
 
 function loadTemplateToForm(templateId) {
@@ -1293,6 +1720,18 @@ function loadTemplateToForm(templateId) {
   document.getElementById('rule-day-cond').value = tpl.ruleDayCond;
   document.getElementById('rule-day-action').value = tpl.ruleDayAction;
   
+  const advContent = document.getElementById('advanced-rules-content');
+  const advArrow = document.getElementById('advanced-rules-arrow');
+  if (advContent && advArrow) {
+    if (!tpl.holidayException || tpl.ruleDayCond !== 'none') {
+      advContent.style.display = 'block';
+      advArrow.textContent = '▼';
+    } else {
+      advContent.style.display = 'none';
+      advArrow.textContent = '▶';
+    }
+  }
+  
   const subtasksList = document.getElementById('form-subtasks-list');
   subtasksList.innerHTML = "";
   if (tpl.subtasks) {
@@ -1306,6 +1745,7 @@ function deleteTemplate(templateId) {
   if (!confirm("Menghapus template tidak menghapus histori tugas lama, namun tidak akan memicu pembuatan tugas ini di masa mendatang. Lanjutkan?")) return;
   State.templates = State.templates.filter(t => t.id !== templateId);
   saveTemplatesToStorage();
+  syncTodayTasksWithTemplates();
   renderTemplatesCatalog();
 }
 
@@ -1458,8 +1898,8 @@ function renderProductivityChart(timeframe) {
 
 // --- Review Tab Calendar Engine ---
 
-let currentCalMonth = 4;
-let currentCalYear = 2026;
+let currentCalMonth = State.currentDate.getMonth();
+let currentCalYear = State.currentDate.getFullYear();
 
 function renderMonthlyCalendarGrid() {
   const daysContainer = document.getElementById('monthly-calendar-days');
@@ -1467,16 +1907,15 @@ function renderMonthlyCalendarGrid() {
   if (!daysContainer) return;
   
   const monthNames = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    "January", "February", "March", "April", "May", "June", 
+    "July", "August", "September", "October", "November", "December"
   ];
   monthYearLabel.textContent = `${monthNames[currentCalMonth]} ${currentCalYear}`;
   
   daysContainer.innerHTML = "";
   
   const firstDay = new Date(currentCalYear, currentCalMonth, 1);
-  let startOffset = firstDay.getDay();
-  startOffset = startOffset === 0 ? 6 : startOffset - 1;
+  const startOffset = firstDay.getDay();
   
   const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
   
@@ -2351,6 +2790,87 @@ function setupEventListeners() {
   document.getElementById('confirm-settings-btn').addEventListener('click', () => {
     document.getElementById('settings-modal').classList.remove('active');
   });
+
+  // Preset templates modal triggers
+  const openPresetBtn = document.getElementById('open-preset-templates-btn');
+  if (openPresetBtn) {
+    openPresetBtn.addEventListener('click', () => {
+      document.getElementById('preset-templates-modal').classList.add('active');
+    });
+  }
+  
+  const closePresetBtn = document.getElementById('close-preset-templates-btn');
+  if (closePresetBtn) {
+    closePresetBtn.addEventListener('click', () => {
+      document.getElementById('preset-templates-modal').classList.remove('active');
+    });
+  }
+  
+  const cancelPresetBtn = document.getElementById('cancel-preset-templates-btn');
+  if (cancelPresetBtn) {
+    cancelPresetBtn.addEventListener('click', () => {
+      document.getElementById('preset-templates-modal').classList.remove('active');
+    });
+  }
+  
+  const confirmAddPresetBtn = document.getElementById('confirm-add-presets-btn');
+  if (confirmAddPresetBtn) {
+    confirmAddPresetBtn.addEventListener('click', () => {
+      const selectedCheckboxes = document.querySelectorAll('input[name="preset-task-select"]:checked');
+      if (selectedCheckboxes.length === 0) {
+        alert("Pilih minimal satu preset tugas esensial!");
+        return;
+      }
+
+      const selectedKeys = Array.from(selectedCheckboxes).map(cb => cb.value);
+      const statusEl = document.getElementById('preset-scheduling-status');
+      if (statusEl) {
+        statusEl.style.display = 'inline';
+      }
+
+      setTimeout(() => {
+        schedulePresetsAI(selectedKeys);
+        if (statusEl) {
+          statusEl.style.display = 'none';
+        }
+        document.getElementById('preset-templates-modal').classList.remove('active');
+        selectedCheckboxes.forEach(cb => cb.checked = false);
+        alert("AI Hoot berhasil menyusun jadwal dan menambahkan preset tugas!");
+      }, 800);
+    });
+  }
+
+  // Advanced Rules collapsible toggle
+  const advToggle = document.getElementById('advanced-rules-toggle');
+  const advContent = document.getElementById('advanced-rules-content');
+  const advArrow = document.getElementById('advanced-rules-arrow');
+  if (advToggle && advContent && advArrow) {
+    advToggle.addEventListener('click', () => {
+      const isHidden = advContent.style.display === 'none';
+      if (isHidden) {
+        advContent.style.display = 'block';
+        advArrow.textContent = '▼';
+      } else {
+        advContent.style.display = 'none';
+        advArrow.textContent = '▶';
+      }
+    });
+  }
+
+  // Preset row selection visual class toggle (for robust fallback support)
+  const presetCheckboxes = document.querySelectorAll('input[name="preset-task-select"]');
+  presetCheckboxes.forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      const row = e.target.closest('.preset-item-row');
+      if (row) {
+        if (e.target.checked) {
+          row.classList.add('selected');
+        } else {
+          row.classList.remove('selected');
+        }
+      }
+    });
+  });
   
   // Theme Toggle Change
   const themeToggle = document.getElementById('settings-theme-toggle');
@@ -2452,6 +2972,7 @@ function setupEventListeners() {
     }
     
     saveTemplatesToStorage();
+    syncTodayTasksWithTemplates();
     renderTemplatesCatalog();
     
     templateForm.reset();
@@ -2719,12 +3240,7 @@ function initGoogleSync() {
       const token = localStorage.getItem('yosday_google_token');
       const tokenExpiry = localStorage.getItem('yosday_google_token_expiry');
       if (token && tokenExpiry && Date.now() < parseInt(tokenExpiry)) {
-        fetchRealGoogleCalendarEvents(token).then(realEvents => {
-          if (realEvents) {
-            State.googleCalendarEvents = realEvents;
-            renderCalendarInformation();
-          }
-        }).catch(err => console.error(err));
+        syncGoogleCalendarAndHolidays(token).catch(err => console.error(err));
       } else {
         // Silently refresh token on load to fetch calendar events
         setTimeout(() => {
@@ -2943,20 +3459,8 @@ async function handleGoogleLoginSuccess(token, mode) {
       }
     }
 
-    // Load real Google Calendar events silently
-    try {
-      const realEvents = await fetchRealGoogleCalendarEvents(token);
-      if (realEvents) {
-        State.googleCalendarEvents = realEvents;
-      } else {
-        State.googleCalendarEvents = [];
-      }
-      renderCalendarInformation();
-    } catch (gcalErr) {
-      console.error("Failed to load Google Calendar events silently:", gcalErr);
-      State.googleCalendarEvents = 'error';
-      renderCalendarInformation();
-    }
+    // Load real Google Calendar events & Holidays
+    await syncGoogleCalendarAndHolidays(token);
 
     // Auto sync on interactive login
     if (mode === 'interactive') {
@@ -3122,6 +3626,112 @@ async function fetchRealGoogleCalendarEvents(token) {
     throw err;
   }
   return null;
+}
+
+async function fetchGoogleHolidays(token, timeMin, timeMax) {
+  const holidayCalendarId = 'id.indonesian#holiday@group.v.calendar.google.com';
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(holidayCalendarId)}/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true`;
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const publicHolidayKeywords = [
+        "tahun baru", "new year", 
+        "imlek", "chinese", 
+        "isra", "mi'raj", "miraj", "ascension of the prophet",
+        "nyepi", "seclusion", "hindu new year",
+        "wafat isa almasih", "jumat agung", "good friday",
+        "kenaikan", "ascension",
+        "waisak", "vesak",
+        "lahir pancasila", "pancasila day",
+        "idul fitri", "eid al-fitr", "lebaran",
+        "idul adha", "eid al-adha",
+        "tahun baru hijriah", "islamic new year",
+        "kemerdekaan", "independence day",
+        "maulid", "prophet's birthday", "birthday of the prophet",
+        "natal", "christmas"
+      ];
+      return (data.items || []).map(item => {
+        const title = item.summary || "";
+        const lowerTitle = title.toLowerCase();
+        const isJointLeave = lowerTitle.includes("cuti bersama") || 
+                             lowerTitle.includes("joint leave");
+        let type = "holiday";
+        if (isJointLeave) {
+          type = "joint_leave";
+        } else {
+          const matchesPublicHoliday = publicHolidayKeywords.some(keyword => lowerTitle.includes(keyword));
+          if (!matchesPublicHoliday) {
+            type = "commemoration";
+          }
+        }
+        return {
+          name: title,
+          date: item.start.date || item.start.dateTime.slice(0, 10),
+          type: type
+        };
+      });
+    }
+  } catch (e) {
+    console.warn("Failed to fetch holidays from Google Calendar:", e);
+  }
+  return null;
+}
+
+async function syncGoogleCalendarAndHolidays(token) {
+  try {
+    const realEvents = await fetchRealGoogleCalendarEvents(token);
+    if (realEvents) {
+      State.googleCalendarEvents = realEvents;
+    } else {
+      State.googleCalendarEvents = [];
+    }
+    
+    // Fetch Google Holidays
+    const today = State.currentDate;
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    const timeMin = startOfDay.toISOString();
+    const timeMax = endOfDay.toISOString();
+    
+    const gcalHolidays = await fetchGoogleHolidays(token, timeMin, timeMax);
+    let holidaysUpdated = false;
+    if (gcalHolidays && gcalHolidays.length > 0) {
+      gcalHolidays.forEach(h => {
+        const parts = h.date.split('-');
+        if (parts.length === 3) {
+          const mmdd = `${parts[1]}-${parts[2]}`;
+          if (!State.holidays.some(sh => sh.date === h.date || sh.date === mmdd)) {
+            State.holidays.push({ date: h.date, name: h.name, type: h.type });
+            holidaysUpdated = true;
+          }
+        }
+      });
+    }
+    
+    if (holidaysUpdated) {
+      const todayStr = getISODateString(State.currentDate);
+      if (State.history[todayStr]) {
+        const record = State.history[todayStr];
+        const hasCompletedTasks = record.tasks.some(t => t.completed);
+        if (!hasCompletedTasks) {
+          delete State.history[todayStr];
+        }
+      }
+      checkAndGenerateTodayTasks();
+      renderDailyTasks();
+      renderTodayProgressSummary();
+      renderWeeklyStreak();
+    }
+    
+    renderCalendarInformation();
+  } catch (err) {
+    console.error("Failed to sync GCal events/holidays:", err);
+    State.googleCalendarEvents = 'error';
+    renderCalendarInformation();
+  }
 }
 
 async function fetchUserProfile(token) {

@@ -1971,6 +1971,8 @@ label {
 
 .plus-icon {
   line-height: 1;
+  font-weight: 800;
+  font-size: 28px;
 }
 
 /* ==========================================================================
@@ -3510,7 +3512,7 @@ label {
 .form-row-always-split {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
-  gap: 12px !important;
+  gap: 16px !important;
   width: 100% !important;
   box-sizing: border-box !important;
   margin: 0 !important;
@@ -3521,6 +3523,8 @@ label {
 }
 .form-row-always-split .form-control {
   width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
   box-sizing: border-box !important;
 }
 
@@ -3624,4 +3628,67 @@ body.light-theme .bg-slate-900 {
 body.light-theme input[type="time"]::-webkit-calendar-picker-indicator,
 body.light-theme input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(0);
+}
+
+/* Curated Presets List Sizing & Visual Selection Feedback */
+.preset-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1.5px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.02);
+  margin-bottom: 8px;
+  user-select: none;
+}
+
+/* Category Specific Backgrounds */
+.preset-item-row.spiritual { background: rgba(59, 130, 246, 0.05); }
+.preset-item-row.kesehatan { background: rgba(34, 197, 94, 0.05); }
+.preset-item-row.karir { background: rgba(245, 158, 11, 0.05); }
+.preset-item-row.edukasi { background: rgba(168, 85, 247, 0.05); }
+.preset-item-row.rutin { background: rgba(236, 72, 153, 0.05); }
+
+/* Category Highlight on Select (:has checked and selected class fallback) */
+.preset-item-row:has(input[type="checkbox"]:checked),
+.preset-item-row.selected {
+  border-color: var(--accent-blue) !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+.preset-item-row.kesehatan:has(input[type="checkbox"]:checked),
+.preset-item-row.kesehatan.selected {
+  border-color: var(--success-green) !important;
+  background: rgba(34, 197, 94, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+  transform: translateY(-1px);
+}
+
+.preset-item-row.karir:has(input[type="checkbox"]:checked),
+.preset-item-row.karir.selected {
+  border-color: var(--warning-gold) !important;
+  background: rgba(245, 158, 11, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+  transform: translateY(-1px);
+}
+
+.preset-item-row.edukasi:has(input[type="checkbox"]:checked),
+.preset-item-row.edukasi.selected {
+  border-color: #a855f7 !important;
+  background: rgba(168, 85, 247, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
+  transform: translateY(-1px);
+}
+
+.preset-item-row.rutin:has(input[type="checkbox"]:checked),
+.preset-item-row.rutin.selected {
+  border-color: #ec4899 !important;
+  background: rgba(236, 72, 153, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.2);
+  transform: translateY(-1px);
 }

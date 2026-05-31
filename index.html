@@ -24,9 +24,6 @@
     <aside id="app-sidebar" class="sidebar expanded">
       <div class="sidebar-header">
         <div class="logo-wrapper" id="logo-sync-trigger" title="Simulasi Google Account & Sync">
-          <div class="logo-icon" id="sidebar-hoot-mascot-target">
-            <!-- Dynamic SVG Mascot of Current Expression rendered here -->
-          </div>
           <span class="logo-text">YOSDAY</span>
         </div>
         <div class="collapse-chevron" id="sidebar-collapse-trigger" title="Klik untuk perkecil/perbesar sidebar">❮</div>
@@ -189,34 +186,13 @@
               <h2 class="card-title">Informasi Kalender <span id="calendar-sync-indicator" class="gcal-disconnected">Google Sync ✕</span></h2>
               
               <div class="calendar-widget-section">
-                <div class="widget-sub-title">🔴 Hari Besar Nasional</div>
-                <div class="calendar-item-list" id="calendar-holidays">
-                  <!-- Javascript will insert holidays -->
-                </div>
-              </div>
-              
-              <div class="calendar-widget-section">
-                <div class="widget-sub-title">📅 Acara Terjadwal (Calendar Events)</div>
-                <div class="calendar-item-list" id="calendar-events">
-                  <!-- Javascript will insert calendar events -->
-                </div>
-              </div>
-              
-              <div class="calendar-widget-section">
-                <div class="widget-sub-title">💡 Pengingat Penting (Reminders)</div>
-                <div class="calendar-item-list" id="calendar-reminders">
-                  <!-- Javascript will insert reminders -->
+                <div class="calendar-item-list" id="calendar-all-items">
+                  <!-- Javascript will insert combined calendar items (holidays, events, reminders) here -->
                 </div>
               </div>
             </div>
             
-            <!-- Fast Info Card: Daily Advice -->
-            <div class="card advice-card">
-              <h3 class="advice-heading">💡 Smart Tip Hari Ini</h3>
-              <p class="advice-text" id="daily-smart-advice">
-                Menyelesaikan tugas-tugas sulit di pagi hari (seperti "Kerja" dan "Membaca Alkitab") terbukti meningkatkan Life Score Anda hingga 15% lebih tinggi dibanding ditunda ke malam hari.
-              </p>
-            </div>
+
             
           </div>
           
@@ -324,32 +300,37 @@
                   <textarea id="template-notes" placeholder="Catatan singkat / instruksi..." class="form-control" rows="2"></textarea>
                 </div>
                 
-                <!-- Holiday Exceptions & Rules -->
-                <div class="form-group full-width exception-rules-box">
-                  <div class="widget-sub-title">⚙️ Aturan Lanjutan (Advanced Rules)</div>
+                <!-- Holiday Exceptions & Rules (Collapsible) -->
+                <div class="form-group full-width exception-rules-box" style="padding: 10px; border-radius: 8px;">
+                  <div class="widget-sub-title collapsible-trigger" id="advanced-rules-toggle" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%; user-select: none;">
+                    <span>⚙️ Aturan Lanjutan (Advanced Rules)</span>
+                    <span id="advanced-rules-arrow" style="font-size: 10px; transition: transform 0.2s ease;">▶</span>
+                  </div>
                   
-                  <label class="toggle-container margin-bottom-sm">
-                    <input type="checkbox" id="rule-holiday-exception" checked>
-                    <span class="toggle-slider"></span>
-                    <span class="toggle-label font-bold">☑ Abaikan Saat Hari Libur Nasional (Holiday Exception)</span>
-                  </label>
-                  <p class="toggle-desc">Tugas tidak akan dibuat pada kalender hari libur nasional resmi.</p>
-                  
-                  <div class="rule-dropdowns">
-                    <div class="rule-row">
-                      <span class="rule-text">Jika hari:</span>
-                      <select id="rule-day-cond" class="form-control sm-control">
-                        <option value="none">-- Pilih Aturan --</option>
-                        <option value="0">Minggu</option>
-                        <option value="6">Sabtu</option>
-                        <option value="holiday">Libur Nasional</option>
-                      </select>
-                      <span class="rule-text">maka</span>
-                      <select id="rule-day-action" class="form-control sm-control">
-                        <option value="hide">Jangan Tampilkan Tugas Ini</option>
-                        <option value="rename-family">Ganti Nama Tugas Menjadi "Family Time"</option>
-                        <option value="rename-rest">Ganti Nama Tugas Menjadi "Self Care / Istirahat"</option>
-                      </select>
+                  <div class="advanced-rules-content" id="advanced-rules-content" style="display: none; margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 12px;">
+                    <label class="toggle-container margin-bottom-sm">
+                      <input type="checkbox" id="rule-holiday-exception" checked>
+                      <span class="toggle-slider"></span>
+                      <span class="toggle-label font-bold">Abaikan Saat Hari Libur Nasional (Holiday Exception)</span>
+                    </label>
+                    <p class="toggle-desc">Tugas tidak akan dibuat pada kalender hari libur nasional resmi.</p>
+                    
+                    <div class="rule-dropdowns">
+                      <div class="rule-row">
+                        <span class="rule-text">Jika hari:</span>
+                        <select id="rule-day-cond" class="form-control sm-control">
+                          <option value="none">-- Pilih Aturan --</option>
+                          <option value="0">Minggu</option>
+                          <option value="6">Sabtu</option>
+                          <option value="holiday">Libur Nasional</option>
+                        </select>
+                        <span class="rule-text">maka</span>
+                        <select id="rule-day-action" class="form-control sm-control">
+                          <option value="hide">Jangan Tampilkan Tugas Ini</option>
+                          <option value="rename-family">Ganti Nama Tugas Menjadi "Family Time"</option>
+                          <option value="rename-rest">Ganti Nama Tugas Menjadi "Self Care / Istirahat"</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -366,8 +347,13 @@
           <!-- Column 2: Template Catalog List -->
           <div class="custom-right">
             <div class="card template-catalog-card">
-              <h2 class="card-title">Daftar Template Aktif</h2>
-              <p class="section-desc">Task-task ini otomatis ditransfer ke halaman utama setiap harinya sesuai jadwal aktif yang Anda buat.</p>
+              <h2 class="card-title" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <span>Daftar Template Aktif</span>
+                <button type="button" id="open-preset-templates-btn" class="btn btn-secondary-outline btn-sm" style="padding: 4px 8px; font-size: 12px; border-radius: 6px; display: flex; align-items: center; gap: 4px;">
+                  <span>➕</span> Preset Esensial
+                </button>
+              </h2>
+              <p class="section-desc" style="font-size: 11px; margin-top: 4px; margin-bottom: 12px; color: var(--text-muted);">Task-task ini otomatis ditransfer ke halaman utama setiap harinya sesuai jadwal aktif yang Anda buat.</p>
               
               <div class="templates-grid" id="templates-catalog-list">
                 <!-- Javascript will render existing templates -->
@@ -467,7 +453,7 @@
               </div>
               
               <div class="calendar-days-grid-header">
-                <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
               </div>
               <div class="calendar-days-grid" id="monthly-calendar-days">
                 <!-- Rendered dynamically by javascript -->
@@ -542,7 +528,7 @@
   
   <!-- FLOATING ACTION / ADD TODAY TASK BUTTON -->
   <button id="floating-add-btn" class="floating-add-action" title="Tambah tugas manual khusus hari ini">
-    <span class="plus-icon">⊕</span>
+    <span class="plus-icon">+</span>
   </button>
   
   <!-- ================= MODALS & OVERLAYS ================= -->
@@ -1050,6 +1036,127 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-primary" id="confirm-settings-btn" style="margin-left: auto;">Simpan & Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. PRESET TEMPLATES MODAL -->
+  <div class="modal-overlay" id="preset-templates-modal">
+    <div class="modal-card modal-medium">
+      <div class="modal-header">
+        <h3 class="modal-title">Pilihan preset</h3>
+        <button class="modal-close-btn" id="close-preset-templates-btn">×</button>
+      </div>
+      <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+        <p class="modal-desc">Pilih satu atau lebih tugas esensial di bawah ini. AI Hoot akan menjadwalkannya secara cerdas agar bebas bentrokan waktu.</p>
+        
+        <div class="preset-category">
+          <div class="preset-cat-title" style="font-weight: bold; margin: 12px 0 6px; font-size: 14px; color: var(--accent-blue);">🌅 Meditasi & Ketenangan</div>
+          <div class="preset-items-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <label class="checkbox-container preset-item-row spiritual">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="preset-task-select" value="spiritual_pagi">
+                <span class="preset-name" style="font-weight: 500;">Meditasi Pagi / Doa</span>
+              </div>
+              <span class="preset-meta" style="font-size: 11px; color: var(--text-muted);">30 mnt • Pagi</span>
+            </label>
+            <label class="checkbox-container preset-item-row spiritual">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="preset-task-select" value="doa_malam">
+                <span class="preset-name" style="font-weight: 500;">Refleksi Malam / Doa</span>
+              </div>
+              <span class="preset-meta" style="font-size: 11px; color: var(--text-muted);">30 mnt • Malam</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="preset-category">
+          <div class="preset-cat-title" style="font-weight: bold; margin: 16px 0 6px; font-size: 14px; color: var(--success-green);">🏃 Kesehatan & Olahraga</div>
+          <div class="preset-items-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <label class="checkbox-container preset-item-row kesehatan">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="preset-task-select" value="olahraga_pagi">
+                <span class="preset-name" style="font-weight: 500;">Olahraga Pagi</span>
+              </div>
+              <span class="preset-meta" style="font-size: 11px; color: var(--text-muted);">60 mnt • Pagi</span>
+            </label>
+            <label class="checkbox-container preset-item-row kesehatan">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="preset-task-select" value="peregangan">
+                <span class="preset-name" style="font-weight: 500;">Minum Air & Peregangan</span>
+              </div>
+              <span class="preset-meta" style="font-size: 11px; color: var(--text-muted);">15 mnt • Siang</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="preset-category">
+          <div class="preset-cat-title" style="font-weight: bold; margin: 16px 0 6px; font-size: 14px; color: var(--warning-gold);">💼 Karir & Pekerjaan</div>
+          <div class="preset-items-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <label class="checkbox-container preset-item-row karir">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="preset-task-select" value="deep_work">
+                <span class="preset-name" style="font-weight: 500;">Deep Work Session</span>
+              </div>
+              <span class="preset-meta" style="font-size: 11px; color: var(--text-muted);">3 jam • Kerja</span>
+            </label>
+            <label class="checkbox-container preset-item-row karir">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="preset-task-select" value="review_kerja">
+                <span class="preset-name" style="font-weight: 500;">Review & Rencana Kerja</span>
+              </div>
+              <span class="preset-meta" style="font-size: 11px; color: var(--text-muted);">30 mnt • Sore</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="preset-category">
+          <div class="preset-cat-title" style="font-weight: bold; margin: 16px 0 6px; font-size: 14px; color: #a855f7;">🎓 Edukasi & Belajar</div>
+          <div class="preset-items-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <label class="checkbox-container preset-item-row edukasi">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="preset-task-select" value="membaca_buku">
+                <span class="preset-name" style="font-weight: 500;">Membaca Buku</span>
+              </div>
+              <span class="preset-meta" style="font-size: 11px; color: var(--text-muted);">60 mnt • Sore/Malam</span>
+            </label>
+            <label class="checkbox-container preset-item-row edukasi">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="preset-task-select" value="belajar_skill">
+                <span class="preset-name" style="font-weight: 500;">Belajar Skill Baru</span>
+              </div>
+              <span class="preset-meta" style="font-size: 11px; color: var(--text-muted);">60 mnt • Malam</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="preset-category">
+          <div class="preset-cat-title" style="font-weight: bold; margin: 16px 0 6px; font-size: 14px; color: #ec4899;">🧹 Rutin & Refleksi</div>
+          <div class="preset-items-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <label class="checkbox-container preset-item-row rutin">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="preset-task-select" value="merapikan_kamar">
+                <span class="preset-name" style="font-weight: 500;">Merapikan Kamar & Rumah</span>
+              </div>
+              <span class="preset-meta" style="font-size: 11px; color: var(--text-muted);">30 mnt • Pagi</span>
+            </label>
+            <label class="checkbox-container preset-item-row rutin">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="preset-task-select" value="jurnal_harian">
+                <span class="preset-name" style="font-weight: 500;">Jurnal & Refleksi Harian</span>
+              </div>
+              <span class="preset-meta" style="font-size: 11px; color: var(--text-muted);">30 mnt • Malam</span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <span id="preset-scheduling-status" style="font-size: 12px; color: var(--success-green); font-weight: 500; display: none;">🦉 Menyusun jadwal...</span>
+        <div style="margin-left: auto; display: flex; gap: 8px;">
+          <button class="btn btn-secondary" id="cancel-preset-templates-btn">Batal</button>
+          <button class="btn btn-primary" id="confirm-add-presets-btn">Tambahkan</button>
+        </div>
       </div>
     </div>
   </div>
