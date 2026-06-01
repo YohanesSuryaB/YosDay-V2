@@ -4450,10 +4450,7 @@ async function findBackupFile(token) {
   const res = await fetch(url, {
     cache: 'no-store',
     headers: { 
-      Authorization: `Bearer ${token}`,
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
+      Authorization: `Bearer ${token}`
     }
   });
   if (res.ok) {
@@ -4468,10 +4465,7 @@ async function readBackupFileContent(token, fileId) {
   const res = await fetch(url, {
     cache: 'no-store',
     headers: { 
-      Authorization: `Bearer ${token}`,
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
+      Authorization: `Bearer ${token}`
     }
   });
   if (res.ok) {
