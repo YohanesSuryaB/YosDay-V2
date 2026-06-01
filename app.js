@@ -2107,6 +2107,31 @@ function openDayDetailModal(dateStr) {
     if (financeList.length === 0) {
       financeContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">Tidak ada catatan keuangan pada hari itu.</span>`;
     } else {
+      // Calculate totals
+      let totalIncome = 0;
+      let totalExpense = 0;
+      financeList.forEach(item => {
+        if (item.type === 'pemasukan') {
+          totalIncome += Number(item.amount) || 0;
+        } else {
+          totalExpense += Number(item.amount) || 0;
+        }
+      });
+
+      // Render summary row at the top
+      financeContainer.insertAdjacentHTML('beforeend', `
+        <div style="display: flex; gap: 10px; margin-bottom: 8px; width: 100%; box-sizing: border-box;">
+          <div style="flex: 1; padding: 8px 12px; background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 8px; text-align: center; min-width: 0;">
+            <div style="color: var(--text-muted); font-size: 9px; text-transform: uppercase; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Total Pemasukan</div>
+            <div class="finance-amount income" style="font-size: 12px; font-weight: 800; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">+ ${formatRupiah(totalIncome)}</div>
+          </div>
+          <div style="flex: 1; padding: 8px 12px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; text-align: center; min-width: 0;">
+            <div style="color: var(--text-muted); font-size: 9px; text-transform: uppercase; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Total Pengeluaran</div>
+            <div class="finance-amount expense" style="font-size: 12px; font-weight: 800; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">- ${formatRupiah(totalExpense)}</div>
+          </div>
+        </div>
+      `);
+
       // Sort with newest transactions displayed first
       const sortedFinance = [...financeList].sort((a, b) => {
         const tA = parseInt(a.id.split('-')[1]) || 0;
