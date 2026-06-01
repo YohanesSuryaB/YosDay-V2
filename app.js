@@ -14,6 +14,11 @@ const State = {
   activeTab: 'home',
   templates: [],
   history: {}, // Key: "YYYY-MM-DD"
+  projects: [],
+  projectCategories: [],
+  collapsedCategories: [],
+  projectCategoryOrder: [],
+  activeMode: 'daily',
   holidays: [
     // Public Holidays (Libur Nasional)
     { date: "01-01", name: "Tahun Baru Masehi", type: "holiday" },
@@ -179,6 +184,47 @@ function showConfirm(title, message, onConfirm, onCancel = null) {
   modal.classList.add('active');
 }
 
+function showPrompt(title, message, defaultValue, onConfirm, onCancel = null) {
+  const modal = document.getElementById('custom-prompt-modal');
+  if (!modal) return;
+  
+  document.getElementById('custom-prompt-title').textContent = title;
+  document.getElementById('custom-prompt-message').textContent = message;
+  
+  const inputEl = document.getElementById('custom-prompt-input');
+  inputEl.value = defaultValue || '';
+  
+  const cancelBtn = document.getElementById('custom-prompt-cancel');
+  const okBtn = document.getElementById('custom-prompt-ok');
+  
+  const newCancelBtn = cancelBtn.cloneNode(true);
+  const newOkBtn = okBtn.cloneNode(true);
+  cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+  okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+  
+  newCancelBtn.addEventListener('click', () => {
+    modal.classList.remove('active');
+    if (onCancel) onCancel();
+  });
+  
+  newOkBtn.addEventListener('click', () => {
+    const value = inputEl.value.trim();
+    modal.classList.remove('active');
+    if (onConfirm) onConfirm(value);
+  });
+  
+  inputEl.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      newOkBtn.click();
+    } else if (e.key === 'Escape') {
+      newCancelBtn.click();
+    }
+  };
+  
+  modal.classList.add('active');
+  setTimeout(() => inputEl.focus(), 100);
+}
+
 // --- Initial Setup & Data Persistence ---
 
 function initApp() {
@@ -208,7 +254,9 @@ function initApp() {
   renderTodayProgressSummary();
   renderDailyTasks();
   renderDailyJournal();
+  renderDailyFinance();
   renderCalendarInformation();
+  setupSwipeToDelete();
   renderTemplatesCatalog();
   renderReviewTab();
   
@@ -219,50 +267,63 @@ function initApp() {
   initSmartVerseType();
   startCloudSyncPolling();
   
-  // Restore saved active tab
-  const savedTab = localStorage.getItem('yosday_active_tab') || 'home';
-  switchTab(savedTab);
+  // Apply active tracker mode (daily or project) and restore tab
+  applyActiveMode();
 }
 
 function switchTab(tabName) {
-  const navItems = document.querySelectorAll('.nav-item');
-  const targetItem = Array.from(navItems).find(item => item.getAttribute('data-tab') === tabName);
-  if (!targetItem) return;
-  
-  navItems.forEach(n => n.classList.remove('active'));
-  targetItem.classList.add('active');
-  
   State.activeTab = tabName;
   localStorage.setItem('yosday_active_tab', tabName);
-  
+  if (['home', 'custom', 'review'].includes(tabName)) {
+    localStorage.setItem('yosday_active_tab_daily', tabName);
+  } else if (['concept', 'ongoing', 'done'].includes(tabName)) {
+    localStorage.setItem('yosday_active_tab_project', tabName);
+  }
+
+  // Update nav-item active state — search all nav items regardless of parent visibility
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const targetNavItem = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
+  if (targetNavItem) targetNavItem.classList.add('active');
+
+  // Update tab panels
   document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
   const panel = document.getElementById(`tab-${tabName}`);
   if (panel) panel.classList.add('active');
-  
-  const titles = { 'home': 'Home Dashboard', 'custom': 'Template Center', 'review': 'Review & Analytics' };
+
+  // Update floating FAB visibility
+  const floatingAddBtn = document.getElementById('floating-add-btn');
+  if (floatingAddBtn) {
+    floatingAddBtn.style.display = ['home', 'custom', 'concept', 'ongoing', 'done'].includes(tabName) ? 'flex' : 'none';
+  }
+
+  // Update tab title
+  const titles = {
+    'home': 'Home Dashboard',
+    'custom': 'Template Center',
+    'review': 'Review & Analytics',
+    'concept': 'Ide / Konsep Projek',
+    'ongoing': 'Projek Sedang Berjalan',
+    'done': 'Projek Selesai'
+  };
   const tabTitleEl = document.getElementById('active-tab-title');
   if (tabTitleEl) {
     tabTitleEl.style.display = 'block';
     tabTitleEl.textContent = titles[tabName] || 'Home Dashboard';
   }
-  
-  const floatingAddBtn = document.getElementById('floating-add-btn');
-  if (floatingAddBtn) {
-    if (tabName === 'home' || tabName === 'custom') {
-      floatingAddBtn.style.display = 'flex';
-    } else {
-      floatingAddBtn.style.display = 'none';
-    }
-  }
 
-  if (tabName === 'review') {
-    renderReviewTab();
-  }
+  if (tabName === 'review') renderReviewTab();
+  if (['concept', 'ongoing', 'done'].includes(tabName)) renderProjects();
 }
 
 function loadDataFromStorage() {
   const localTemplates = localStorage.getItem('yosday_templates');
   const localHistory = localStorage.getItem('yosday_history');
+  State.hiddenCalendarItems = JSON.parse(localStorage.getItem('yosday_hidden_calendar_items')) || [];
+  State.projects = JSON.parse(localStorage.getItem('yosday_projects')) || [];
+  State.projectCategories = JSON.parse(localStorage.getItem('yosday_project_categories')) || [];
+  State.collapsedCategories = JSON.parse(localStorage.getItem('yosday_collapsed_categories')) || [];
+  State.projectCategoryOrder = JSON.parse(localStorage.getItem('yosday_category_order')) || [];
+  State.activeMode = localStorage.getItem('yosday_active_mode') || 'daily';
   
   if (localTemplates) {
     State.templates = JSON.parse(localTemplates);
@@ -369,6 +430,14 @@ function saveTemplatesToStorage() {
 
 function saveHistoryToStorage() {
   localStorage.setItem('yosday_history', JSON.stringify(State.history));
+  triggerAutoCloudBackup();
+}
+
+function saveProjectsToStorage() {
+  localStorage.setItem('yosday_projects', JSON.stringify(State.projects));
+  localStorage.setItem('yosday_project_categories', JSON.stringify(State.projectCategories));
+  localStorage.setItem('yosday_collapsed_categories', JSON.stringify(State.collapsedCategories || []));
+  localStorage.setItem('yosday_category_order', JSON.stringify(State.projectCategoryOrder || []));
   triggerAutoCloudBackup();
 }
 
@@ -1005,140 +1074,48 @@ function renderMascot(targetContainerId, progressRate, expressionOverload = null
     expression = "Legendary";
   }
   
-  let primaryColor = "#3b82f6"; // Blue (Netral)
-  let eyePathLeft = `circle cx="38" cy="48" r="14" fill="white"`;
-  let eyePathRight = `circle cx="62" cy="48" r="14" fill="white"`;
-  let eyePupils = `
-    <circle cx="38" cy="48" r="7" fill="#0f172a" />
-    <circle cx="62" cy="48" r="7" fill="#0f172a" />
-    <circle cx="41" cy="45" r="2.5" fill="white" />
-    <circle cx="65" cy="45" r="2.5" fill="white" />
-  `;
-  let beakPath = `path d="M 46 56 L 54 56 L 50 62 Z" fill="#f59e0b"`;
-  let eyebrowPath = "";
-  let extraSVG = "";
-  let hootClass = "hoot-owl-animate";
+  let colorStart = "#3b82f6";
+  let colorEnd = "#1d4ed8";
   
   if (expression === "Sangat Bahagia") {
-    primaryColor = "#22c55e"; // Green
-    eyePathLeft = `path d="M 26 48 Q 38 36 50 48" fill="none" stroke="white" stroke-width="5" stroke-linecap="round"`;
-    eyePathRight = `path d="M 50 48 Q 62 36 74 48" fill="none" stroke="white" stroke-width="5" stroke-linecap="round"`;
-    eyePupils = "";
-    beakPath = `path d="M 46 54 Q 50 66 54 54 Z" fill="#f59e0b"`;
+    colorStart = "#22c55e";
+    colorEnd = "#15803d";
   } else if (expression === "Senang") {
-    primaryColor = "#14b8a6"; // Teal
-    eyePathLeft = `circle cx="38" cy="48" r="14" fill="white"`;
-    eyePathRight = `circle cx="62" cy="48" r="14" fill="white"`;
-    eyePupils = `
-      <circle cx="38" cy="48" r="7" fill="#0f172a" />
-      <circle cx="62" cy="48" r="7" fill="#0f172a" />
-      <circle cx="41" cy="44" r="3" fill="white" />
-      <circle cx="65" cy="44" r="3" fill="white" />
-      <path d="M 28 38 Q 38 34 48 38" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" />
-      <path d="M 52 38 Q 62 34 72 38" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" />
-    `;
-    beakPath = `path d="M 46 54 Q 50 62 54 54 Z" fill="#f59e0b"`;
+    colorStart = "#14b8a6";
+    colorEnd = "#0f766e";
   } else if (expression === "Netral" || expression === "Ramah") {
-    primaryColor = "#3b82f6"; // Blue
+    colorStart = "#3b82f6";
+    colorEnd = "#1d4ed8";
   } else if (expression === "Kecewa") {
-    primaryColor = "#eab308"; // Yellow
-    eyebrowPath = `
-      <path d="M 24 35 Q 38 42 48 38" fill="none" stroke="#eab308" stroke-width="3" stroke-linecap="round" />
-      <path d="M 52 38 Q 62 42 76 35" fill="none" stroke="#eab308" stroke-width="3" stroke-linecap="round" />
-    `;
-    beakPath = `path d="M 46 58 L 54 58 L 50 54 Z" fill="#f59e0b"`;
-  } else if (expression === "Sedih") {
-    primaryColor = "#f97316"; // Orange
-    eyePathLeft = `circle cx="38" cy="48" r="14" fill="white"`;
-    eyePathRight = `circle cx="62" cy="48" r="14" fill="white"`;
-    eyePupils = `
-      <circle cx="38" cy="51" r="5" fill="#0f172a" />
-      <circle cx="62" cy="51" r="5" fill="#0f172a" />
-      <path d="M 24 45 L 52 45 Z" fill="#0f172a" />
-      <path d="M 24 48 L 52 48" stroke="#f97316" stroke-width="3" />
-      <path d="M 48 48 L 76 48" stroke="#f97316" stroke-width="3" />
-    `;
-    extraSVG = `
-      <path d="M 68 56 Q 71 66 67 66 Q 63 66 66 56 Z" fill="#3b82f6" opacity="0.85" />
-    `;
-    beakPath = `path d="M 47 58 L 53 58 L 50 53 Z" fill="#f59e0b"`;
-  } else if (expression === "Marah") {
-    primaryColor = "#ef4444"; // Red
-    eyebrowPath = `
-      <path d="M 24 34 L 46 44" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round" />
-      <path d="M 76 34 L 54 44" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round" />
-    `;
-    eyePupils = `
-      <circle cx="38" cy="48" r="7" fill="#0f172a" />
-      <circle cx="62" cy="48" r="7" fill="#0f172a" />
-      <circle cx="36" cy="48" r="2.5" fill="white" />
-      <circle cx="64" cy="48" r="2.5" fill="white" />
-    `;
-    beakPath = `path d="M 46 54 L 54 54 L 50 64 Z" fill="#f59e0b"`;
+    colorStart = "#f59e0b";
+    colorEnd = "#b45309";
+  } else if (expression === "Sedih" || expression === "Marah") {
+    colorStart = "#ef4444";
+    colorEnd = "#b91c1c";
   } else if (expression === "Legendary") {
-    primaryColor = "#d97706"; // Golden Yellow
+    colorStart = "#a855f7";
+    colorEnd = "#fbbf24";
+  }
+  
+  let hootClass = "hoot-owl-animate";
+  if (expression === "Legendary") {
     hootClass = "hoot-owl-animate glow-gold-animation";
-    eyePathLeft = `circle cx="38" cy="48" r="14" fill="#fef08a"`;
-    eyePathRight = `circle cx="62" cy="48" r="14" fill="#fef08a"`;
-    eyePupils = `
-      <circle cx="38" cy="48" r="6" fill="#ca8a04" />
-      <circle cx="62" cy="48" r="6" fill="#ca8a04" />
-      <circle cx="38" cy="48" r="3" fill="#fef08a" />
-      <circle cx="62" cy="48" r="3" fill="#fef08a" />
-    `;
-    beakPath = `path d="M 46 54 Q 50 66 54 54 Z" fill="#fbbf24"`;
-    
-    extraSVG = `
-      <g class="legendary-flame flame-1" fill="#f59e0b">
-        <path d="M 12 70 Q 5 50 18 35 Q 26 50 20 70 Z" />
-      </g>
-      <g class="legendary-flame flame-2" fill="#ef4444">
-        <path d="M 50 92 Q 35 75 50 60 Q 65 75 50 92 Z" />
-      </g>
-      <g class="legendary-flame flame-3" fill="#f59e0b">
-        <path d="M 88 70 Q 95 50 82 35 Q 74 50 80 70 Z" />
-      </g>
-    `;
   }
   
   const svgContent = `
     <svg viewBox="0 0 100 100" class="${hootClass}" style="width: 100%; height: 100%;">
       <defs>
-        <filter id="owl-shadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity="0.3" />
+        <filter id="ai-glow-${targetContainerId}" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="5" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
+        <linearGradient id="ai-grad-${targetContainerId}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${colorStart}" />
+          <stop offset="100%" stop-color="${colorEnd}" />
+        </linearGradient>
       </defs>
-      
-      ${extraSVG}
-      
-      <g filter="url(#owl-shadow)">
-        <path d="M 22 34 L 14 16 L 36 28 Z" fill="${primaryColor}" class="hoot-svg-face" />
-        <path d="M 78 34 L 86 16 L 64 28 Z" fill="${primaryColor}" class="hoot-svg-face" />
-        
-        <rect x="20" y="24" width="60" height="52" rx="22" ry="22" fill="${primaryColor}" class="hoot-svg-face" />
-        
-        <rect x="26" y="32" width="48" height="38" rx="16" ry="16" fill="#1e293b" />
-        
-        <g>
-          <g>${eyePathLeft}</g>
-          <g>${eyePathRight}</g>
-        </g>
-        
-        <g>
-          ${eyePupils}
-        </g>
-        
-        <g>
-          ${eyebrowPath}
-        </g>
-        
-        <g>
-          ${beakPath}
-        </g>
-        
-        <ellipse cx="28" cy="56" rx="4" ry="2.5" fill="#f43f5e" opacity="0.35" />
-        <ellipse cx="72" cy="56" rx="4" ry="2.5" fill="#f43f5e" opacity="0.35" />
-      </g>
+      <circle cx="50" cy="50" r="42" fill="rgba(15, 23, 42, 0.75)" stroke="url(#ai-grad-${targetContainerId})" stroke-width="4" filter="url(#ai-glow-${targetContainerId})" />
+      <text x="50%" y="63%" font-size="34" font-family="'Outfit', sans-serif" font-weight="900" fill="url(#ai-grad-${targetContainerId})" text-anchor="middle" filter="url(#ai-glow-${targetContainerId})" style="letter-spacing: -0.5px;">AI</text>
     </svg>
   `;
   
@@ -1413,18 +1390,27 @@ function renderDailyTasks() {
   const sortedTasks = [...todayRecord.tasks];
   
   const getFloatTime = (timeStr) => {
+    if (!timeStr) return 0;
     const p = timeStr.split(':');
-    return parseInt(p[0]) + (parseInt(p[1]) / 60);
+    if (p.length < 2) return 0;
+    const h = parseInt(p[0]);
+    const m = parseInt(p[1]);
+    if (isNaN(h) || isNaN(m)) return 0;
+    return h + (m / 60);
   };
   
   const now = new Date();
   const nowFloat = now.getHours() + (now.getMinutes() / 60);
   
   const getTaskCategoryIndex = (task) => {
-    if (task.completed) return 3; // Completed category (very bottom)
+    if (task.completed) return 4; // Completed category (very bottom)
+    if (!task.startTime) {
+      if (task.priority === 'Tinggi') return -1; // Untimed high priority always at the top
+      return 3; // Untimed medium/low priority at the bottom of active tasks
+    }
     
     const start = getFloatTime(task.startTime);
-    const end = getFloatTime(task.endTime);
+    const end = task.endTime ? getFloatTime(task.endTime) : (start + 0.5); // Default +30 min duration
     
     if (nowFloat >= start && nowFloat <= end) {
       return 0; // Active now
@@ -1451,7 +1437,9 @@ function renderDailyTasks() {
       return prioB - prioA;
     }
     
-    return getFloatTime(a.startTime) - getFloatTime(b.startTime);
+    const timeA = a.startTime ? getFloatTime(a.startTime) : 999;
+    const timeB = b.startTime ? getFloatTime(b.startTime) : 999;
+    return timeA - timeB;
   });
   
   sortedTasks.forEach(task => {
@@ -1489,6 +1477,18 @@ function renderDailyTasks() {
       subtasksHTML += `</div>`;
     }
     
+    const isReminder = !task.startTime || !task.endTime;
+    const reminderDot = isReminder ? `<span class="reminder-dot" title="Tugas Reminder"></span>` : "";
+    
+    let timeHTML = "";
+    if (task.startTime && task.endTime) {
+      timeHTML = `<span class="task-time">⏰ ${task.startTime} - ${task.endTime}</span>`;
+    } else if (task.startTime) {
+      timeHTML = `<span class="task-time">⏰ ${task.startTime}</span>`;
+    } else {
+      timeHTML = `<span class="task-time">🔔 Reminder</span>`;
+    }
+
     const taskHTML = `
       <div class="task-item ${isCompleted ? 'completed' : ''} ${isTodayActive ? 'active-now' : ''}" id="task-card-${task.id}">
         <div class="task-main-row">
@@ -1499,9 +1499,9 @@ function renderDailyTasks() {
           </label>
           
           <div class="task-body">
-            <span class="task-name">${task.name}</span>
+            <span class="task-name">${reminderDot}${task.name}</span>
             <div class="task-meta">
-              <span class="task-time">⏰ ${task.startTime} - ${task.endTime}</span>
+              ${timeHTML}
               <span class="task-priority-tag ${task.priority.toLowerCase()}">
                 ${task.priority === 'Tinggi' ? '🔴 Tinggi' : task.priority === 'Sedang' ? '🟡 Sedang' : '🔵 Rendah'}
               </span>
@@ -1617,6 +1617,7 @@ function renderCalendarInformation() {
   
   const todayStr = getISODateString(State.currentDate);
   const isLoggedIn = localStorage.getItem('yosday_google_profile') !== null;
+  const hiddenItems = State.hiddenCalendarItems || [];
   
   // Update Sync status indicator dynamically
   const syncIndicator = document.getElementById('calendar-sync-indicator');
@@ -1638,6 +1639,9 @@ function renderCalendarInformation() {
   const todayHolidaysAndLeaves = getTodayHolidaysAndLeaves(todayStr);
   if (todayHolidaysAndLeaves.length > 0) {
     todayHolidaysAndLeaves.forEach(h => {
+      const itemId = `holiday_${h.name}`;
+      if (hiddenItems.includes(itemId)) return;
+
       let emoji = '🔴';
       let textStyle = '';
       let itemStyle = 'border-left-color: var(--danger-red, #ef4444); background: rgba(239, 68, 68, 0.08);';
@@ -1657,12 +1661,17 @@ function renderCalendarInformation() {
       }
 
       htmlItems.push(`
-        <div class="calendar-info-item holiday" style="${itemStyle}">
-          <span class="cal-item-emoji">${emoji}</span>
-          <span class="cal-item-text" style="${textStyle}">
-            ${displayName}
-          </span>
-          <span class="cal-item-time">Hari Ini</span>
+        <div class="calendar-item-wrapper" data-id="${itemId}">
+          <div class="calendar-info-item holiday" style="${itemStyle}">
+            <span class="cal-item-emoji">${emoji}</span>
+            <span class="cal-item-text" style="${textStyle}">
+              ${displayName}
+            </span>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+              <span class="cal-item-time">Hari Ini</span>
+              <button class="calendar-delete-btn" onclick="deleteCalendarItem('${itemId}')" title="Hapus">×</button>
+            </div>
+          </div>
         </div>
       `);
     });
@@ -1672,7 +1681,7 @@ function renderCalendarInformation() {
   if (isLoggedIn) {
     if (State.googleCalendarEvents === 'error') {
       htmlItems.push(`
-        <div class="calendar-info-item event error" style="border-left-color: var(--danger-red); background: rgba(239, 68, 68, 0.08); padding: 8px 12px; border-radius: 8px; border-left: 3px solid var(--danger-red);">
+        <div class="calendar-info-item event error" style="border-left-color: var(--danger-red); background: rgba(239, 68, 68, 0.08); padding: 8px 12px; border-radius: 8px; border-left: 3px solid var(--danger-red); width: 100%;">
           <span class="cal-item-emoji">⚠️</span>
           <span class="cal-item-text" style="color: var(--danger-red); font-size: 11px; line-height: 1.4;">
             Gagal memuat Kalender. Pastikan <strong>Google Calendar API</strong> diaktifkan di Google Cloud Console Anda.
@@ -1682,11 +1691,19 @@ function renderCalendarInformation() {
     } else {
       const eventsToRender = State.googleCalendarEvents || [];
       eventsToRender.forEach(e => {
+        const itemId = `event_${e.id || e.title}`;
+        if (hiddenItems.includes(itemId)) return;
+
         htmlItems.push(`
-          <div class="calendar-info-item event">
-            <span class="cal-item-emoji">📅</span>
-            <span class="cal-item-text">${e.title}</span>
-            <span class="cal-item-time">${e.time}</span>
+          <div class="calendar-item-wrapper" data-id="${itemId}">
+            <div class="calendar-info-item event">
+              <span class="cal-item-emoji">📅</span>
+              <span class="cal-item-text">${e.title}</span>
+              <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <span class="cal-item-time">${e.time}</span>
+                <button class="calendar-delete-btn" onclick="deleteCalendarItem('${itemId}')" title="Hapus">×</button>
+              </div>
+            </div>
           </div>
         `);
       });
@@ -1696,11 +1713,19 @@ function renderCalendarInformation() {
     const activeReminders = State.reminders.filter(r => r.date >= todayStr);
     activeReminders.forEach(r => {
       const isOverdue = r.date === todayStr;
+      const itemId = `reminder_${r.id || r.title}`;
+      if (hiddenItems.includes(itemId)) return;
+
       htmlItems.push(`
-        <div class="calendar-info-item reminder">
-          <span class="cal-item-emoji">💡</span>
-          <span class="cal-item-text" style="${r.done ? 'text-decoration: line-through;' : ''}">${r.title}</span>
-          <span class="cal-item-time">${isOverdue ? 'Jatuh Tempo Hari Ini' : r.date}</span>
+        <div class="calendar-item-wrapper" data-id="${itemId}">
+          <div class="calendar-info-item reminder">
+            <span class="cal-item-emoji">💡</span>
+            <span class="cal-item-text" style="${r.done ? 'text-decoration: line-through;' : ''}">${r.title}</span>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+              <span class="cal-item-time">${isOverdue ? 'Jatuh Tempo Hari Ini' : r.date}</span>
+              <button class="calendar-delete-btn" onclick="deleteCalendarItem('${itemId}')" title="Hapus">×</button>
+            </div>
+          </div>
         </div>
       `);
     });
@@ -1715,6 +1740,40 @@ function renderCalendarInformation() {
     container.innerHTML = `<span class="text-xs text-muted">Tidak ada jadwal acara atau pengingat hari ini.</span>`;
   }
 }
+
+function deleteCalendarItem(itemId) {
+  const wrapper = document.querySelector(`.calendar-item-wrapper[data-id="${itemId}"]`);
+  if (wrapper) {
+    wrapper.style.maxHeight = wrapper.offsetHeight + 'px';
+    wrapper.offsetHeight; // Force reflow
+    wrapper.classList.add('deleting');
+    
+    if (!State.hiddenCalendarItems) {
+      State.hiddenCalendarItems = [];
+    }
+    if (!State.hiddenCalendarItems.includes(itemId)) {
+      State.hiddenCalendarItems.push(itemId);
+      localStorage.setItem('yosday_hidden_calendar_items', JSON.stringify(State.hiddenCalendarItems));
+    }
+    
+    setTimeout(() => {
+      wrapper.remove();
+      const container = document.getElementById('calendar-all-items');
+      if (container && container.children.length === 0) {
+        container.innerHTML = `<span class="text-xs text-muted">Tidak ada jadwal acara atau pengingat hari ini.</span>`;
+      }
+    }, 300);
+    
+    // Trigger auto cloud sync to push settings changes
+    triggerAutoCloudBackup();
+  }
+}
+
+function setupSwipeToDelete() {
+  // Swiping is disabled, X button is used instead
+}
+
+window.deleteCalendarItem = deleteCalendarItem;
 
 // ==========================================================================
 // TAB 2: CUSTOM ENGINE (TEMPLATE MANAGER)
@@ -1824,7 +1883,7 @@ function renderTemplatesCatalog() {
     saveBtn.addEventListener('click', () => {
       saveTemplatesToStorage();
       syncTodayTasksWithTemplates();
-      alert("Daftar template berhasil disimpan dan tugas hari ini diperbarui!");
+      showToast("Daftar template berhasil disimpan dan tugas hari ini diperbarui!", "success");
     });
   }
 }
@@ -1907,7 +1966,6 @@ function addSubtaskRowToBuilder(containerId, value = "") {
 
 function renderReviewTab() {
   calculateAndRenderSummaryCards();
-  renderProductivityChart('7'); // Default 7 days
   renderMonthlyCalendarGrid();
   renderAILifeReviewText();
 }
@@ -1940,99 +1998,7 @@ function calculateAndRenderSummaryCards() {
   document.getElementById('review-stat-productive-hours').textContent = `${Math.round(totalProductiveHours)} Jam`;
 }
 
-// Fixed: SVG layout now maps inside a viewBox "0 0 500 220" for total mobile responsiveness
-function renderProductivityChart(timeframe) {
-  const canvas = document.getElementById('productivity-chart-canvas');
-  if (!canvas) return;
-  
-  const daysLimit = parseInt(timeframe);
-  const sortedDates = Object.keys(State.history).sort();
-  const targetDates = sortedDates.slice(-daysLimit);
-  
-  if (targetDates.length === 0) {
-    canvas.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top:100px;">Data history tidak cukup untuk membuat grafik.</span>`;
-    return;
-  }
-  
-  // Static scale definitions for SVG viewBox responsiveness
-  const chartWidth = 500;
-  const chartHeight = 220;
-  
-  const stepX = chartWidth / (targetDates.length - 1 || 1);
-  
-  let completionPoints = [];
-  let hoursPoints = [];
-  let scorePoints = [];
-  
-  targetDates.forEach((dStr, idx) => {
-    const record = State.history[dStr];
-    const compRate = calculateCompletionRateForTasks(record.tasks);
-    const prodHours = calculateProductiveHoursForDay(record);
-    const lifeScore = calculateLifeScoreForDay(record);
-    
-    const x = idx * stepX;
-    
-    const yCompletion = chartHeight - (compRate * chartHeight);
-    const yHours = chartHeight - (Math.min(prodHours / 12, 1) * chartHeight);
-    const yScore = chartHeight - ((lifeScore / 100) * chartHeight);
-    
-    completionPoints.push(`${x},${yCompletion}`);
-    hoursPoints.push(`${x},${yHours}`);
-    scorePoints.push(`${x},${yScore}`);
-  });
-  
-  let gridLines = "";
-  targetDates.forEach((dStr, idx) => {
-    if (idx % Math.ceil(targetDates.length / 7) === 0) {
-      const x = idx * stepX;
-      const dateLabel = dStr.substring(8, 10) + "/" + dStr.substring(5, 7);
-      gridLines += `
-        <line x1="${x}" y1="0" x2="${x}" y2="${chartHeight}" stroke="rgba(255,255,255,0.03)" />
-        <text x="${x}" y="${chartHeight + 15}" fill="var(--text-muted)" font-size="10" text-anchor="middle">${dateLabel}</text>
-      `;
-    }
-  });
-  
-  let hoverPointsHTML = "";
-  targetDates.forEach((dStr, idx) => {
-    const record = State.history[dStr];
-    const compRate = calculateCompletionRateForTasks(record.tasks);
-    const prodHours = calculateProductiveHoursForDay(record);
-    const x = idx * stepX;
-    const yCompletion = chartHeight - (compRate * chartHeight);
-    
-    hoverPointsHTML += `
-      <circle cx="${x}" cy="${yCompletion}" r="4" class="chart-point-completion" 
-              onclick="openDayDetailModal('${dStr}')">
-        <title>Tanggal: ${dStr}\nCompletion: ${Math.round(compRate*100)}%\nJam Produktif: ${prodHours.toFixed(1)} jam</title>
-      </circle>
-    `;
-  });
-  
-  canvas.innerHTML = `
-    <svg viewBox="0 0 500 245" width="100%" height="100%" style="overflow: visible;">
-      <g>
-        ${gridLines}
-      </g>
-      <path d="M 0,${chartHeight} L ${completionPoints.join(' L ')} L ${chartWidth},${chartHeight} Z" fill="url(#blue-grad)" class="chart-area-fill" />
-      
-      <polyline points="${completionPoints.join(' ')}" class="chart-line-completion" />
-      <polyline points="${hoursPoints.join(' ')}" class="chart-line-hours" />
-      <polyline points="${scorePoints.join(' ')}" class="chart-line-score" />
-      
-      <g>
-        ${hoverPointsHTML}
-      </g>
-      
-      <defs>
-        <linearGradient id="blue-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="var(--accent-blue)" stop-opacity="0.3"/>
-          <stop offset="100%" stop-color="var(--accent-blue)" stop-opacity="0.0"/>
-        </linearGradient>
-      </defs>
-    </svg>
-  `;
-}
+
 
 // --- Review Tab Calendar Engine ---
 
@@ -2085,6 +2051,9 @@ function renderMonthlyCalendarGrid() {
     `;
     daysContainer.insertAdjacentHTML('beforeend', dayHTML);
   }
+  
+  // Render monthly finance summary synced with currently viewed month
+  renderMonthlyFinanceSummary(currentCalMonth, currentCalYear);
 }
 
 // --- Deep Daily Record Modal ---
@@ -2128,6 +2097,36 @@ function openDayDetailModal(dateStr) {
         </div>
       `);
     });
+  }
+  
+  // Render daily finance inside Day Detail Modal
+  const financeContainer = document.getElementById('day-detail-finance-list');
+  if (financeContainer) {
+    financeContainer.innerHTML = "";
+    const financeList = record.finance || [];
+    if (financeList.length === 0) {
+      financeContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">Tidak ada catatan keuangan pada hari itu.</span>`;
+    } else {
+      financeList.forEach(item => {
+        const isIncome = item.type === 'pemasukan';
+        const typeSign = isIncome ? '+' : '-';
+        const amountClass = isIncome ? 'finance-amount income' : 'finance-amount expense';
+        const timeStr = item.time ? ` (${item.time})` : '';
+        const descStr = item.description ? ` - ${item.description}` : '';
+        
+        financeContainer.insertAdjacentHTML('beforeend', `
+          <div class="detail-task-history-item" style="border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 10px;">
+            <div>
+              <span class="detail-task-h-title" style="font-weight: 700;">${item.category.charAt(0).toUpperCase() + item.category.slice(1)}</span>
+              <div class="detail-task-h-meta" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                <span>${descStr ? descStr.substring(3) : 'Tanpa keterangan'}</span>${timeStr ? ` | <span>${timeStr.substring(2, timeStr.length - 1)}</span>` : ''}
+              </div>
+            </div>
+            <span class="${amountClass}" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 13px;">${typeSign} ${formatRupiah(item.amount)}</span>
+          </div>
+        `);
+      });
+    }
   }
   
   if (record.verse) {
@@ -2307,8 +2306,13 @@ function enterFocusMode() {
   if (!todayRecord) return;
   
   const getFloatTime = (timeStr) => {
+    if (!timeStr) return 0;
     const p = timeStr.split(':');
-    return parseInt(p[0]) + (parseInt(p[1]) / 60);
+    if (p.length < 2) return 0;
+    const h = parseInt(p[0]);
+    const m = parseInt(p[1]);
+    if (isNaN(h) || isNaN(m)) return 0;
+    return h + (m / 60);
   };
   
   const now = new Date();
@@ -2332,7 +2336,7 @@ function enterFocusMode() {
   }
   
   if (!activeTask) {
-    alert("Semua tugas hari ini sudah selesai! Tidak ada tugas untuk mode fokus.");
+    showToast("Semua tugas hari ini sudah selesai! Tidak ada tugas untuk mode fokus.", "info");
     return;
   }
   
@@ -2373,8 +2377,13 @@ function updateFocusModeDetails() {
   if (!todayRecord) return;
   
   const getFloatTime = (timeStr) => {
+    if (!timeStr) return 0;
     const p = timeStr.split(':');
-    return parseInt(p[0]) + (parseInt(p[1]) / 60);
+    if (p.length < 2) return 0;
+    const h = parseInt(p[0]);
+    const m = parseInt(p[1]);
+    if (isNaN(h) || isNaN(m)) return 0;
+    return h + (m / 60);
   };
   const now = new Date();
   const nowFloat = now.getHours() + (now.getMinutes() / 60);
@@ -2446,7 +2455,7 @@ function updateFocusModeDetails() {
       const priorityLabel = task.priority === 'Tinggi' ? '🔴 Tinggi' : task.priority === 'Sedang' ? '🟡 Sedang' : '🔵 Rendah';
       
       container.insertAdjacentHTML('beforeend', `
-        <div class="card focus-task-card glow-blue" style="padding: 12px 14px; border-radius: 12px; margin-bottom: 8px; border: 1px solid rgba(59, 130, 246, 0.15); background: rgba(15, 23, 42, 0.65);">
+        <div class="card focus-task-card glow-blue" style="padding: 12px 14px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-color); background: var(--surface-dark);">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; flex-wrap: wrap; gap: 4px;">
             <span class="focus-priority-indicator" style="font-size: 10px; font-weight: 700; color: ${task.priority === 'Tinggi' ? 'var(--danger-red)' : task.priority === 'Sedang' ? 'var(--warning-gold)' : 'var(--accent-blue)'};">${priorityLabel}</span>
             <span style="font-size: 11px; color: var(--text-muted);">⏰ ${task.startTime} - ${task.endTime}</span>
@@ -2715,7 +2724,6 @@ function prevWrappedSlide() {
   }
 }
 
-// --- AI Agent Command Parser Engine ---
 function processAIAgentCommand(promptText) {
   const result = {
     success: false,
@@ -2744,6 +2752,81 @@ function processAIAgentCommand(promptText) {
     matches.push(m[1].trim());
   }
   
+  // 1. PROJECT REFERENCE INTEGRATION
+  let referredProject = null;
+  const projectKeywords = ["projek", "project"];
+  const hasProjectKeyword = projectKeywords.some(w => text.includes(w));
+  
+  if (hasProjectKeyword) {
+    if (matches.length > 0) {
+      const matchName = matches[0].toLowerCase();
+      referredProject = State.projects.find(p => p.name.toLowerCase() === matchName || p.name.toLowerCase().includes(matchName));
+    }
+    if (!referredProject) {
+      let bestMatch = null;
+      for (let p of State.projects) {
+        if (text.includes(p.name.toLowerCase())) {
+          if (!bestMatch || p.name.length > bestMatch.name.length) {
+            bestMatch = p;
+          }
+        }
+      }
+      referredProject = bestMatch;
+    }
+  }
+
+  if (referredProject) {
+    let times = [];
+    const timeRegex = /(\d{1,2})[:.](\d{2})/g;
+    while ((m = timeRegex.exec(promptText)) !== null) {
+      let hh = String(m[1]).padStart(2, '0');
+      let mm = String(m[2]).padStart(2, '0');
+      times.push(`${hh}:${mm}`);
+    }
+    
+    let startTime = "09:00";
+    let endTime = "10:00";
+    if (times.length >= 2) {
+      startTime = times[0];
+      endTime = times[1];
+    } else if (times.length === 1) {
+      startTime = times[0];
+      let parts = startTime.split(':');
+      let endHour = (parseInt(parts[0]) + 1) % 24;
+      endTime = `${String(endHour).padStart(2, '0')}:${parts[1]}`;
+    }
+    
+    // Copy subprojects to daily subtasks
+    const subtasks = (referredProject.subprojects || []).map(sub => ({
+      name: sub.name,
+      completed: sub.completed
+    }));
+    
+    const newTask = {
+      id: `task_${Date.now()}`,
+      name: `Projek: ${referredProject.name}`,
+      startTime: startTime,
+      endTime: endTime,
+      category: "Karir",
+      priority: "Sedang",
+      completed: false,
+      subtasks: subtasks,
+      notes: `Dibuat otomatis oleh AI dari Project Tracker: ${referredProject.name}`,
+      isFromTemplate: false
+    };
+    
+    todayRecord.tasks.push(newTask);
+    saveHistoryToStorage();
+    recalculateDailyOutputs();
+    
+    result.success = true;
+    result.type = "new_task";
+    let subReport = subtasks.length > 0 ? ` dengan ${subtasks.length} subtask checklist` : "";
+    result.message = `Berhasil menyalin projek **"${referredProject.name}"** ke tugas harian Anda pada jam **${startTime} - ${endTime}** (Kategori: **Karir**)${subReport}!`;
+    return result;
+  }
+
+  // 2. REGULAR TASK / SUBTASK PARSING
   let subtaskName = "";
   if (matches.length > 0) {
     subtaskName = matches[0];
@@ -2767,36 +2850,40 @@ function processAIAgentCommand(promptText) {
   }
   
   let referredTask = null;
-  const keywordsMap = {
-    "kerja": ["kerja", "pekerjaan", "karir", "kantor", "standup", "sprint", "operasional", "development", "proyek", "laporan", "keuangan"],
-    "alkitab": ["alkitab", "saat teduh", "ibadah", "doa", "spiritual", "renungan", "baca alkitab"],
-    "olahraga": ["olahraga", "lari", "jogging", "gym", "sehat", "stretching", "stamina", "workout"],
-    "belajar": ["belajar", "tutorial", "go", "pemrograman", "coding", "technical", "tonton video"],
-    "tidur": ["tidur", "istirahat", "meditasi", "rutin", "malam", "rileks"]
-  };
+  const isSubtaskIntent = text.includes("subtask") || text.includes("checklist") || text.includes("fokus ke") || text.includes("fokus:") || text.includes("tambah fokus") || text.includes("tambahkan fokus");
   
-  for (let task of todayRecord.tasks) {
-    const taskNameLower = task.name.toLowerCase();
+  if (isSubtaskIntent) {
+    const keywordsMap = {
+      "kerja": ["kerja", "pekerjaan", "karir", "kantor", "standup", "sprint", "operasional", "development", "proyek", "laporan", "keuangan"],
+      "alkitab": ["alkitab", "saat teduh", "ibadah", "doa", "spiritual", "renungan", "baca alkitab"],
+      "olahraga": ["olahraga", "lari", "jogging", "gym", "sehat", "stretching", "stamina", "workout"],
+      "belajar": ["belajar", "tutorial", "go", "pemrograman", "coding", "technical", "tonton video"],
+      "tidur": ["tidur", "istirahat", "meditasi", "rutin", "malam", "rileks"]
+    };
     
-    if (text.includes(taskNameLower) || taskNameLower.includes(text)) {
-      referredTask = task;
-      break;
-    }
-    
-    let matchFound = false;
-    for (let key in keywordsMap) {
-      if (taskNameLower.includes(key)) {
-        for (let word of keywordsMap[key]) {
-          if (text.includes(word)) {
-            referredTask = task;
-            matchFound = true;
-            break;
+    for (let task of todayRecord.tasks) {
+      const taskNameLower = task.name.toLowerCase();
+      
+      if (text.includes(taskNameLower) || taskNameLower.includes(text)) {
+        referredTask = task;
+        break;
+      }
+      
+      let matchFound = false;
+      for (let key in keywordsMap) {
+        if (taskNameLower.includes(key)) {
+          for (let word of keywordsMap[key]) {
+            if (text.includes(word)) {
+              referredTask = task;
+              matchFound = true;
+              break;
+            }
           }
         }
+        if (matchFound) break;
       }
-      if (matchFound) break;
+      if (referredTask) break;
     }
-    if (referredTask) break;
   }
   
   if (referredTask && subtaskName) {
@@ -2835,24 +2922,28 @@ function processAIAgentCommand(promptText) {
     endTime = `${String(endHour).padStart(2, '0')}:${parts[1]}`;
   }
   
-  let cleanTaskName = promptText;
-  cleanTaskName = cleanTaskName.replace(/(\d{1,2})[:.](\d{2})/g, "");
-  const stopWords = [
-    /buat tugas/gi, /tambah tugas/gi, /tambahkan tugas/gi, /tambah/gi, /tambahkan/gi,
-    /hari ini/gi, /jam/gi, /pukul/gi, /sampai/gi, /antara/gi, /fokus/gi, /dengan subtask/gi,
-    /checklist/gi, /-/gi, /ke/gi, /di/gi
-  ];
-  for (let rx of stopWords) {
-    cleanTaskName = cleanTaskName.replace(rx, "");
-  }
+  let newTaskName = "";
+  let subtasks = [];
   
   if (matches.length > 0) {
-    matches.forEach(mVal => {
-      cleanTaskName = cleanTaskName.replace(mVal, "").replace(/["'“”‘’]/g, "");
-    });
+    newTaskName = matches[0];
+    for (let i = 1; i < matches.length; i++) {
+      subtasks.push({ name: matches[i], completed: false });
+    }
+  } else {
+    let cleanTaskName = promptText;
+    cleanTaskName = cleanTaskName.replace(/(\d{1,2})[:.](\d{2})/g, "");
+    const stopWords = [
+      /buat tugas/gi, /tambah tugas/gi, /tambahkan tugas/gi, /tambah/gi, /tambahkan/gi,
+      /hari ini/gi, /jam/gi, /pukul/gi, /sampai/gi, /antara/gi, /fokus/gi, /dengan subtask/gi,
+      /checklist/gi, /-/gi, /ke/gi, /di/gi
+    ];
+    for (let rx of stopWords) {
+      cleanTaskName = cleanTaskName.replace(rx, "");
+    }
+    newTaskName = cleanTaskName.trim().replace(/\s+/g, " ");
   }
   
-  let newTaskName = cleanTaskName.trim().replace(/\s+/g, " ");
   if (newTaskName) {
     newTaskName = newTaskName.charAt(0).toUpperCase() + newTaskName.slice(1);
   }
@@ -2861,14 +2952,14 @@ function processAIAgentCommand(promptText) {
     if (subtaskName) {
       newTaskName = `Fokus: ${subtaskName}`;
     } else {
-      result.message = "Hoot kurang paham maksud Anda. Coba tulis seperti: *tambahan fokus pekerjaan 'menulis film'* atau *Buat tugas baru 'Menonton film' jam 20:00-21:30*";
+      result.message = "Format perintah kurang dipahami. Coba tulis seperti: *tambahan fokus pekerjaan 'menulis film'* atau *Buat tugas baru 'Menonton film' jam 20:00-21:30*";
       return result;
     }
   }
   
   let category = "Rutin";
   const catKeywords = {
-    "Karir": ["kerja", "kantor", "code", "coding", "rapat", "meeting", "report", "laporan", "project", "go"],
+    "Karir": ["kerja", "kantor", "code", "coding", "rapat", "meeting", "report", "laporan", "project", "go", "projek"],
     "Kesehatan": ["olahraga", "lari", "jogging", "gym", "sehat", "sepeda", "stretching", "workout"],
     "Spiritual": ["alkitab", "ibadah", "doa", "saat teduh", "gereja", "renungan"],
     "Edukasi": ["belajar", "membaca", "kursus", "tutorial", "buku", "kuliah", "sekolah"],
@@ -2886,12 +2977,7 @@ function processAIAgentCommand(promptText) {
     if (category !== "Rutin") break;
   }
   
-  let subtasks = [];
-  if (matches.length > 0) {
-    matches.forEach(mVal => {
-      subtasks.push({ name: mVal, completed: false });
-    });
-  } else {
+  if (subtasks.length === 0 && matches.length === 0) {
     const subtaskTriggers = ["subtask", "checklist", "daftar"];
     for (let trig of subtaskTriggers) {
       const idx = text.indexOf(trig);
@@ -2919,7 +3005,7 @@ function processAIAgentCommand(promptText) {
     priority: "Sedang",
     completed: false,
     subtasks: subtasks,
-    notes: "Dibuat otomatis oleh Hoot AI Agent",
+    notes: "Dibuat otomatis oleh AI Agent",
     isFromTemplate: false
   };
   
@@ -3101,7 +3187,7 @@ function setupEventListeners() {
     confirmAddPresetBtn.addEventListener('click', () => {
       const selectedCheckboxes = document.querySelectorAll('input[name="preset-task-select"]:checked');
       if (selectedCheckboxes.length === 0) {
-        alert("Pilih minimal satu preset tugas esensial!");
+        showToast("Pilih minimal satu preset tugas esensial!", "warning");
         return;
       }
 
@@ -3118,7 +3204,7 @@ function setupEventListeners() {
         }
         document.getElementById('preset-templates-modal').classList.remove('active');
         selectedCheckboxes.forEach(cb => cb.checked = false);
-        alert("AI Hoot berhasil menyusun jadwal dan menambahkan preset tugas!");
+        showToast("AI berhasil menyusun jadwal dan menambahkan preset tugas!", "success");
       }, 800);
     });
   }
@@ -3180,6 +3266,7 @@ function setupEventListeners() {
       const val = e.target.value;
       localStorage.setItem('yosday_smart_verse_type', val);
       renderDailyVerse();
+      triggerAutoCloudBackup(); // Sync to cloud!
     });
   }
   
@@ -3242,7 +3329,7 @@ function setupEventListeners() {
     cbDays.forEach(cb => activeDays.push(parseInt(cb.value)));
     
     if (activeDays.length === 0) {
-      alert("Pilih minimal satu hari aktif untuk template ini!");
+      showToast("Pilih minimal satu hari aktif untuk template ini!", "warning");
       return;
     }
     
@@ -3283,7 +3370,7 @@ function setupEventListeners() {
     document.getElementById('form-subtasks-list').innerHTML = "";
     document.getElementById('template-editor-title').textContent = "Buat Template Tugas Baru";
     
-    alert("Template tugas berhasil disimpan!");
+    showToast("Template tugas berhasil disimpan!", "success");
   });
   
   document.getElementById('reset-template-form-btn').addEventListener('click', () => {
@@ -3295,7 +3382,11 @@ function setupEventListeners() {
   
   const floatingAddBtn = document.getElementById('floating-add-btn');
   floatingAddBtn.addEventListener('click', () => {
-    document.getElementById('add-choice-modal').classList.add('active');
+    if (State.activeMode === 'project') {
+      openAddProjectModal();
+    } else {
+      document.getElementById('add-choice-modal').classList.add('active');
+    }
   });
   
   // Close buttons for choices & AI modals
@@ -3323,7 +3414,7 @@ function setupEventListeners() {
     document.getElementById('ai-agent-prompt').value = "";
     document.getElementById('ai-agent-feedback').style.display = "none";
     document.getElementById('ai-agent-processing').style.display = "none";
-    document.getElementById('ai-agent-status-bubble').textContent = "Halo! Aku Hoot. Tuliskan tugas tambahanmu, aku bisa menambahkannya langsung ke sublist tugas yang sudah ada atau membuat tugas baru lengkap dengan sublist dan waktu pengerjaan!";
+    document.getElementById('ai-agent-status-bubble').textContent = "Halo! Saya asisten AI. Tuliskan perintah tugas Anda, saya dapat menambahkannya secara otomatis.";
     renderMascot('ai-agent-mascot-target', 0.8, 'Ramah');
     document.getElementById('ai-agent-modal').classList.add('active');
   });
@@ -3367,7 +3458,7 @@ function setupEventListeners() {
       } else {
         feedbackEl.className = "ai-result-feedback error";
         feedbackEl.textContent = result.message;
-        bubbleEl.textContent = "Aduh, sepertinya Hoot kebingungan memahami perintah itu...";
+        bubbleEl.textContent = "Aduh, sepertinya saya kebingungan memahami perintah itu...";
         renderMascot('ai-agent-mascot-target', 0.3, 'Kecewa');
       }
     }, 1200);
@@ -3472,17 +3563,264 @@ function setupEventListeners() {
     renderMonthlyCalendarGrid();
   });
   
-  const chartTimeframeBtns = document.querySelectorAll('.chart-timeframes button');
-  chartTimeframeBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      chartTimeframeBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const timeframe = btn.getAttribute('data-timeframe');
-      renderProductivityChart(timeframe);
+  setupJournalAndExportEventListeners();
+
+  // Mode Selector Trigger & Dropdown Click
+  const modeTrigger = document.getElementById('mode-selector-trigger');
+  const modeDropdown = document.getElementById('mode-selector-dropdown');
+  if (modeTrigger && modeDropdown) {
+    modeTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isVisible = modeDropdown.style.display === 'block';
+      modeDropdown.style.display = isVisible ? 'none' : 'block';
     });
+
+    // Close mode dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!modeTrigger.contains(e.target) && !modeDropdown.contains(e.target)) {
+        modeDropdown.style.display = 'none';
+      }
+    });
+
+    // Mode options click
+    const modeOptions = modeDropdown.querySelectorAll('.mode-option');
+    modeOptions.forEach(opt => {
+      opt.addEventListener('click', () => {
+        const mode = opt.getAttribute('data-mode');
+        State.activeMode = mode;
+        localStorage.setItem('yosday_active_mode', mode);
+        modeDropdown.style.display = 'none';
+        applyActiveMode();
+      });
+    });
+  }
+
+  // Project Modal listeners
+  const closeProjModal = document.getElementById('close-project-modal');
+  if (closeProjModal) {
+    closeProjModal.addEventListener('click', () => {
+      document.getElementById('project-modal').classList.remove('active');
+    });
+  }
+
+  const cancelProjModal = document.getElementById('cancel-project-modal');
+  if (cancelProjModal) {
+    cancelProjModal.addEventListener('click', () => {
+      document.getElementById('project-modal').classList.remove('active');
+    });
+  }
+
+    const saveProjModal = document.getElementById('save-project-modal');
+  if (saveProjModal) {
+    saveProjModal.addEventListener('click', saveProject);
+  }
+
+  const addProjSubtaskBtn = document.getElementById('btn-project-add-subproject');
+  if (addProjSubtaskBtn) {
+    addProjSubtaskBtn.addEventListener('click', () => {
+      addProjectSubtaskRow();
+    });
+  }
+
+  // Project category edit button
+  const btnCatEdit = document.getElementById('btn-project-category-edit');
+  if (btnCatEdit) {
+    btnCatEdit.addEventListener('click', () => {
+      const select = document.getElementById('project-input-category-select');
+      const currentCat = select.value;
+      if (!currentCat) {
+        showToast('Pilih kategori yang ingin diedit terlebih dahulu.', 'warning');
+        return;
+      }
+      showPrompt(
+        "Edit Kategori",
+        `Ganti nama kategori "${currentCat}" menjadi:`,
+        currentCat,
+        (newName) => {
+          if (!newName || newName === currentCat) return;
+          if (State.projectCategories.includes(newName)) {
+            showToast('Nama kategori tersebut sudah ada!', 'error');
+            return;
+          }
+          // Rename category in list
+          const idx = State.projectCategories.indexOf(currentCat);
+          if (idx !== -1) State.projectCategories[idx] = newName;
+          // Rename all projects using that category
+          State.projects.forEach(p => {
+            if (p.category === currentCat) p.category = newName;
+          });
+          saveProjectsToStorage();
+          // Refresh dropdown in modal
+          const newSelect = document.getElementById('project-input-category-select');
+          newSelect.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+          State.projectCategories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            newSelect.appendChild(opt);
+          });
+          newSelect.value = newName;
+          renderProjects();
+          showToast(`Kategori berhasil diubah menjadi "${newName}"`, 'success');
+        }
+      );
+    });
+  }
+
+  // Project category delete button
+  const btnCatDel = document.getElementById('btn-project-category-delete');
+  if (btnCatDel) {
+    btnCatDel.addEventListener('click', () => {
+      const select = document.getElementById('project-input-category-select');
+      const currentCat = select.value;
+      if (!currentCat) {
+        showToast('Pilih kategori yang ingin dihapus terlebih dahulu.', 'warning');
+        return;
+      }
+      showConfirm(
+        'Hapus Kategori',
+        `Hapus kategori "${currentCat}"? Semua projek dalam kategori ini akan dipindahkan ke "Tanpa Kategori".`,
+        () => {
+          // Move projects to Tanpa Kategori
+          State.projects.forEach(p => {
+            if (p.category === currentCat) p.category = 'Tanpa Kategori';
+          });
+          // Remove from categories list
+          State.projectCategories = State.projectCategories.filter(c => c !== currentCat);
+          saveProjectsToStorage();
+          // Refresh dropdown
+          const refreshSelect = document.getElementById('project-input-category-select');
+          refreshSelect.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+          State.projectCategories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            refreshSelect.appendChild(opt);
+          });
+          refreshSelect.value = '';
+          renderProjects();
+          showToast(`Kategori "${currentCat}" dihapus.`, 'success');
+        }
+      );
+    });
+  }
+
+  // Project Detail Modal listeners
+  const closeProjDetailModal = document.getElementById('close-project-detail-modal');
+  if (closeProjDetailModal) {
+    closeProjDetailModal.addEventListener('click', () => {
+      document.getElementById('project-detail-modal').classList.remove('active');
+    });
+  }
+
+  // --- Daily & Monthly Finance Listeners ---
+  document.getElementById('btn-add-finance-header')?.addEventListener('click', () => {
+    openFinanceChoiceModal();
+  });
+  document.getElementById('choice-finance-btn')?.addEventListener('click', () => {
+    openFinanceChoiceModal();
+  });
+  document.getElementById('close-finance-choice-modal')?.addEventListener('click', () => {
+    document.getElementById('finance-choice-modal').classList.remove('active');
+  });
+  document.getElementById('finance-choice-income-btn')?.addEventListener('click', () => {
+    openAddFinanceModal('pemasukan');
+  });
+  document.getElementById('finance-choice-expense-btn')?.addEventListener('click', () => {
+    openAddFinanceModal('pengeluaran');
+  });
+  document.getElementById('close-finance-form-modal')?.addEventListener('click', () => {
+    document.getElementById('finance-form-modal').classList.remove('active');
+  });
+  document.getElementById('cancel-finance-form-btn')?.addEventListener('click', () => {
+    document.getElementById('finance-form-modal').classList.remove('active');
   });
   
-  setupJournalAndExportEventListeners();
+  const financeForm = document.getElementById('finance-form');
+  if (financeForm) {
+    // Add real-time thousand separator formatter as user types
+    const amountInput = document.getElementById('finance-amount');
+    if (amountInput) {
+      amountInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value) {
+          e.target.value = Number(value).toLocaleString('id-ID');
+        } else {
+          e.target.value = '';
+        }
+      });
+    }
+
+    financeForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const editId = document.getElementById('finance-edit-id').value;
+      const type = document.getElementById('finance-type').value;
+      // Parse amount by stripping non-digit characters
+      const amount = Number(document.getElementById('finance-amount').value.replace(/\D/g, ''));
+      const category = document.getElementById('finance-category').value;
+      const description = document.getElementById('finance-description').value.trim();
+      
+      const dateStr = getISODateString(State.currentDate);
+      
+      if (!State.history[dateStr]) {
+        State.history[dateStr] = {
+          date: dateStr,
+          tasks: [],
+          notes: "",
+          journal: "",
+          finance: []
+        };
+      }
+      if (!State.history[dateStr].finance) {
+        State.history[dateStr].finance = [];
+      }
+      
+      if (editId) {
+        const transaction = State.history[dateStr].finance.find(t => t.id === editId);
+        if (transaction) {
+          transaction.type = type;
+          transaction.amount = amount;
+          transaction.category = category;
+          transaction.description = description;
+          if (!transaction.time) {
+            const now = new Date();
+            transaction.time = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+          }
+        }
+        showToast("Transaksi berhasil diperbarui!", "success");
+      } else {
+        const now = new Date();
+        const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        const newTransaction = {
+          id: 'fin-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+          type,
+          amount,
+          category,
+          description,
+          time: timeStr
+        };
+        State.history[dateStr].finance.push(newTransaction);
+        showToast("Transaksi berhasil ditambahkan!", "success");
+      }
+      
+      saveHistoryToStorage();
+      renderDailyFinance();
+      renderMonthlyFinanceSummary(currentCalMonth, currentCalYear);
+      
+      document.getElementById('finance-form-modal').classList.remove('active');
+    });
+  }
+
+  document.getElementById('btn-monthly-finance-details')?.addEventListener('click', () => {
+    openMonthlyFinanceChartModal();
+  });
+  document.getElementById('close-finance-chart-modal')?.addEventListener('click', () => {
+    document.getElementById('monthly-finance-chart-modal').classList.remove('active');
+  });
+  document.getElementById('close-finance-chart-footer-btn')?.addEventListener('click', () => {
+    document.getElementById('monthly-finance-chart-modal').classList.remove('active');
+  });
 }
 
 function openEditTaskModal(taskId) {
@@ -3654,7 +3992,7 @@ function setupGoogleAuthEventListeners() {
   if (loginBtn) {
     loginBtn.addEventListener('click', () => {
       if (typeof google === 'undefined') {
-        alert("Gagal memuat pustaka Google Identity Services. Periksa koneksi internet Anda atau matikan ad-blocker.");
+        showAlert("Koneksi Google Gagal", "Gagal memuat pustaka Google Identity Services. Periksa koneksi internet Anda atau matikan ad-blocker.");
         return;
       }
       googleAuthMode = 'interactive';
@@ -3740,9 +4078,17 @@ function setupGoogleAuthEventListeners() {
               
               State.templates = content.templates || [];
               State.history = content.history || {};
+              State.projects = content.projects || [];
+              State.projectCategories = content.projectCategories || [];
+              State.collapsedCategories = content.collapsedCategories || [];
+              State.projectCategoryOrder = content.projectCategoryOrder || [];
               
               localStorage.setItem('yosday_templates', JSON.stringify(State.templates));
               localStorage.setItem('yosday_history', JSON.stringify(State.history));
+              localStorage.setItem('yosday_projects', JSON.stringify(State.projects));
+              localStorage.setItem('yosday_project_categories', JSON.stringify(State.projectCategories));
+              localStorage.setItem('yosday_collapsed_categories', JSON.stringify(State.collapsedCategories));
+              localStorage.setItem('yosday_category_order', JSON.stringify(State.projectCategoryOrder));
               
               initApp();
               showToast("Pemulihan Berhasil! Halaman dimuat ulang dengan data terbaru.", "success");
@@ -3789,9 +4135,17 @@ async function handleGoogleLoginSuccess(token, mode) {
           if (content) {
             State.templates = content.templates || [];
             State.history = content.history || {};
+            State.projects = content.projects || [];
+            State.projectCategories = content.projectCategories || [];
+            State.collapsedCategories = content.collapsedCategories || [];
+            State.projectCategoryOrder = content.projectCategoryOrder || [];
             
             localStorage.setItem('yosday_templates', JSON.stringify(State.templates));
             localStorage.setItem('yosday_history', JSON.stringify(State.history));
+            localStorage.setItem('yosday_projects', JSON.stringify(State.projects));
+            localStorage.setItem('yosday_project_categories', JSON.stringify(State.projectCategories));
+            localStorage.setItem('yosday_collapsed_categories', JSON.stringify(State.collapsedCategories));
+            localStorage.setItem('yosday_category_order', JSON.stringify(State.projectCategoryOrder));
             
             // Re-render UI dashboard lists
             checkAndGenerateTodayTasks();
@@ -3800,6 +4154,7 @@ async function handleGoogleLoginSuccess(token, mode) {
             renderDailyVerse();
             renderTodayProgressSummary();
             renderDailyTasks();
+            renderDailyFinance();
             renderCalendarInformation();
             renderTemplatesCatalog();
             renderReviewTab();
@@ -3844,23 +4199,50 @@ async function handleGoogleLoginSuccess(token, mode) {
       try {
         const file = await findBackupFile(token);
         if (!file) {
-          alert("Tidak ditemukan berkas cadangan 'yosday_backup.json' di Google Drive Anda. Silakan klik Backup terlebih dahulu.");
+          showToast("Tidak ditemukan berkas cadangan 'yosday_backup.json' di Google Drive Anda. Silakan klik Backup terlebih dahulu.", "warning");
+          if (restoreBtn) {
+            restoreBtn.textContent = "📥 Restore dari Cloud";
+            restoreBtn.disabled = false;
+          }
           return;
         }
         const content = await readBackupFileContent(token, file.id);
-        if (content && confirm("Berkas cadangan ditemukan! Apakah Anda yakin ingin memulihkan data tersebut? Semua data lokal saat ini akan tertimpa.")) {
-          State.templates = content.templates || [];
-          State.history = content.history || {};
-          
-          localStorage.setItem('yosday_templates', JSON.stringify(State.templates));
-          localStorage.setItem('yosday_history', JSON.stringify(State.history));
-          
-          initApp();
-          alert("Pemulihan Berhasil! Halaman akan memuat ulang data terbaru.");
+        if (content) {
+          showConfirm(
+            "Pemulihan Data",
+            "Berkas cadangan ditemukan! Apakah Anda yakin ingin memulihkan data tersebut? Semua data lokal saat ini akan tertimpa.",
+            () => {
+              State.templates = content.templates || [];
+              State.history = content.history || {};
+              State.projects = content.projects || [];
+              State.projectCategories = content.projectCategories || [];
+              State.collapsedCategories = content.collapsedCategories || [];
+              State.projectCategoryOrder = content.projectCategoryOrder || [];
+              
+              localStorage.setItem('yosday_templates', JSON.stringify(State.templates));
+              localStorage.setItem('yosday_history', JSON.stringify(State.history));
+              localStorage.setItem('yosday_projects', JSON.stringify(State.projects));
+              localStorage.setItem('yosday_project_categories', JSON.stringify(State.projectCategories));
+              localStorage.setItem('yosday_collapsed_categories', JSON.stringify(State.collapsedCategories));
+              localStorage.setItem('yosday_category_order', JSON.stringify(State.projectCategoryOrder));
+              
+              initApp();
+              showAlert("Pemulihan Berhasil", "Data berhasil dipulihkan dari Google Drive. Halaman telah dimuat ulang dengan data terbaru.");
+              if (restoreBtn) {
+                restoreBtn.textContent = "📥 Restore dari Cloud";
+                restoreBtn.disabled = false;
+              }
+            },
+            () => {
+              if (restoreBtn) {
+                restoreBtn.textContent = "📥 Restore dari Cloud";
+                restoreBtn.disabled = false;
+              }
+            }
+          );
         }
       } catch (err) {
-        alert("Gagal memulihkan data: " + err.message);
-      } finally {
+        showToast("Gagal memulihkan data: " + err.message, "error");
         if (restoreBtn) {
           restoreBtn.textContent = "📥 Restore dari Cloud";
           restoreBtn.disabled = false;
@@ -3881,7 +4263,7 @@ function logoutGoogleOAuth(quiet = false) {
   renderCalendarInformation();
   
   if (!quiet) {
-    alert("Akun terputus. Data saat ini akan tetap tersimpan secara lokal.");
+    showToast("Akun terputus. Data saat ini akan tetap tersimpan secara lokal.", "info");
   }
   
   // Toggle UI views
@@ -4210,7 +4592,16 @@ async function backupDataToDriveSilently(token) {
     const file = await findBackupFile(token);
     const payload = {
       templates: State.templates,
-      history: State.history
+      history: State.history,
+      projects: State.projects || [],
+      projectCategories: State.projectCategories || [],
+      collapsedCategories: State.collapsedCategories || [],
+      projectCategoryOrder: State.projectCategoryOrder || [],
+      settings: {
+        notificationInterval: localStorage.getItem('yosday_notification_interval') || 'disabled',
+        smartVerseType: localStorage.getItem('yosday_smart_verse_type') || 'quotes',
+        hiddenCalendarItems: JSON.parse(localStorage.getItem('yosday_hidden_calendar_items')) || []
+      }
     };
     if (file && file.id) {
       await updateBackupFile(token, file.id, payload);
@@ -4286,6 +4677,9 @@ function setNotificationInterval(interval) {
   } else {
     setupNotificationTimer();
   }
+  
+  // Sync changed settings to Google Drive
+  triggerAutoCloudBackup();
 }
 
 function updateNotificationPermissionWarning() {
@@ -4414,10 +4808,40 @@ function startCloudSyncPolling() {
         if (content) {
           State.templates = content.templates || [];
           State.history = content.history || {};
+          State.projects = content.projects || [];
+          State.projectCategories = content.projectCategories || [];
+          State.collapsedCategories = content.collapsedCategories || [];
+          State.projectCategoryOrder = content.projectCategoryOrder || [];
           
           localStorage.setItem('yosday_templates', JSON.stringify(State.templates));
           localStorage.setItem('yosday_history', JSON.stringify(State.history));
+          localStorage.setItem('yosday_projects', JSON.stringify(State.projects));
+          localStorage.setItem('yosday_project_categories', JSON.stringify(State.projectCategories));
+          localStorage.setItem('yosday_collapsed_categories', JSON.stringify(State.collapsedCategories));
+          localStorage.setItem('yosday_category_order', JSON.stringify(State.projectCategoryOrder));
           localStorage.setItem('yosday_last_cloud_sync_time', remoteTime);
+          
+          // Restore settings if present
+          if (content.settings) {
+            const settings = content.settings;
+            if (settings.notificationInterval) {
+              State.notificationInterval = settings.notificationInterval;
+              localStorage.setItem('yosday_notification_interval', settings.notificationInterval);
+              const intervalSelect = document.getElementById('settings-notification-interval');
+              if (intervalSelect) intervalSelect.value = settings.notificationInterval;
+              setupNotificationTimer();
+            }
+            if (settings.smartVerseType) {
+              localStorage.setItem('yosday_smart_verse_type', settings.smartVerseType);
+              const smartVerseSelect = document.getElementById('settings-smart-verse-type');
+              if (smartVerseSelect) smartVerseSelect.value = settings.smartVerseType;
+              renderDailyVerse();
+            }
+            if (settings.hiddenCalendarItems) {
+              State.hiddenCalendarItems = settings.hiddenCalendarItems;
+              localStorage.setItem('yosday_hidden_calendar_items', JSON.stringify(settings.hiddenCalendarItems));
+            }
+          }
           
           // Refresh UI
           checkAndGenerateTodayTasks();
@@ -4430,6 +4854,9 @@ function startCloudSyncPolling() {
           renderCalendarInformation();
           renderTemplatesCatalog();
           renderReviewTab();
+          if (State.activeMode === 'project') {
+            renderProjects();
+          }
           
           showToast("Data disinkronkan otomatis dari Cloud!", "success");
         }
@@ -4439,8 +4866,8 @@ function startCloudSyncPolling() {
     }
   };
   
-  // Check every 15 seconds
-  syncPollingInterval = setInterval(pollSync, 15000);
+  // Check every 3 seconds for fast real-time synchronization
+  syncPollingInterval = setInterval(pollSync, 3000);
   
   // Monitor tab focus / active screen states
   document.addEventListener('visibilitychange', () => {
@@ -4590,13 +5017,21 @@ function openExportModal() {
 }
 
 function generateFormattedReportText() {
+  const monthNamesId = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  
   let report = "YOSDAY — PERSONAL LIFE REPORT\n";
+  report += `Laporan Bulan: ${monthNamesId[currentCalMonth]} ${currentCalYear}\n`;
   report += "Generated: " + new Date().toLocaleString('id-ID') + "\n";
   report += "==================================================\n\n";
   
-  const sortedDates = Object.keys(State.history).sort();
+  const prefix = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-`;
+  const sortedDates = Object.keys(State.history).sort().filter(d => d.startsWith(prefix));
+  
   if (sortedDates.length === 0) {
-    report += "Belum ada histori data tercatat.\n";
+    report += "Belum ada histori data tercatat untuk bulan ini.\n";
     return report;
   }
   
@@ -4613,7 +5048,7 @@ function generateFormattedReportText() {
     const completionRate = total === 0 ? 100 : Math.round((completed / total) * 100);
     
     report += `Tingkat Penyelesaian: ${completionRate}% (${completed}/${total} Tugas Selesai)\n`;
-    report += `Kondisi Hoot: ${record.hootExpression || 'Normal'}\n`;
+    report += `Status AI: ${record.hootExpression || 'Normal'}\n`;
     
     report += "TUGAS:\n";
     if (total === 0) {
@@ -4628,6 +5063,19 @@ function generateFormattedReportText() {
             report += `      ${stCheck} Subtask: ${st.name}\n`;
           });
         }
+      });
+    }
+    
+    report += "KEUANGAN:\n";
+    const financeList = record.finance || [];
+    if (financeList.length === 0) {
+      report += "  - Tidak ada transaksi keuangan.\n";
+    } else {
+      financeList.forEach(f => {
+        const typeStr = f.type === 'pemasukan' ? "[📈 PEMASUKAN]" : "[💸 PENGELUARAN]";
+        const timeStr = f.time ? ` @ ${f.time}` : '';
+        const descStr = f.description ? ` (${f.description})` : '';
+        report += `  ${typeStr} ${f.category}${timeStr}: ${formatRupiah(f.amount)}${descStr}\n`;
       });
     }
     
@@ -4770,7 +5218,7 @@ function printReportPDF() {
           <div class="day-header">${formattedDate} (${dateStr})</div>
           <div class="meta-info">
             <strong>Tingkat Penyelesaian:</strong> ${completionRate}% (${completed}/${total} Selesai) | 
-            <strong>Kondisi Hoot:</strong> ${record.hootExpression || 'Normal'}
+            <strong>Status AI:</strong> ${record.hootExpression || 'Normal'}
           </div>
       `;
       
@@ -4850,9 +5298,18 @@ function printReportPDF() {
 }
 
 function downloadReportJSON() {
+  const prefix = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-`;
+  const filteredHistory = {};
+  Object.keys(State.history).forEach(dateStr => {
+    if (dateStr.startsWith(prefix)) {
+      filteredHistory[dateStr] = State.history[dateStr];
+    }
+  });
+
   const data = {
+    month: `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}`,
     templates: State.templates,
-    history: State.history
+    history: filteredHistory
   };
   
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -4860,7 +5317,7 @@ function downloadReportJSON() {
   
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'yosday_data_export.json';
+  a.download = `yosday_export_${currentCalYear}_${String(currentCalMonth + 1).padStart(2, '0')}.json`;
   document.body.appendChild(a);
   a.click();
   
@@ -4923,7 +5380,6 @@ function setupJournalAndExportEventListeners() {
   const downloadBtn = document.getElementById('btn-export-json');
   if (downloadBtn) downloadBtn.addEventListener('click', downloadReportJSON);
 }
-
 function initSmartVerseType() {
   const savedType = localStorage.getItem('yosday_smart_verse_type') || 'quotes';
   const select = document.getElementById('settings-smart-verse-type');
@@ -4931,6 +5387,1207 @@ function initSmartVerseType() {
     select.value = savedType;
   }
 }
+
+// ==========================================================================
+// PROJECT TRACKER ENGINE
+// ==========================================================================
+
+function applyActiveMode() {
+  const dailyNav = document.getElementById('nav-list-daily');
+  const projectNav = document.getElementById('nav-list-project');
+
+  // Highlight the active mode option in dropdown
+  document.querySelectorAll('#mode-selector-dropdown .mode-option').forEach(opt => {
+    if (opt.getAttribute('data-mode') === State.activeMode) {
+      opt.style.backgroundColor = 'rgba(59, 130, 246, 0.15)';
+      opt.style.color = 'var(--accent-blue)';
+    } else {
+      opt.style.backgroundColor = 'transparent';
+      opt.style.color = 'var(--text-primary)';
+    }
+  });
+
+  // Update mode badge
+  const modeBadge = document.getElementById('active-mode-badge');
+  if (modeBadge) {
+    const isDaily = State.activeMode === 'daily';
+    modeBadge.textContent = isDaily ? 'DAILY' : 'PROJECT';
+    modeBadge.style.color = isDaily ? 'var(--accent-blue)' : 'var(--warning-gold)';
+    modeBadge.style.background = isDaily ? 'rgba(59, 130, 246, 0.1)' : 'rgba(245, 158, 11, 0.1)';
+  }
+
+  // Toggle content-header
+  const contentHeader = document.querySelector('.content-header');
+
+  if (State.activeMode === 'daily') {
+    // Show daily nav, hide project nav
+    if (dailyNav) dailyNav.style.display = '';
+    if (projectNav) projectNav.style.display = 'none';
+
+    // Hide project stats
+    const statsContainer = document.getElementById('project-tracker-stats-container');
+    if (statsContainer) statsContainer.style.display = 'none';
+
+    // Show content-header
+    if (contentHeader) {
+      contentHeader.style.display = '';
+      contentHeader.classList.remove('project-mode-hidden');
+    }
+
+    // Hide all project tab panels, make sure all panels are reset
+    ['concept', 'ongoing', 'done'].forEach(t => {
+      const p = document.getElementById(`tab-${t}`);
+      if (p) p.classList.remove('active');
+    });
+
+    // Switch to saved daily tab
+    const savedDailyTab = localStorage.getItem('yosday_active_tab_daily') || 'home';
+    switchTab(savedDailyTab);
+
+  } else {
+    // Show project nav, hide daily nav
+    if (dailyNav) dailyNav.style.display = 'none';
+    if (projectNav) projectNav.style.display = '';
+
+    // Show project stats and render
+    renderProjectStatsTimeline();
+
+    // Hide content-header
+    if (contentHeader) {
+      contentHeader.style.display = 'none';
+      contentHeader.classList.add('project-mode-hidden');
+    }
+
+    // Hide all daily tab panels
+    ['home', 'custom', 'review'].forEach(t => {
+      const p = document.getElementById(`tab-${t}`);
+      if (p) p.classList.remove('active');
+    });
+
+    // Switch to saved project tab
+    const savedProjectTab = localStorage.getItem('yosday_active_tab_project') || 'concept';
+    switchTab(savedProjectTab);
+  }
+}
+
+// ---- Category Collapse Toggle ----
+function toggleCategoryCollapse(catKey) {
+  if (!State.collapsedCategories) State.collapsedCategories = [];
+  const idx = State.collapsedCategories.indexOf(catKey);
+  if (idx === -1) {
+    State.collapsedCategories.push(catKey);
+  } else {
+    State.collapsedCategories.splice(idx, 1);
+  }
+  localStorage.setItem('yosday_collapsed_categories', JSON.stringify(State.collapsedCategories));
+  renderProjects();
+}
+
+// ---- Project Modal ----
+function openAddProjectModal(defaultStatus = 'concept') {
+  document.getElementById('project-modal-title').textContent = "Tambah Projek";
+  document.getElementById('project-input-name').value = "";
+  document.getElementById('project-input-desc').value = "";
+  document.getElementById('project-input-link').value = "";
+  document.getElementById('project-input-category-new').value = "";
+  document.getElementById('project-input-urgency').value = "Sedang";
+  document.getElementById('project-input-subprojects-container').innerHTML = "";
+  
+  const saveBtn = document.getElementById('save-project-modal');
+  saveBtn.removeAttribute('data-edit-id');
+  saveBtn.setAttribute('data-default-status', defaultStatus);
+  
+  const select = document.getElementById('project-input-category-select');
+  select.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+  State.projectCategories.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    select.appendChild(opt);
+  });
+  
+  document.getElementById('project-modal').classList.add('active');
+}
+
+function openEditProjectModal(projectId) {
+  const project = State.projects.find(p => p.id === projectId);
+  if (!project) return;
+
+  document.getElementById('project-modal-title').textContent = "Edit Projek";
+  document.getElementById('project-input-name').value = project.name;
+  document.getElementById('project-input-desc').value = project.desc || "";
+  document.getElementById('project-input-link').value = project.link || "";
+  document.getElementById('project-input-category-new').value = "";
+  document.getElementById('project-input-urgency').value = project.urgency;
+  
+  const select = document.getElementById('project-input-category-select');
+  select.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+  State.projectCategories.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    select.appendChild(opt);
+  });
+  select.value = project.category || "";
+
+  const container = document.getElementById('project-input-subprojects-container');
+  container.innerHTML = "";
+  if (project.subprojects) {
+    project.subprojects.forEach(sub => {
+      addProjectSubtaskRow(sub.name);
+    });
+  }
+
+  const saveBtn = document.getElementById('save-project-modal');
+  saveBtn.setAttribute('data-edit-id', projectId);
+  
+  document.getElementById('project-modal').classList.add('active');
+}
+
+function addProjectSubtaskRow(value = '') {
+  const container = document.getElementById('project-input-subprojects-container');
+  const div = document.createElement('div');
+  div.className = 'project-modal-subtask-row';
+  div.style.display = 'flex';
+  div.style.gap = '6px';
+  div.style.alignItems = 'center';
+  div.style.marginTop = '6px';
+  div.innerHTML = `
+    <input type="text" class="project-modal-subtask-input form-control" value="${value}" placeholder="Nama sub-projek..." style="flex-grow: 1; padding: 6px; font-size: 12px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); border-radius: 4px;">
+    <button type="button" class="btn btn-secondary-outline btn-sm remove-subtask-row-btn" style="padding: 4px 8px; color: var(--danger-red); border-color: var(--danger-red); font-size: 12px;">×</button>
+  `;
+  container.appendChild(div);
+  div.querySelector('.remove-subtask-row-btn').addEventListener('click', () => {
+    div.remove();
+  });
+}
+
+function saveProject() {
+  const name = document.getElementById('project-input-name').value.trim();
+  const desc = document.getElementById('project-input-desc').value.trim();
+  const link = document.getElementById('project-input-link').value.trim();
+  const urgency = document.getElementById('project-input-urgency').value;
+  
+  const selectCat = document.getElementById('project-input-category-select').value;
+  const newCat = document.getElementById('project-input-category-new').value.trim();
+  const categoryName = newCat || selectCat || 'Tanpa Kategori';
+
+  if (!name) {
+    showToast("Nama projek wajib diisi!", "error");
+    return;
+  }
+
+  const container = document.getElementById('project-input-subprojects-container');
+  const saveBtn = document.getElementById('save-project-modal');
+  const editId = saveBtn.getAttribute('data-edit-id');
+  const existingProject = editId ? State.projects.find(p => p.id === editId) : null;
+
+  const subprojects = Array.from(container.querySelectorAll('.project-modal-subtask-input'))
+    .map(input => {
+      const subName = input.value.trim();
+      if (!subName) return null;
+      const existingSub = existingProject && existingProject.subprojects ? existingProject.subprojects.find(s => s.name === subName) : null;
+      return {
+        name: subName,
+        completed: existingSub ? existingSub.completed : false
+      };
+    }).filter(Boolean);
+
+  if (categoryName && categoryName !== 'Tanpa Kategori' && !State.projectCategories.includes(categoryName)) {
+    State.projectCategories.push(categoryName);
+  }
+
+  if (editId) {
+    const projIdx = State.projects.findIndex(p => p.id === editId);
+    if (projIdx !== -1) {
+      State.projects[projIdx].name = name;
+      State.projects[projIdx].desc = desc;
+      State.projects[projIdx].link = link;
+      State.projects[projIdx].category = categoryName;
+      State.projects[projIdx].urgency = urgency;
+      State.projects[projIdx].subprojects = subprojects;
+    }
+    showToast("Projek berhasil diperbarui!", "success");
+  } else {
+    const defaultStatus = saveBtn.getAttribute('data-default-status') || 'concept';
+    const nowStr = getISODateString(State.currentDate);
+    const newProj = {
+      id: `proj_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      name: name,
+      desc: desc,
+      link: link,
+      category: categoryName,
+      urgency: urgency,
+      status: defaultStatus,
+      subprojects: subprojects,
+      dateConcept: nowStr,
+      dateOngoing: defaultStatus === 'ongoing' ? nowStr : null,
+      dateDone: defaultStatus === 'done' ? nowStr : null,
+      sortOrder: State.projects.length
+    };
+    State.projects.push(newProj);
+    showToast("Projek baru berhasil ditambahkan!", "success");
+  }
+
+  saveProjectsToStorage();
+  document.getElementById('project-modal').classList.remove('active');
+  renderProjects();
+}
+
+// ---- Status Move with Confirmation ----
+function moveProjectStatus(projectId, newStatus) {
+  const project = State.projects.find(p => p.id === projectId);
+  if (!project) return;
+
+  const statusLabels = { concept: 'Concept', ongoing: 'On Going', done: 'Done' };
+  const from = statusLabels[project.status] || project.status;
+  const to = statusLabels[newStatus] || newStatus;
+
+  showConfirm(
+    'Pindahkan Projek',
+    `Pindahkan "${project.name}" dari ${from} ke ${to}?`,
+    () => {
+      project.status = newStatus;
+      const nowStr = getISODateString(State.currentDate);
+      if (newStatus === 'ongoing') {
+        if (!project.dateOngoing) project.dateOngoing = nowStr;
+        project.dateDone = null;
+      } else if (newStatus === 'done') {
+        if (!project.dateOngoing) project.dateOngoing = nowStr;
+        if (!project.dateDone) project.dateDone = nowStr;
+      } else if (newStatus === 'concept') {
+        project.dateOngoing = null;
+        project.dateDone = null;
+      }
+      saveProjectsToStorage();
+      renderProjects();
+      // Refresh detail modal if open
+      const detailModal = document.getElementById('project-detail-modal');
+      if (detailModal && detailModal.classList.contains('active')) {
+        openProjectDetailModal(projectId);
+      } else {
+        showToast(`Projek dipindahkan ke ${to}!`, "success");
+      }
+    }
+  );
+}
+
+function deleteProject(projectId) {
+  const project = State.projects.find(p => p.id === projectId);
+  if (!project) return;
+  showConfirm("Hapus Projek", `Apakah Anda yakin ingin menghapus projek "${project.name}"?`, () => {
+    State.projects = State.projects.filter(p => p.id !== projectId);
+    saveProjectsToStorage();
+    // Close detail modal if open for this project
+    const detailModal = document.getElementById('project-detail-modal');
+    if (detailModal && detailModal.classList.contains('active')) {
+      detailModal.classList.remove('active');
+    }
+    renderProjects();
+    showToast("Projek berhasil dihapus!", "success");
+  });
+}
+
+function toggleProjectSubtask(projectId, index) {
+  const project = State.projects.find(p => p.id === projectId);
+  if (project && project.subprojects && project.subprojects[index] !== undefined) {
+    project.subprojects[index].completed = !project.subprojects[index].completed;
+    saveProjectsToStorage();
+    // Refresh detail modal subtask list without full re-render
+    const subListEl = document.getElementById('project-detail-subprojects');
+    if (subListEl) {
+      renderDetailSubprojects(project, subListEl);
+    }
+  }
+}
+
+function renderDetailSubprojects(project, container) {
+  container.innerHTML = '';
+  if (!project.subprojects || project.subprojects.length === 0) {
+    container.innerHTML = '<span style="font-size:12px;color:var(--text-muted);font-style:italic;">Tidak ada sub-projek.</span>';
+    return;
+  }
+  project.subprojects.forEach((sub, idx) => {
+    const item = document.createElement('label');
+    item.className = 'project-detail-subtask-item';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = sub.completed;
+    cb.addEventListener('change', () => toggleProjectSubtask(project.id, idx));
+    const name = document.createElement('span');
+    name.className = `project-detail-subtask-name${sub.completed ? ' done' : ''}`;
+    name.textContent = sub.name;
+    item.appendChild(cb);
+    item.appendChild(name);
+    container.appendChild(item);
+  });
+}
+
+// ---- Project Detail Modal ----
+function openProjectDetailModal(projectId) {
+  const project = State.projects.find(p => p.id === projectId);
+  if (!project) return;
+
+  // Populate header
+  document.getElementById('project-detail-category').textContent = project.category || 'Tanpa Kategori';
+  document.getElementById('project-detail-name').textContent = project.name;
+
+  const urgencyBadge = document.getElementById('project-detail-urgency');
+  urgencyBadge.textContent = project.urgency;
+  urgencyBadge.className = `project-urgency-badge urgency-${(project.urgency || 'sedang').toLowerCase()}`;
+
+  // Description
+  const descEl = document.getElementById('project-detail-desc');
+  descEl.textContent = project.desc || '(Tidak ada deskripsi)';
+
+  // Project Link
+  const linkContainer = document.getElementById('project-detail-link-container');
+  const linkEl = document.getElementById('project-detail-link');
+  const linkTextEl = document.getElementById('project-detail-link-text');
+  if (project.link) {
+    linkContainer.style.display = 'flex';
+    linkEl.href = project.link;
+    linkTextEl.textContent = project.link;
+  } else {
+    linkContainer.style.display = 'none';
+    linkEl.href = '#';
+    linkTextEl.textContent = '';
+  }
+
+  // Subprojects
+  const subListEl = document.getElementById('project-detail-subprojects');
+  renderDetailSubprojects(project, subListEl);
+
+  // Dates
+  document.getElementById('project-detail-date-concept').textContent = formatDate(project.dateConcept) || '-';
+  document.getElementById('project-detail-date-ongoing').textContent = formatDate(project.dateOngoing) || '-';
+  document.getElementById('project-detail-date-done').textContent = formatDate(project.dateDone) || '-';
+
+  // Status action buttons
+  const actionsEl = document.getElementById('project-detail-status-actions');
+  actionsEl.innerHTML = '';
+
+  if (project.status === 'concept') {
+    const startBtn = document.createElement('button');
+    startBtn.className = 'project-detail-status-btn start-btn';
+    startBtn.innerHTML = 'Mulai ❯';
+    startBtn.addEventListener('click', () => moveProjectStatus(project.id, 'ongoing'));
+    actionsEl.appendChild(startBtn);
+  } else if (project.status === 'ongoing') {
+    const backBtn = document.createElement('button');
+    backBtn.className = 'project-detail-status-btn';
+    backBtn.innerHTML = '❮ Konsep';
+    backBtn.addEventListener('click', () => moveProjectStatus(project.id, 'concept'));
+    actionsEl.appendChild(backBtn);
+
+    const doneBtn = document.createElement('button');
+    doneBtn.className = 'project-detail-status-btn done-btn';
+    doneBtn.innerHTML = 'Selesai ❯';
+    doneBtn.addEventListener('click', () => moveProjectStatus(project.id, 'done'));
+    actionsEl.appendChild(doneBtn);
+  } else if (project.status === 'done') {
+    const backConceptBtn = document.createElement('button');
+    backConceptBtn.className = 'project-detail-status-btn';
+    backConceptBtn.innerHTML = '❮ Konsep';
+    backConceptBtn.addEventListener('click', () => moveProjectStatus(project.id, 'concept'));
+    actionsEl.appendChild(backConceptBtn);
+
+    const backOngoingBtn = document.createElement('button');
+    backOngoingBtn.className = 'project-detail-status-btn';
+    backOngoingBtn.innerHTML = '❮ Mulai';
+    backOngoingBtn.addEventListener('click', () => moveProjectStatus(project.id, 'ongoing'));
+    actionsEl.appendChild(backOngoingBtn);
+  }
+
+  // Edit and Delete button bindings
+  const editBtn = document.getElementById('project-detail-btn-edit');
+  if (editBtn) {
+    const newEdit = editBtn.cloneNode(true);
+    editBtn.parentNode.replaceChild(newEdit, editBtn);
+    newEdit.addEventListener('click', () => {
+      document.getElementById('project-detail-modal').classList.remove('active');
+      openEditProjectModal(project.id);
+    });
+  }
+
+  const delBtn = document.getElementById('project-detail-btn-delete');
+  if (delBtn) {
+    const newDel = delBtn.cloneNode(true);
+    delBtn.parentNode.replaceChild(newDel, delBtn);
+    newDel.addEventListener('click', () => deleteProject(project.id));
+  }
+
+  document.getElementById('project-detail-modal').classList.add('active');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+// ---- Urgency sort weight ----
+function urgencyWeight(urgency) {
+  if (!urgency) return 1;
+  const u = urgency.toLowerCase();
+  if (u === 'tinggi') return 3;
+  if (u === 'sedang') return 2;
+  return 1;
+}
+
+function renderProjectStatsTimeline() {
+  const container = document.getElementById('project-tracker-stats-container');
+  if (!container) return;
+
+  if (State.activeMode !== 'project') {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
+
+  const total = State.projects.length;
+  const conceptCount = State.projects.filter(p => p.status === 'concept').length;
+  const ongoingCount = State.projects.filter(p => p.status === 'ongoing').length;
+  const doneCount = State.projects.filter(p => p.status === 'done').length;
+
+  if (total === 0) {
+    container.innerHTML = `
+      <div class="project-timeline-container" style="text-align: center; font-size: 11px; color: var(--text-muted); padding: 12px;">
+        Belum ada projek untuk dianalisis. Tambahkan projek baru untuk melihat progres timeline.
+      </div>
+    `;
+    return;
+  }
+
+  const conceptPercent = Math.round((conceptCount / total) * 100);
+  const ongoingPercent = Math.round((ongoingCount / total) * 100);
+  const donePercent = 100 - conceptPercent - ongoingPercent;
+
+  container.innerHTML = `
+    <div class="project-timeline-container">
+      <div class="project-timeline-labels">
+        <span style="font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Progres Projek Keseluruhan</span>
+        <span style="font-size: 10px; font-weight: 700; color: var(--text-secondary);"><span style="color: var(--accent-blue); font-weight: 800;">${total}</span> Total Projek</span>
+      </div>
+      <div class="project-timeline-bar-wrapper">
+        <div class="project-timeline-segment concept" style="width: ${conceptPercent}%;" title="Konsep: ${conceptCount} (${conceptPercent}%)"></div>
+        <div class="project-timeline-segment ongoing" style="width: ${ongoingPercent}%;" title="Sedang Berjalan: ${ongoingCount} (${ongoingPercent}%)"></div>
+        <div class="project-timeline-segment done" style="width: ${donePercent}%;" title="Selesai: ${doneCount} (${donePercent}%)"></div>
+      </div>
+      <div class="project-timeline-labels" style="margin-top: 2px;">
+        <div class="project-timeline-label-item">
+          <span class="project-timeline-dot concept"></span>
+          <span>Konsep:</span>
+          <span class="project-timeline-label-val">${conceptCount}</span>
+          <span style="color: var(--text-muted); font-size: 9px; font-weight: 500;">(${conceptPercent}%)</span>
+        </div>
+        <div class="project-timeline-label-item">
+          <span class="project-timeline-dot ongoing"></span>
+          <span>Berjalan:</span>
+          <span class="project-timeline-label-val">${ongoingCount}</span>
+          <span style="color: var(--text-muted); font-size: 9px; font-weight: 500;">(${ongoingPercent}%)</span>
+        </div>
+        <div class="project-timeline-label-item">
+          <span class="project-timeline-dot done"></span>
+          <span>Selesai:</span>
+          <span class="project-timeline-label-val">${doneCount}</span>
+          <span style="color: var(--text-muted); font-size: 9px; font-weight: 500;">(${donePercent}%)</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ---- renderProjects (compact, collapsible, draggable) ----
+function renderProjects() {
+  renderProjectStatsTimeline();
+
+  const activeStatus = State.activeTab;
+  if (!['concept', 'ongoing', 'done'].includes(activeStatus)) return;
+
+  const container = document.getElementById(`project-list-${activeStatus}`);
+  if (!container) return;
+
+  const tabTitles = {
+    'concept': '💡 Concept / Ide Projek',
+    'ongoing': '⚙️ Projek Sedang Berjalan',
+    'done': '✔ Projek Selesai',
+  };
+  const titleHtml = `<h2 class="tab-internal-title" style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-top: 4px; margin-bottom: 12px; font-family: 'Outfit', sans-serif; text-align: left;">${tabTitles[activeStatus]}</h2>`;
+
+  container.innerHTML = titleHtml;
+
+  const tabProjects = State.projects.filter(p => p.status === activeStatus);
+
+  if (tabProjects.length === 0) {
+    container.innerHTML += `
+      <div class="empty-tasks-view" style="text-align:center; padding: 20px;">
+        <div class="empty-tasks-icon">📋</div>
+        <h3>Belum Ada Projek</h3>
+        <p>Klik tombol + di bawah untuk menambahkan projek baru.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Group by category
+  const categoriesMap = {};
+  tabProjects.forEach(p => {
+    const cat = p.category || 'Tanpa Kategori';
+    if (!categoriesMap[cat]) categoriesMap[cat] = [];
+    categoriesMap[cat].push(p);
+  });
+
+  // Determine category display order: use projectCategoryOrder first, then alphabetical for new ones
+  const allCats = Object.keys(categoriesMap);
+  const orderedCats = [
+    ...(State.projectCategoryOrder || []).filter(c => allCats.includes(c)),
+    ...allCats.filter(c => !(State.projectCategoryOrder || []).includes(c)).sort((a, b) => a.localeCompare(b))
+  ];
+
+  orderedCats.forEach((catName, catIdx) => {
+    const projs = categoriesMap[catName];
+    
+    // Sort by urgency desc, then sortOrder, then dateConcept
+    projs.sort((a, b) => {
+      const wDiff = urgencyWeight(b.urgency) - urgencyWeight(a.urgency);
+      if (wDiff !== 0) return wDiff;
+      const soA = typeof a.sortOrder === 'number' ? a.sortOrder : 9999;
+      const soB = typeof b.sortOrder === 'number' ? b.sortOrder : 9999;
+      if (soA !== soB) return soA - soB;
+      return new Date(a.dateConcept || 0) - new Date(b.dateConcept || 0);
+    });
+
+    const catKey = `${activeStatus}::${catName}`;
+    const isCollapsed = (State.collapsedCategories || []).includes(catKey);
+
+    const catSection = document.createElement('div');
+    catSection.className = 'project-category-section';
+    catSection.setAttribute('data-cat-name', catName);
+    catSection.setAttribute('data-cat-idx', catIdx);
+    catSection.setAttribute('draggable', 'true');
+
+    // Category header
+    const catHeader = document.createElement('div');
+    catHeader.className = `project-category-header ${activeStatus}`;
+    catHeader.innerHTML = `
+      <span class="category-collapse-arrow${isCollapsed ? ' collapsed' : ''}">▼</span>
+      <span style="flex-grow:1;">${catName}</span>
+      <span class="project-category-count">${projs.length}</span>
+      <button class="btn btn-primary btn-sm project-add-in-cat" data-status="${activeStatus}" title="Tambah projek di kategori ini" style="padding:2px 8px;font-size:10px;margin-left:6px;border-radius:4px;" onclick="openAddProjectModal('${activeStatus}')">+</button>
+    `;
+    catHeader.addEventListener('click', (e) => {
+      if (e.target.closest('.project-add-in-cat')) return;
+      toggleCategoryCollapse(catKey);
+    });
+
+    // Category drag events
+    catSection.addEventListener('dragstart', (e) => {
+      e.stopPropagation();
+      e.dataTransfer.setData('text/cat-drag', catName);
+      e.dataTransfer.setData('text/cat-status', activeStatus);
+      catSection.classList.add('cat-dragging');
+      setTimeout(() => catSection.style.opacity = '0.4', 0);
+    });
+    catSection.addEventListener('dragend', () => {
+      catSection.classList.remove('cat-dragging');
+      catSection.style.opacity = '';
+      document.querySelectorAll('.project-category-section').forEach(s => s.classList.remove('cat-drag-over'));
+    });
+    catSection.addEventListener('dragover', (e) => {
+      if (e.dataTransfer.types.includes('text/cat-drag')) {
+        e.preventDefault();
+        catSection.classList.add('cat-drag-over');
+      }
+    });
+    catSection.addEventListener('dragleave', () => {
+      catSection.classList.remove('cat-drag-over');
+    });
+    catSection.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      catSection.classList.remove('cat-drag-over');
+      const draggedCat = e.dataTransfer.getData('text/cat-drag');
+      const dragStatus = e.dataTransfer.getData('text/cat-status');
+      if (!draggedCat || dragStatus !== activeStatus || draggedCat === catName) return;
+      // Reorder projectCategoryOrder
+      if (!State.projectCategoryOrder || State.projectCategoryOrder.length === 0) {
+        State.projectCategoryOrder = orderedCats.slice();
+      }
+      const allOrder = State.projectCategoryOrder;
+      const fromIdx = allOrder.indexOf(draggedCat);
+      const toIdx = allOrder.indexOf(catName);
+      if (fromIdx !== -1 && toIdx !== -1) {
+        allOrder.splice(fromIdx, 1);
+        allOrder.splice(toIdx, 0, draggedCat);
+      } else if (fromIdx === -1) {
+        // Insert before target
+        const insertAt = toIdx !== -1 ? toIdx : allOrder.length;
+        allOrder.splice(insertAt, 0, draggedCat);
+      }
+      State.projectCategoryOrder = allOrder;
+      saveProjectsToStorage();
+      renderProjects();
+    });
+
+    catSection.appendChild(catHeader);
+
+    // Project grid (collapsible)
+    const grid = document.createElement('div');
+    grid.className = `project-grid${isCollapsed ? ' collapsed' : ''}`;
+    grid.setAttribute('data-cat-name', catName);
+
+    // Grid drop zone for cross-category moves
+    grid.addEventListener('dragover', (e) => {
+      if (e.dataTransfer.types.includes('text/proj-drag')) {
+        e.preventDefault();
+        catSection.classList.add('dragging-over');
+      }
+    });
+    grid.addEventListener('dragleave', () => {
+      catSection.classList.remove('dragging-over');
+    });
+    grid.addEventListener('drop', (e) => {
+      e.preventDefault();
+      catSection.classList.remove('dragging-over');
+      const projId = e.dataTransfer.getData('text/proj-drag');
+      if (!projId) return;
+      const proj = State.projects.find(p => p.id === projId);
+      if (!proj) return;
+      // Move to this category
+      if (proj.category !== catName) {
+        proj.category = catName;
+        if (!State.projectCategories.includes(catName)) State.projectCategories.push(catName);
+        // Set sortOrder to end of this category
+        const maxOrder = projs.reduce((m, p) => Math.max(m, p.sortOrder || 0), 0);
+        proj.sortOrder = maxOrder + 1;
+        saveProjectsToStorage();
+        renderProjects();
+      }
+    });
+
+    projs.forEach((project, projIdx) => {
+      const card = document.createElement('div');
+      card.className = 'project-card';
+      card.setAttribute('draggable', 'true');
+      card.setAttribute('data-proj-id', project.id);
+
+      // Card content: header row only (name + urgency badge)
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'project-card-header';
+      const linkIcon = project.link ? ' <span title="Memiliki link/tautan" style="font-size: 10px; opacity: 0.6; cursor: pointer; flex-shrink: 0; margin-left: 4px;">🔗</span>' : '';
+      headerDiv.innerHTML = `
+        <h3 class="project-card-title">${project.name}${linkIcon}</h3>
+        <span class="project-urgency-badge urgency-${(project.urgency || 'sedang').toLowerCase()}">${project.urgency}</span>
+      `;
+      card.appendChild(headerDiv);
+
+      // Click opens detail modal
+      card.addEventListener('click', () => openProjectDetailModal(project.id));
+
+      // Card drag events
+      card.addEventListener('dragstart', (e) => {
+        e.stopPropagation();
+        e.dataTransfer.setData('text/proj-drag', project.id);
+        e.dataTransfer.setData('text/proj-cat', catName);
+        card.classList.add('dragging');
+      });
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        document.querySelectorAll('.project-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+      });
+      card.addEventListener('dragover', (e) => {
+        if (e.dataTransfer.types.includes('text/proj-drag')) {
+          e.preventDefault();
+          e.stopPropagation();
+          card.classList.add('drag-over');
+        }
+      });
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('drag-over');
+      });
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        card.classList.remove('drag-over');
+        const projId = e.dataTransfer.getData('text/proj-drag');
+        if (!projId || projId === project.id) return;
+        const draggedProj = State.projects.find(p => p.id === projId);
+        if (!draggedProj) return;
+        // Move to same category (reorder by swapping sortOrder)
+        draggedProj.category = catName;
+        // Assign sortOrder based on drop position
+        const targetOrder = typeof project.sortOrder === 'number' ? project.sortOrder : projIdx;
+        const draggedOrder = typeof draggedProj.sortOrder === 'number' ? draggedProj.sortOrder : 9999;
+        draggedProj.sortOrder = targetOrder - 0.5;
+        // Normalize sortOrders for this category
+        const catProjs = State.projects.filter(p => p.category === catName && p.status === activeStatus);
+        catProjs.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        catProjs.forEach((p, i) => p.sortOrder = i);
+        if (!State.projectCategories.includes(catName)) State.projectCategories.push(catName);
+        saveProjectsToStorage();
+        renderProjects();
+      });
+
+      grid.appendChild(card);
+    });
+
+    catSection.appendChild(grid);
+    container.appendChild(catSection);
+  });
+
+}
+
+// --- Daily & Monthly Finance Core Functions ---
+
+function formatRupiah(amount) {
+  return 'Rp ' + Number(amount).toLocaleString('id-ID');
+}
+
+function renderDailyFinance() {
+  const dateStr = getISODateString(State.currentDate);
+  const record = State.history[dateStr];
+  const financeList = (record && record.finance) ? record.finance : [];
+
+  const listContainer = document.getElementById('daily-finance-list');
+  if (!listContainer) return;
+  listContainer.innerHTML = '';
+
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  if (financeList.length === 0) {
+    listContainer.innerHTML = `<p class="text-xs text-muted" style="font-style: italic; margin-bottom: 12px; font-size: 11px;">Belum ada transaksi keuangan hari ini.</p>`;
+  } else {
+    financeList.forEach(item => {
+      const isIncome = item.type === 'pemasukan';
+      if (isIncome) {
+        totalIncome += Number(item.amount);
+      } else {
+        totalExpense += Number(item.amount);
+      }
+
+      const typeSign = isIncome ? '+' : '-';
+      const amountClass = isIncome ? 'finance-amount income' : 'finance-amount expense';
+      const timeHTML = item.time ? `<div style="font-size: 10px; color: var(--text-muted); text-align: right; margin-top: 2px;">${item.time}</div>` : '';
+      
+      const itemRow = document.createElement('div');
+      itemRow.className = 'finance-item-row';
+      itemRow.innerHTML = `
+        <div class="finance-item-left">
+          <div class="finance-item-title">${item.category.charAt(0).toUpperCase() + item.category.slice(1)}</div>
+          <div class="finance-item-desc">${item.description || ''}</div>
+        </div>
+        <div class="finance-item-right">
+          <div style="display: flex; flex-direction: column; align-items: flex-end;">
+            <div class="${amountClass}">${typeSign} ${formatRupiah(item.amount)}</div>
+            ${timeHTML}
+          </div>
+          <div class="finance-actions">
+            <button class="finance-action-btn edit-btn" onclick="openEditFinanceModal('${item.id}')" title="Ubah">✏️</button>
+            <button class="finance-action-btn delete-btn" onclick="confirmDeleteFinance('${item.id}')" title="Hapus">🗑️</button>
+          </div>
+        </div>
+      `;
+      listContainer.appendChild(itemRow);
+    });
+  }
+
+  const dailyTotalIncomeEl = document.getElementById('daily-total-income');
+  const dailyTotalExpenseEl = document.getElementById('daily-total-expense');
+  if (dailyTotalIncomeEl) dailyTotalIncomeEl.textContent = formatRupiah(totalIncome);
+  if (dailyTotalExpenseEl) dailyTotalExpenseEl.textContent = formatRupiah(totalExpense);
+}
+
+function renderMonthlyFinanceSummary(month, year) {
+  const monthNamesId = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  
+  const monthLabel = document.getElementById('monthly-finance-month-label');
+  if (monthLabel) {
+    monthLabel.textContent = `${monthNamesId[month]} ${year}`;
+  }
+
+  let totalIncome = 0;
+  let totalExpense = 0;
+  
+  const prefix = `${year}-${String(month + 1).padStart(2, '0')}-`;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const dailyExpenses = Array(daysInMonth).fill(0);
+  const categoryTotals = {};
+  
+  Object.keys(State.history).forEach(dateStr => {
+    if (dateStr.startsWith(prefix)) {
+      const dayNum = parseInt(dateStr.substring(8, 10));
+      const record = State.history[dateStr];
+      const financeList = record.finance || [];
+      financeList.forEach(item => {
+        if (item.type === 'pemasukan') {
+          totalIncome += Number(item.amount);
+        } else {
+          const amt = Number(item.amount);
+          totalExpense += amt;
+          if (dayNum >= 1 && dayNum <= daysInMonth) {
+            dailyExpenses[dayNum - 1] += amt;
+          }
+          
+          const cat = (item.category || 'lainnya').toLowerCase().trim();
+          categoryTotals[cat] = (categoryTotals[cat] || 0) + amt;
+        }
+      });
+    }
+  });
+
+  const monthlyTotalIncomeEl = document.getElementById('monthly-total-income');
+  const monthlyTotalExpenseEl = document.getElementById('monthly-total-expense');
+  if (monthlyTotalIncomeEl) monthlyTotalIncomeEl.textContent = formatRupiah(totalIncome);
+  if (monthlyTotalExpenseEl) monthlyTotalExpenseEl.textContent = formatRupiah(totalExpense);
+
+  // Render Daily Expense Bar Chart inside card
+  let highestDailyTotal = 0;
+  let highestDailyDay = null;
+  dailyExpenses.forEach((amt, idx) => {
+    if (amt > highestDailyTotal) {
+      highestDailyTotal = amt;
+      highestDailyDay = idx + 1;
+    }
+  });
+
+  const chartCanvas = document.getElementById('finance-daily-chart-canvas');
+  if (chartCanvas) {
+    if (highestDailyTotal === 0) {
+      chartCanvas.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 11px; color: var(--text-muted); font-style: italic;">Belum ada pengeluaran bulan ini.</div>`;
+      const yAxisEl = document.getElementById('finance-chart-y-axis');
+      if (yAxisEl) {
+        yAxisEl.innerHTML = '<span></span><span></span><span></span>';
+      }
+    } else {
+      let barsHTML = "";
+      const maxCanvasWidth = 240;
+      const step = maxCanvasWidth / daysInMonth;
+      const barWidth = Math.max(Math.floor(step - 2), 2);
+      
+      for (let i = 0; i < daysInMonth; i++) {
+        const amt = dailyExpenses[i];
+        const h = (amt / highestDailyTotal) * 110;
+        const x = 10 + i * step;
+        const y = 130 - h;
+        
+        barsHTML += `
+          <rect x="${x}" y="${y}" width="${barWidth}" height="${h}" rx="1" 
+                fill="url(#expense-bar-grad)" style="cursor: pointer; transition: fill 0.2s;"
+                onclick="showFinanceChartDayDetail(${i + 1}, ${amt})">
+            <title>Tanggal ${i + 1}: ${formatRupiah(amt)}</title>
+          </rect>
+        `;
+      }
+      
+      let xAxisHTML = "";
+      for (let i = 0; i < daysInMonth; i++) {
+        if ((i + 1) === 1 || (i + 1) % 5 === 0 || (i + 1) === daysInMonth) {
+          const x = 10 + i * step + barWidth / 2;
+          xAxisHTML += `<text x="${x}" y="145" fill="var(--text-muted)" font-size="8" text-anchor="middle">${i + 1}</text>`;
+        }
+      }
+      
+      chartCanvas.innerHTML = `
+        <svg viewBox="0 0 260 150" width="100%" height="100%" style="overflow: visible;">
+          <defs>
+            <linearGradient id="expense-bar-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ef4444" />
+              <stop offset="100%" stop-color="#f97316" stop-opacity="0.3" />
+            </linearGradient>
+          </defs>
+          <g>
+            <line x1="10" y1="130" x2="250" y2="130" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+            ${barsHTML}
+            ${xAxisHTML}
+          </g>
+        </svg>
+      `;
+      
+      const yAxisEl = document.getElementById('finance-chart-y-axis');
+      if (yAxisEl) {
+        yAxisEl.innerHTML = `
+          <span>${formatRupiah(highestDailyTotal)}</span>
+          <span>${formatRupiah(Math.round(highestDailyTotal / 2))}</span>
+          <span>Rp 0</span>
+        `;
+      }
+    }
+  }
+
+  // Populate Insights Box
+  const insightDayEl = document.getElementById('insight-largest-day');
+  const insightCatEl = document.getElementById('insight-largest-category');
+  
+  if (insightDayEl) {
+    if (highestDailyTotal > 0) {
+      insightDayEl.textContent = `Tanggal ${highestDailyDay} (${formatRupiah(highestDailyTotal)})`;
+    } else {
+      insightDayEl.textContent = 'Belum ada pengeluaran';
+    }
+  }
+  
+  if (insightCatEl) {
+    let largestCatName = '-';
+    let largestCatAmount = 0;
+    Object.entries(categoryTotals).forEach(([cat, amt]) => {
+      if (amt > largestCatAmount) {
+        largestCatAmount = amt;
+        largestCatName = cat;
+      }
+    });
+    
+    if (largestCatAmount > 0) {
+      insightCatEl.textContent = `${largestCatName.charAt(0).toUpperCase() + largestCatName.slice(1)} (${formatRupiah(largestCatAmount)})`;
+    } else {
+      insightCatEl.textContent = 'Belum ada pengeluaran';
+    }
+  }
+}
+
+// Function to handle chart day clicks
+window.showFinanceChartDayDetail = function(day, amount) {
+  const label = document.getElementById('finance-chart-info-label');
+  if (label) {
+    const monthNamesId = [
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    label.innerHTML = `Tanggal ${day} ${monthNamesId[currentCalMonth]}: <strong style="color:var(--danger-red);">${formatRupiah(amount)}</strong>`;
+  }
+};
+
+function openMonthlyFinanceChartModal() {
+  const month = currentCalMonth;
+  const year = currentCalYear;
+  
+  const monthNamesId = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  
+  const titleEl = document.getElementById('monthly-finance-chart-title');
+  if (titleEl) {
+    titleEl.textContent = `Analisis Anggaran: ${monthNamesId[month]} ${year}`;
+  }
+  
+  const prefix = `${year}-${String(month + 1).padStart(2, '0')}-`;
+  
+  const incomeBreakdown = {};
+  const expenseBreakdown = {};
+  
+  const predefinedIncome = ['gaji', 'lainnya'];
+  const predefinedExpense = ['makan', 'minum', 'snack', 'belanja', 'bensin', 'kuota', 'lainnya'];
+  
+  predefinedIncome.forEach(cat => incomeBreakdown[cat] = 0);
+  predefinedExpense.forEach(cat => expenseBreakdown[cat] = 0);
+  
+  let totalIncome = 0;
+  let totalExpense = 0;
+  
+  Object.keys(State.history).forEach(dateStr => {
+    if (dateStr.startsWith(prefix)) {
+      const record = State.history[dateStr];
+      const financeList = record.finance || [];
+      financeList.forEach(item => {
+        const cat = (item.category || 'lainnya').toLowerCase().trim();
+        const amt = Number(item.amount) || 0;
+        if (item.type === 'pemasukan') {
+          incomeBreakdown[cat] = (incomeBreakdown[cat] || 0) + amt;
+          totalIncome += amt;
+        } else {
+          expenseBreakdown[cat] = (expenseBreakdown[cat] || 0) + amt;
+          totalExpense += amt;
+        }
+      });
+    }
+  });
+  
+  const incomeListEl = document.getElementById('monthly-income-chart-list');
+  if (incomeListEl) {
+    incomeListEl.innerHTML = '';
+    if (totalIncome === 0) {
+      incomeListEl.innerHTML = '<p class="text-xs text-muted" style="font-style: italic; font-size: 11px;">Belum ada data pemasukan.</p>';
+    } else {
+      const sortedIncome = Object.entries(incomeBreakdown)
+        .filter(([_, amt]) => amt > 0)
+        .sort((a, b) => b[1] - a[1]);
+        
+      if (sortedIncome.length === 0) {
+        incomeListEl.innerHTML = '<p class="text-xs text-muted" style="font-style: italic; font-size: 11px;">Belum ada data pemasukan.</p>';
+      } else {
+        sortedIncome.forEach(([cat, amt]) => {
+          const percent = (amt / totalIncome) * 100;
+          const itemEl = document.createElement('div');
+          itemEl.className = 'finance-chart-item';
+          itemEl.innerHTML = `
+            <div class="finance-chart-info" style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+              <span class="finance-chart-label" style="text-transform: capitalize; font-weight: 500;">${cat}</span>
+              <span class="finance-chart-value" style="color: var(--text-secondary);">${formatRupiah(amt)} (${percent.toFixed(1)}%)</span>
+            </div>
+            <div class="finance-chart-bar-bg" style="background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; overflow: hidden; width: 100%;">
+              <div class="finance-chart-bar-fill income" style="background: var(--success-green); height: 100%; width: ${percent}%; border-radius: 4px; box-shadow: 0 0 8px var(--success-green);"></div>
+            </div>
+          `;
+          incomeListEl.appendChild(itemEl);
+        });
+      }
+    }
+  }
+  
+  const expenseListEl = document.getElementById('monthly-expense-chart-list');
+  if (expenseListEl) {
+    expenseListEl.innerHTML = '';
+    if (totalExpense === 0) {
+      expenseListEl.innerHTML = '<p class="text-xs text-muted" style="font-style: italic; font-size: 11px;">Belum ada data pengeluaran.</p>';
+    } else {
+      const sortedExpense = Object.entries(expenseBreakdown)
+        .filter(([_, amt]) => amt > 0)
+        .sort((a, b) => b[1] - a[1]);
+        
+      if (sortedExpense.length === 0) {
+        expenseListEl.innerHTML = '<p class="text-xs text-muted" style="font-style: italic; font-size: 11px;">Belum ada data pengeluaran.</p>';
+      } else {
+        sortedExpense.forEach(([cat, amt]) => {
+          const percent = (amt / totalExpense) * 100;
+          const itemEl = document.createElement('div');
+          itemEl.className = 'finance-chart-item';
+          itemEl.innerHTML = `
+            <div class="finance-chart-info" style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+              <span class="finance-chart-label" style="text-transform: capitalize; font-weight: 500;">${cat}</span>
+              <span class="finance-chart-value" style="color: var(--text-secondary);">${formatRupiah(amt)} (${percent.toFixed(1)}%)</span>
+            </div>
+            <div class="finance-chart-bar-bg" style="background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; overflow: hidden; width: 100%;">
+              <div class="finance-chart-bar-fill expense" style="background: var(--danger-red); height: 100%; width: ${percent}%; border-radius: 4px; box-shadow: 0 0 8px var(--danger-red);"></div>
+            </div>
+          `;
+          expenseListEl.appendChild(itemEl);
+        });
+      }
+    }
+  }
+  
+  const chartModal = document.getElementById('monthly-finance-chart-modal');
+  if (chartModal) {
+    chartModal.classList.add('active');
+  }
+}
+
+function openFinanceChoiceModal() {
+  document.getElementById('add-choice-modal').classList.remove('active');
+  document.getElementById('finance-choice-modal').classList.add('active');
+}
+
+// Ensure the helper is exported to window for SVG inline calls
+window.showFinanceChartDayDetail = showFinanceChartDayDetail;
+
+function openAddFinanceModal(type) {
+  document.getElementById('finance-choice-modal').classList.remove('active');
+  
+  document.getElementById('finance-edit-id').value = '';
+  document.getElementById('finance-type').value = type;
+  document.getElementById('finance-amount').value = '';
+  document.getElementById('finance-description').value = '';
+  
+  const formTitleEl = document.getElementById('finance-form-title');
+  if (formTitleEl) {
+    formTitleEl.textContent = type === 'pemasukan' ? 'Tambah Pemasukan' : 'Tambah Pengeluaran';
+  }
+  
+  populateFinanceCategories(type);
+  
+  document.getElementById('finance-form-modal').classList.add('active');
+}
+
+function populateFinanceCategories(type, selectedValue = '') {
+  const selectEl = document.getElementById('finance-category');
+  if (!selectEl) return;
+  selectEl.innerHTML = '';
+  
+  const categories = type === 'pemasukan' 
+    ? ['gaji', 'lainnya']
+    : ['makan', 'minum', 'snack', 'belanja', 'bensin', 'kuota', 'lainnya'];
+    
+  categories.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+    if (cat === selectedValue.toLowerCase()) {
+      opt.selected = true;
+    }
+    selectEl.appendChild(opt);
+  });
+}
+
+function openEditFinanceModal(itemId) {
+  const dateStr = getISODateString(State.currentDate);
+  const record = State.history[dateStr];
+  if (!record || !record.finance) return;
+  
+  const item = record.finance.find(t => t.id === itemId);
+  if (!item) return;
+  
+  document.getElementById('finance-edit-id').value = item.id;
+  document.getElementById('finance-type').value = item.type;
+  // Format with thousand separators on edit load
+  document.getElementById('finance-amount').value = Number(item.amount).toLocaleString('id-ID');
+  document.getElementById('finance-description').value = item.description || '';
+  
+  const formTitleEl = document.getElementById('finance-form-title');
+  if (formTitleEl) {
+    formTitleEl.textContent = item.type === 'pemasukan' ? 'Ubah Pemasukan' : 'Ubah Pengeluaran';
+  }
+  
+  populateFinanceCategories(item.type, item.category);
+  
+  document.getElementById('finance-form-modal').classList.add('active');
+}
+
+function confirmDeleteFinance(itemId) {
+  showConfirm(
+    "Hapus Transaksi",
+    "Apakah Anda yakin ingin menghapus transaksi keuangan ini?",
+    () => {
+      const dateStr = getISODateString(State.currentDate);
+      const record = State.history[dateStr];
+      if (record && record.finance) {
+        record.finance = record.finance.filter(t => t.id !== itemId);
+        saveHistoryToStorage();
+        renderDailyFinance();
+        renderMonthlyFinanceSummary(currentCalMonth, currentCalYear);
+        showToast("Transaksi berhasil dihapus");
+      }
+    }
+  );
+}
+
+// Bind to window for global access
+window.openAddProjectModal = openAddProjectModal;
+window.openEditProjectModal = openEditProjectModal;
+window.moveProjectStatus = moveProjectStatus;
+window.deleteProject = deleteProject;
+window.toggleProjectSubtask = toggleProjectSubtask;
+window.saveProject = saveProject;
+window.addProjectSubtaskRow = addProjectSubtaskRow;
+window.applyActiveMode = applyActiveMode;
+window.renderProjects = renderProjects;
+window.openProjectDetailModal = openProjectDetailModal;
+window.toggleCategoryCollapse = toggleCategoryCollapse;
+window.showPrompt = showPrompt;
+window.renderProjectStatsTimeline = renderProjectStatsTimeline;
+window.openEditFinanceModal = openEditFinanceModal;
+window.confirmDeleteFinance = confirmDeleteFinance;
+window.renderDailyFinance = renderDailyFinance;
+window.renderMonthlyFinanceSummary = renderMonthlyFinanceSummary;
+window.openMonthlyFinanceChartModal = openMonthlyFinanceChartModal;
+window.openFinanceChoiceModal = openFinanceChoiceModal;
+window.openAddFinanceModal = openAddFinanceModal;
 
 // --- Window load execution init ---
 window.addEventListener('DOMContentLoaded', () => {

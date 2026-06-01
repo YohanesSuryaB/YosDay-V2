@@ -32,8 +32,21 @@
     <!-- Collapsible Sidebar -->
     <aside id="app-sidebar" class="sidebar expanded">
       <div class="sidebar-header">
-        <div class="logo-wrapper" id="logo-sync-trigger" title="Simulasi Google Account & Sync">
-          <span class="logo-text">YOSDAY</span>
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <div class="logo-wrapper" id="logo-sync-trigger" title="Simulasi Google Account & Sync">
+            <span class="logo-text">YOSDAY</span>
+          </div>
+          <!-- Mode Selector Button -->
+          <div class="mode-selector-wrapper" style="position: relative; display: flex; align-items: center;">
+            <button id="mode-selector-trigger" title="Ubah Mode Tracker" style="background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; line-height: 1; border-radius: 4px; transition: color 0.2s; gap: 4px;">
+              <span>⋮</span>
+              <span id="active-mode-badge" style="font-size: 9px; font-weight: 800; padding: 2px 5px; border-radius: 4px; background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); text-transform: uppercase; letter-spacing: 0.05em; font-family: 'Outfit', sans-serif;">DAILY</span>
+            </button>
+            <div id="mode-selector-dropdown" style="display: none; position: absolute; left: 0; top: 100%; margin-top: 6px; background-color: var(--surface-dark); border: 1px solid var(--border-color); border-radius: 8px; z-index: 500; min-width: 140px; box-shadow: var(--card-shadow); overflow: hidden;">
+              <div class="mode-option" data-mode="daily" style="padding: 10px 14px; font-size: 12px; color: var(--text-primary); cursor: pointer; font-weight: 700; transition: background-color 0.2s;">Daily Tracker</div>
+              <div class="mode-option" data-mode="project" style="padding: 10px 14px; font-size: 12px; color: var(--text-primary); cursor: pointer; font-weight: 700; transition: background-color 0.2s; border-top: 1px solid var(--border-color);">Project Tracker</div>
+            </div>
+          </div>
         </div>
         <div class="collapse-chevron" id="sidebar-collapse-trigger" title="Klik untuk perkecil/perbesar sidebar">❮</div>
         
@@ -50,7 +63,7 @@
         </div>
       </div>
       
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" id="nav-list-daily">
         <a href="#" class="nav-item active" data-tab="home" id="nav-home">
           <span class="nav-text-short">H</span>
           <span class="nav-text-long">Home</span>
@@ -62,6 +75,20 @@
         <a href="#" class="nav-item" data-tab="review" id="nav-review">
           <span class="nav-text-short">R</span>
           <span class="nav-text-long">Review</span>
+        </a>
+      </nav>
+      <nav class="sidebar-nav" id="nav-list-project" style="display: none;">
+        <a href="#" class="nav-item" data-tab="concept" id="nav-concept">
+          <span class="nav-text-short">C</span>
+          <span class="nav-text-long">Concept</span>
+        </a>
+        <a href="#" class="nav-item" data-tab="ongoing" id="nav-ongoing">
+          <span class="nav-text-short">O</span>
+          <span class="nav-text-long">On Going</span>
+        </a>
+        <a href="#" class="nav-item" data-tab="done" id="nav-done">
+          <span class="nav-text-short">D</span>
+          <span class="nav-text-long">Done</span>
         </a>
       </nav>
       
@@ -185,6 +212,29 @@
               </div>
             </div>
             
+            <!-- SECTION 3A: Daily Finance (Keuangan) Card -->
+            <div class="card daily-finance-card" style="margin-top: 20px;">
+              <div class="card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="card-title">Keuangan Harian</h2>
+                <button class="btn btn-secondary-outline btn-sm" id="btn-add-finance-header" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; display: flex; align-items: center; gap: 4px;">
+                  <span>➕</span> Tambah
+                </button>
+              </div>
+              <div class="finance-list-container" id="daily-finance-list" style="max-height: 120px; overflow-y: auto; margin: 12px 0; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+                <!-- Finance items will be rendered dynamically -->
+              </div>
+              <div class="finance-summary-row" style="display: grid; grid-template-columns: 1fr 1fr; border-top: 1px dashed var(--border-color); padding-top: 8px; font-size: 11px;">
+                <div class="finance-sum-item" style="text-align: left; display: flex; flex-direction: column; gap: 2px;">
+                  <span style="color: var(--text-muted); font-size: 9px; text-transform: uppercase;">Total Pemasukan</span>
+                  <span id="daily-total-income" class="text-success" style="font-weight: 700; color: var(--success-green); font-size: 13px;">Rp 0</span>
+                </div>
+                <div class="finance-sum-item" style="text-align: right; display: flex; flex-direction: column; gap: 2px;">
+                  <span style="color: var(--text-muted); font-size: 9px; text-transform: uppercase;">Total Pengeluaran</span>
+                  <span id="daily-total-expense" class="text-danger" style="font-weight: 700; color: var(--danger-red); font-size: 13px;">Rp 0</span>
+                </div>
+              </div>
+            </div>
+
             <!-- SECTION 3B: Daily Journal Card -->
             <div class="card daily-journal-card" style="margin-top: 20px;">
               <h2 class="card-title">Jurnal Harian</h2>
@@ -235,12 +285,12 @@
                 
                 <div class="form-row-always-split">
                   <div class="form-group">
-                    <label for="template-start-time">Jam Mulai *</label>
-                    <input type="time" id="template-start-time" required class="form-control">
+                    <label for="template-start-time">Jam Mulai</label>
+                    <input type="time" id="template-start-time" class="form-control">
                   </div>
                   <div class="form-group">
-                    <label for="template-end-time">Jam Selesai *</label>
-                    <input type="time" id="template-end-time" required class="form-control">
+                    <label for="template-end-time">Jam Selesai</label>
+                    <input type="time" id="template-end-time" class="form-control">
                   </div>
                 </div>
                 
@@ -478,34 +528,52 @@
               </div>
             </div>
             
-            <!-- SECTION 2: Productivity Chart -->
-            <div class="card chart-card">
+            <!-- Combined Monthly Finance Card (Samping Kalender, Lebar Sama) -->
+            <div class="card monthly-finance-card" id="btn-monthly-finance-details" style="cursor: pointer; transition: transform 0.2s, border-color 0.2s;" title="Klik untuk melihat detail grafik anggaran per kategori">
               <div class="card-header-flex">
-                <h2 class="card-title">Grafik Produktivitas</h2>
-                <div class="chart-timeframes">
-                  <button class="btn btn-xs btn-secondary-outline active" data-timeframe="7">7 Hari</button>
-                  <button class="btn btn-xs btn-secondary-outline" data-timeframe="30">30 Hari</button>
-                  <button class="btn btn-xs btn-secondary-outline" data-timeframe="90">90 Hari</button>
-                  <button class="btn btn-xs btn-secondary-outline" data-timeframe="365">1 Tahun</button>
-                </div>
+                <h2 class="card-title">Keuangan Bulanan</h2>
+                <span style="font-size: 11px; color: var(--accent-blue); font-weight: 500; display: flex; align-items: center; gap: 4px;">Analisis Kategori 📊</span>
               </div>
+              <p class="section-desc" style="font-size: 11px; margin-top: 4px; margin-bottom: 12px; color: var(--text-muted);">Total keuangan untuk bulan <span id="monthly-finance-month-label">Mei 2026</span></p>
               
-              <div class="chart-display-container">
-                <div class="chart-y-axis">
-                  <span>100%</span>
-                  <span>75%</span>
-                  <span>50%</span>
-                  <span>25%</span>
-                  <span>0%</span>
+              <div class="monthly-finance-summary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; text-align: center; margin-bottom: 16px;">
+                <div style="background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.15); padding: 12px; border-radius: 12px;">
+                  <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; text-align: center;">Total Pemasukan</div>
+                  <div id="monthly-total-income" style="font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; color: var(--success-green); margin-top: 4px; text-align: center;">Rp 0</div>
                 </div>
-                <div class="chart-body-wrapper" id="productivity-chart-canvas">
-                  <!-- Beautiful SVG line chart will be drawn here dynamically -->
+                <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.15); padding: 12px; border-radius: 12px;">
+                  <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; text-align: center;">Total Pengeluaran</div>
+                  <div id="monthly-total-expense" style="font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; color: var(--danger-red); margin-top: 4px; text-align: center;">Rp 0</div>
                 </div>
               </div>
-              <div class="chart-legend">
-                <span class="legend-item"><span class="legend-dot dot-completion"></span> Completion Rate (%)</span>
-                <span class="legend-item"><span class="legend-dot dot-hours"></span> Jam Produktif (Jam)</span>
-                <span class="legend-item"><span class="legend-dot dot-score"></span> Life Score (Skor)</span>
+
+              <!-- DAILY EXPENSE CHART SECTION -->
+              <div class="finance-chart-section" style="border-top: 1px dashed var(--border-color); padding-top: 16px;">
+                <h3 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                  <span>Grafik Pengeluaran Harian</span>
+                  <span style="font-size: 10px; font-weight: normal; color: var(--text-secondary);" id="finance-chart-info-label">Sorot titik untuk detail</span>
+                </h3>
+                
+                <div class="chart-display-container" style="height: 180px; display: flex; align-items: stretch; margin-top: 10px;">
+                  <div class="chart-y-axis" id="finance-chart-y-axis" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; font-size: 9px; color: var(--text-muted); text-align: right; width: 65px; padding-right: 8px; flex-shrink: 0; box-sizing: border-box; font-family: monospace;">
+                    <!-- Will be populated dynamically -->
+                  </div>
+                  <div class="chart-body-wrapper" id="finance-daily-chart-canvas" style="flex-grow: 1; height: 100%; position: relative;">
+                    <!-- SVG daily expense chart will be drawn here dynamically -->
+                  </div>
+                </div>
+                
+                <!-- SUMMARY TEXTS FOR LARGEST EXPENSE -->
+                <div class="finance-insights-box" style="margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); border-radius: 6px; font-size: 11px; display: flex; flex-direction: column; gap: 6px; text-align: left;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-muted);">Pengeluaran Harian Terbesar:</span>
+                    <span id="insight-largest-day" style="font-weight: 700; color: var(--danger-red); text-align: right;">-</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-muted);">Kategori Pengeluaran Terbesar:</span>
+                    <span id="insight-largest-category" style="font-weight: 700; color: var(--warning-gold); text-align: right;">-</span>
+                  </div>
+                </div>
               </div>
             </div>
             </div> <!-- End review-top-row -->
@@ -548,6 +616,30 @@
         </div>
       </section>
       
+      <!-- 7.5 PROJECT TRACKER COMPARISON TIMELINE -->
+      <div id="project-tracker-stats-container" style="display: none; width: 100%; box-sizing: border-box; margin-bottom: 8px;"></div>
+
+      <!-- TAB 4: CONCEPT PANEL -->
+      <section id="tab-concept" class="tab-panel">
+        <div class="project-list-container" id="project-list-concept">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+      <!-- TAB 5: ON GOING PANEL -->
+      <section id="tab-ongoing" class="tab-panel">
+        <div class="project-list-container" id="project-list-ongoing">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+      <!-- TAB 6: DONE PANEL -->
+      <section id="tab-done" class="tab-panel">
+        <div class="project-list-container" id="project-list-done">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+      
     </main>
   </div>
   
@@ -560,23 +652,28 @@
   
   <!-- 0. ADD CHOICE POPUP MODAL (MANUAL VS AI AGENT) -->
   <div class="modal-overlay" id="add-choice-modal">
-    <div class="modal-card modal-medium">
+    <div class="modal-card modal-medium" style="max-width: 440px;">
       <div class="modal-header">
-        <h3 class="modal-title">Metode Tambah Tugas</h3>
+        <h3 class="modal-title">Tambah Tugas</h3>
         <button class="modal-close-btn" id="close-choice-modal">×</button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc text-center">Silakan pilih metode pembuatan tugas hari ini. Anda bisa menulis manual atau menggunakan asisten AI pintar Hoot.</p>
+        <p class="modal-desc text-center">Pilih cara menambahkan tugas hari ini.</p>
         <div class="choice-cards-container">
           <div class="choice-card glow-blue" id="choice-manual-btn">
             <div class="choice-icon">📝</div>
-            <div class="choice-title">Tambah Tugas Manual</div>
-            <div class="choice-desc">Ketik manual nama tugas, kategori, prioritas, waktu pengerjaan, dan checklist subtask.</div>
+            <div class="choice-title">Manual</div>
+            <div class="choice-desc">Tulis tugas secara mandiri.</div>
           </div>
           <div class="choice-card glow-gold" id="choice-ai-btn">
-            <div class="choice-icon">🦉</div>
-            <div class="choice-title">Hoot AI Agent</div>
-            <div class="choice-desc">Tulis perintah bebas (misal: "tambahan fokus pekerjaan hari ini 'menulis film'") dan biarkan Hoot mengaturnya secara otomatis.</div>
+            <div class="choice-icon ai-choice-logo">AI</div>
+            <div class="choice-title">AI Agent</div>
+            <div class="choice-desc">Gunakan perintah teks bebas.</div>
+          </div>
+          <div class="choice-card glow-green" id="choice-finance-btn">
+            <div class="choice-icon">💸</div>
+            <div class="choice-title">Keuangan</div>
+            <div class="choice-desc">Catat pengeluaran & pemasukan.</div>
           </div>
         </div>
       </div>
@@ -587,7 +684,7 @@
   <div class="modal-overlay" id="ai-agent-modal">
     <div class="modal-card modal-medium">
       <div class="modal-header">
-        <h3 class="modal-title">🦉 Hoot AI Agent</h3>
+        <h3 class="modal-title">AI Agent</h3>
         <button class="modal-close-btn" id="close-ai-modal">×</button>
       </div>
       <div class="modal-body">
@@ -687,12 +784,12 @@
           
           <div class="form-row-always-split">
             <div class="form-group">
-              <label for="task-start-time">Jam Mulai *</label>
-              <input type="time" id="task-start-time" required class="form-control">
+              <label for="task-start-time">Jam Mulai</label>
+              <input type="time" id="task-start-time" class="form-control">
             </div>
             <div class="form-group">
-              <label for="task-end-time">Jam Selesai *</label>
-              <input type="time" id="task-end-time" required class="form-control">
+              <label for="task-end-time">Jam Selesai</label>
+              <input type="time" id="task-end-time" class="form-control">
             </div>
           </div>
           
@@ -780,8 +877,13 @@
           <!-- Left side: tasks done/missed -->
           <div class="detail-grid-left">
             <h4>📋 Daftar Tugas Hari Itu</h4>
-            <div class="detail-tasks-history-list" id="day-detail-tasks-list">
+            <div class="detail-tasks-history-list" id="day-detail-tasks-list" style="max-height: 180px;">
               <!-- Javascript will render historical tasks and their states -->
+            </div>
+            
+            <h4 style="margin-top: 14px; text-align: left;">💸 Transaksi Keuangan Hari Itu</h4>
+            <div id="day-detail-finance-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; text-align: left;">
+              <!-- Dynamic finance list will be rendered here -->
             </div>
           </div>
           
@@ -872,7 +974,7 @@
         <!-- Slide 1: Welcome Intro -->
         <div class="wrapped-slide slide-active text-center slide-intro" data-slide="0">
           <div class="wrapped-glow-bg glow-purple"></div>
-          <div class="wrapped-logo-hoot" id="wrapped-intro-mascot-target" style="width: 100px; height: 100px;">🦉</div>
+          <div class="wrapped-logo-hoot" id="wrapped-intro-mascot-target" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">AI</div>
           <h1 class="wrapped-main-title">YosDay Review</h1>
           <h2 class="wrapped-year-title">Kilas Balik Produktivitas Mingguan</h2>
           <p class="wrapped-slide-desc margin-top-lg">Perjalanan luar biasa Anda minggu ini dalam merancang kehidupan yang terarah, konsisten, dan bermakna.</p>
@@ -964,7 +1066,7 @@
             <div class="wrapped-badge-gold-fire" id="wrapped-badge-animation-container">
               <!-- Golden Fire Hoot SVG loaded here -->
             </div>
-            <h3 class="wrapped-badge-title" id="wrapped-val-badge-title">Legendary Owl (Burung Hantu Emas)</h3>
+            <h3 class="wrapped-badge-title" id="wrapped-val-badge-title">Legendary Achiever (Bintang Emas)</h3>
             <p class="wrapped-badge-desc" id="wrapped-val-badge-desc">Luar biasa! Konsistensi 30 hari streak penuh, dengan jiwa dedikasi spiritual yang seimbang. Anda memimpin hidup Anda, bukan hanya sekadar mengalir.</p>
           </div>
           
@@ -998,7 +1100,7 @@
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-card modal-medium">
       <div class="modal-header">
-        <h3 class="modal-title">Pengaturan YosDay</h3>
+        <h3 class="modal-title">Pengaturan</h3>
         <button class="modal-close-btn" id="close-settings-modal">×</button>
       </div>
       <div class="modal-body">
@@ -1178,6 +1280,96 @@
     </div>
   </div>
 
+  <!-- 7.1 FINANCE CHOICE POPUP MODAL -->
+  <div class="modal-overlay" id="finance-choice-modal" style="z-index: 2900;">
+    <div class="modal-card modal-medium" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Tipe Transaksi</h3>
+        <button class="modal-close-btn" id="close-finance-choice-modal">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc text-center">Pilih jenis transaksi keuangan harian.</p>
+        <div class="choice-cards-container" style="grid-template-columns: 1fr 1fr; margin-top: 10px;">
+          <div class="choice-card glow-green" id="finance-choice-income-btn" style="padding: 20px 10px;">
+            <div class="choice-icon">📈</div>
+            <div class="choice-title">Pemasukan</div>
+            <div class="choice-desc">Uang masuk / gaji.</div>
+          </div>
+          <div class="choice-card glow-red" id="finance-choice-expense-btn" style="padding: 20px 10px;">
+            <div class="choice-icon">💸</div>
+            <div class="choice-title">Pengeluaran</div>
+            <div class="choice-desc">Belanja, makan, dll.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7.2 FINANCE FORM MODAL -->
+  <div class="modal-overlay" id="finance-form-modal" style="z-index: 2950;">
+    <div class="modal-card modal-medium" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="finance-form-title">Tambah Data Keuangan</h3>
+        <button class="modal-close-btn" id="close-finance-form-modal">×</button>
+      </div>
+      <form id="finance-form">
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+          <input type="hidden" id="finance-edit-id" value="">
+          <input type="hidden" id="finance-type" value="pengeluaran">
+          
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label for="finance-amount" style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Jumlah Nominal (Rupiah) *</label>
+            <input type="text" id="finance-amount" required placeholder="Contoh: 50.000" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); outline: none; font-size: 13px;">
+          </div>
+          
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label for="finance-category" style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Kategori *</label>
+            <select id="finance-category" required style="padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); outline: none; font-size: 13px;">
+              <!-- Options loaded dynamically -->
+            </select>
+          </div>
+          
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label for="finance-description" style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Keterangan</label>
+            <input type="text" id="finance-description" placeholder="Contoh: Nasi padang siang hari (Opsional)" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); outline: none; font-size: 13px;">
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+          <button type="button" class="btn btn-secondary" id="cancel-finance-form-btn">Batal</button>
+          <button type="submit" class="btn btn-primary" id="save-finance-form-btn">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 7.3 MONTHLY FINANCE CHART MODAL -->
+  <div class="modal-overlay" id="monthly-finance-chart-modal" style="z-index: 2900;">
+    <div class="modal-card modal-medium" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="monthly-finance-chart-title">Analisis Anggaran Bulanan</h3>
+        <button class="modal-close-btn" id="close-finance-chart-modal">×</button>
+      </div>
+      <div class="modal-body" style="max-height: 400px; overflow-y: auto; text-align: left;">
+        <h4 style="font-size: 13px; font-weight: 700; color: var(--success-green); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+          <span>📈</span> Distribusi Pemasukan
+        </h4>
+        <div id="monthly-income-chart-list" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+          <!-- Injected dynamically -->
+        </div>
+
+        <h4 style="font-size: 13px; font-weight: 700; color: var(--danger-red); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+          <span>💸</span> Distribusi Pengeluaran
+        </h4>
+        <div id="monthly-expense-chart-list" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; justify-content: flex-end;">
+        <button type="button" class="btn btn-primary" id="close-finance-chart-footer-btn">Tutup</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 8. CUSTOM CONFIRM MODAL -->
   <div class="modal-overlay" id="custom-confirm-modal" style="z-index: 3000;">
     <div class="modal-card modal-small text-center" style="max-width: 400px; padding: 24px;">
@@ -1190,6 +1382,23 @@
       <div class="modal-footer" id="custom-confirm-actions" style="justify-content: center; gap: 12px; border-top: none; padding-top: 0;">
         <button class="btn btn-secondary" id="custom-confirm-cancel">Batal</button>
         <button class="btn btn-primary" id="custom-confirm-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8.1 CUSTOM PROMPT MODAL -->
+  <div class="modal-overlay" id="custom-prompt-modal" style="z-index: 3000;">
+    <div class="modal-card modal-small" style="max-width: 400px; padding: 24px;">
+      <div class="modal-header" style="border-bottom: none; padding-bottom: 0; justify-content: flex-start; text-align: left;">
+        <h3 class="modal-title" id="custom-prompt-title" style="margin: 0; font-size: 16px; font-weight: 700;">Input Data</h3>
+      </div>
+      <div class="modal-body" style="padding-top: 12px; margin-bottom: 20px; text-align: left;">
+        <p id="custom-prompt-message" style="color: var(--text-secondary); font-size: 13px; line-height: 1.5; margin-bottom: 12px;"></p>
+        <input type="text" id="custom-prompt-input" style="width: 100%; box-sizing: border-box; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); outline: none; font-size: 13px;">
+      </div>
+      <div class="modal-footer" style="justify-content: flex-end; gap: 12px; border-top: none; padding-top: 0; display: flex;">
+        <button class="btn btn-secondary" id="custom-prompt-cancel" style="padding: 8px 20px;">Batal</button>
+        <button class="btn btn-primary" id="custom-prompt-ok" style="padding: 8px 20px;">Simpan</button>
       </div>
     </div>
   </div>
@@ -1241,6 +1450,135 @@
       </div>
       <div class="modal-footer" style="padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
         <button class="btn btn-secondary" id="close-export-footer-btn">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. PROJECT FORM MODAL -->
+  <div class="modal-overlay" id="project-modal" style="z-index: 3000;">
+    <div class="modal-card modal-medium" style="max-width: 500px; padding: 20px;">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <h3 class="modal-title" id="project-modal-title">Tambah Projek</h3>
+        <button class="modal-close-btn" id="close-project-modal" style="font-size: 20px;">×</button>
+      </div>
+      <div class="modal-body" style="padding-top: 14px; display: flex; flex-direction: column; gap: 12px;">
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Nama Projek</label>
+          <input type="text" id="project-input-name" placeholder="Tulis nama projek..." style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); outline: none; font-size: 13px;">
+        </div>
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Deskripsi</label>
+          <textarea id="project-input-desc" placeholder="Tulis deskripsi atau ide projek..." rows="3" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); outline: none; font-size: 13px; font-family: inherit; resize: vertical;"></textarea>
+        </div>
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Link / Tautan Projek (Opsional)</label>
+          <input type="url" id="project-input-link" placeholder="Contoh: https://figma.com/... atau https://github.com/..." style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); outline: none; font-size: 13px;">
+        </div>
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Kategori</label>
+          <!-- Row 1: select + edit/delete icons -->
+          <div style="display: flex; gap: 6px; align-items: center; width: 100%;">
+            <select id="project-input-category-select" style="flex: 1; min-width: 0; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); outline: none; font-size: 13px;">
+              <option value="">-- Pilih Kategori --</option>
+            </select>
+            <button type="button" id="btn-project-category-edit" title="Edit Kategori terpilih" style="padding: 6px; font-size: 14px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0;">✏️</button>
+            <button type="button" id="btn-project-category-delete" title="Hapus Kategori terpilih" style="padding: 6px; font-size: 14px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--danger-red); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0;">🗑️</button>
+          </div>
+          <!-- Row 2: new category text input (full width) -->
+          <input type="text" id="project-input-category-new" placeholder="Atau ketik nama kategori baru..." style="width: 100%; box-sizing: border-box; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); outline: none; font-size: 13px;">
+        </div>
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Urgensitas</label>
+          <select id="project-input-urgency" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); outline: none; font-size: 13px;">
+            <option value="Rendah">Rendah</option>
+            <option value="Sedang" selected>Sedang</option>
+            <option value="Tinggi">Tinggi</option>
+          </select>
+        </div>
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Sub-projek Checklist</label>
+          <div id="project-input-subprojects-container" style="display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto;">
+            <!-- list of input elements for subprojects -->
+          </div>
+          <button class="btn btn-secondary-outline btn-sm" id="btn-project-add-subproject" style="padding: 6px; font-size: 11px; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <span>➕</span> Tambah Sub-projek
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+        <button class="btn btn-secondary" id="cancel-project-modal">Batal</button>
+        <button class="btn btn-primary" id="save-project-modal">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9.1 PROJECT DETAIL MODAL -->
+  <div class="modal-overlay" id="project-detail-modal" style="z-index: 2800;">
+    <div class="modal-card modal-medium" style="max-width: 500px; padding: 20px;">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex-grow: 1; text-align: left;">
+          <span id="project-detail-category" style="font-size: 10px; font-weight: 700; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 0.05em; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">KATEGORI</span>
+          <h3 class="modal-title" id="project-detail-name" style="margin: 0; font-size: 16px; font-weight: 700; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Nama Projek</h3>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+          <span class="project-urgency-badge" id="project-detail-urgency">Tinggi</span>
+          <button class="modal-close-btn" id="close-project-detail-modal" style="font-size: 20px;">×</button>
+        </div>
+      </div>
+      <div class="modal-body" style="padding-top: 14px; display: flex; flex-direction: column; gap: 14px; text-align: left;">
+        <!-- Description -->
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Deskripsi Projek</label>
+          <div id="project-detail-desc" style="font-size: 13px; color: var(--text-primary); background: rgba(0,0,0,0.15); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); white-space: pre-wrap; line-height: 1.5; max-height: 120px; overflow-y: auto;">
+            Deskripsi projek lengkap...
+          </div>
+        </div>
+        
+        <!-- Link Tautan Projek -->
+        <div id="project-detail-link-container" style="display: none; flex-direction: column; gap: 4px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Link / Tautan Projek</label>
+          <div style="background: rgba(0,0,0,0.15); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+            <a id="project-detail-link" href="#" target="_blank" style="font-size: 13px; color: var(--accent-blue); text-decoration: none; word-break: break-all; display: flex; align-items: center; gap: 6px;">
+              <span>🔗</span> <span id="project-detail-link-text">Buka Link Projek</span>
+            </a>
+          </div>
+        </div>
+        
+        <!-- Checklist Subprojects -->
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Sub-projek Checklist</label>
+          <div id="project-detail-subprojects" style="display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+            <!-- subprojects list checkable -->
+          </div>
+        </div>
+
+        <!-- Dates -->
+        <div style="display: flex; flex-direction: column; gap: 4px; border-top: 1px dashed var(--border-color); padding-top: 10px;">
+          <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Riwayat Tanggal Projek</label>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 4px;">
+            <div style="display: flex; flex-direction: column; gap: 2px; align-items: center; padding: 6px; background: rgba(0,0,0,0.1); border-radius: 6px; border: 1px solid var(--border-color);">
+              <span style="font-size: 9px; color: var(--text-secondary);">💡 Konsep</span>
+              <span id="project-detail-date-concept" style="font-size: 11px; font-weight: 600; color: var(--text-primary);">-</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px; align-items: center; padding: 6px; background: rgba(0,0,0,0.1); border-radius: 6px; border: 1px solid var(--border-color);">
+              <span style="font-size: 9px; color: var(--text-secondary);">⚙️ Mulai</span>
+              <span id="project-detail-date-ongoing" style="font-size: 11px; font-weight: 600; color: var(--text-primary);">-</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px; align-items: center; padding: 6px; background: rgba(0,0,0,0.1); border-radius: 6px; border: 1px solid var(--border-color);">
+              <span style="font-size: 9px; color: var(--text-secondary);">✔ Selesai</span>
+              <span id="project-detail-date-done" style="font-size: 11px; font-weight: 600; color: var(--text-primary);">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary-outline btn-sm" id="project-detail-btn-delete" style="color: var(--danger-red); border-color: var(--danger-red); padding: 6px 12px; font-size: 12px;">🗑️ Hapus</button>
+          <button class="btn btn-secondary-outline btn-sm" id="project-detail-btn-edit" style="padding: 6px 12px; font-size: 12px;">✏️ Edit</button>
+        </div>
+        <div id="project-detail-status-actions" style="display: flex; gap: 6px;">
+          <!-- Move status actions injected dynamically -->
+        </div>
       </div>
     </div>
   </div>
