@@ -185,6 +185,15 @@
               </div>
             </div>
             
+            <!-- SECTION 3B: Daily Journal Card -->
+            <div class="card daily-journal-card" style="margin-top: 20px;">
+              <h2 class="card-title">Jurnal Harian</h2>
+              <div class="journal-preview-container" id="journal-preview-box">
+                <p class="text-sm text-secondary" style="font-style: italic; margin-bottom: 12px;">Bagaimana hari Anda sejauh ini? Tulis cerita atau refleksi singkat di sini.</p>
+                <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">✏️ Tulis Jurnal Harian</button>
+              </div>
+            </div>
+            
           </div>
           
           <!-- Column 2: Sidebar Widgets -->
@@ -526,6 +535,13 @@
               </div>
             </div>
             
+            <!-- Export Data Button -->
+            <div style="margin-top: 24px; display: flex; justify-content: center; width: 100%;">
+              <button type="button" class="btn btn-primary btn-large btn-glow-blue" id="btn-export-data" style="width: 100%; max-width: 400px; padding: 12px 24px;">
+                📥 Export & Cetak Laporan Harian
+              </button>
+            </div>
+            
           </div>
           
 
@@ -779,13 +795,13 @@
               <cite class="detail-verse-ref" id="day-detail-verse-ref">Filipi 4:13</cite>
             </div>
             
-            <div class="card bg-slate-900">
-              <h5 class="widget-sub-title">📝 Catatan Refleksi & Evaluasi</h5>
-              <div class="form-group">
-                <p class="text-sm text-muted margin-bottom-sm">Refleksi harian untuk hari ini:</p>
-                <textarea id="day-detail-notes-input" class="form-control" rows="4" placeholder="Tulis jurnal pendek tentang produktivitas, hambatan, atau rasa syukur Anda hari ini..."></textarea>
+            <!-- Daily Journal Display inside Day Detail Modal -->
+            <div class="card bg-slate-900" style="margin-top: 16px;">
+              <h5 class="widget-sub-title">📝 Jurnal Harian Terformat</h5>
+              <div class="detail-journal-content" id="day-detail-journal-content" style="font-size: 13px; color: var(--text-secondary); max-height: 150px; overflow-y: auto; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); line-height: 1.6; margin-bottom: 8px;">
+                <span style="font-style: italic; color: var(--text-muted);">Belum ada tulisan jurnal untuk hari ini.</span>
               </div>
-              <button class="btn btn-primary btn-sm full-width" id="day-detail-save-notes-btn">Simpan Catatan Jurnal</button>
+              <button class="btn btn-secondary-outline btn-sm full-width" id="day-detail-edit-journal-btn">Edit</button>
             </div>
           </div>
         </div>
@@ -803,7 +819,12 @@
     
     <div class="focus-header">
       <div class="focus-logo">YOSDAY <span class="focus-tag">FOCUS MODE</span></div>
-      <button class="btn btn-secondary btn-sm" id="exit-focus-btn">Keluar Fokus (Esc)</button>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button class="btn btn-secondary btn-sm" id="focus-music-toggle">
+          <span id="focus-music-text">Musik: Off</span>
+        </button>
+        <button class="btn btn-secondary btn-sm" id="exit-focus-btn">Keluar</button>
+      </div>
     </div>
     
     <div class="focus-container">
@@ -816,44 +837,17 @@
             <circle cx="50" cy="50" r="45" class="ring-fg" id="focus-countdown-ring" stroke-dasharray="282.7" stroke-dashoffset="0"></circle>
           </svg>
           <div class="focus-timer-text-wrap">
-            <span class="focus-timer-label" id="focus-timer-state">TUGAS SEKARANG</span>
+            <span class="focus-timer-label" id="focus-timer-state">TUGAS<br>SEKARANG</span>
             <span class="focus-timer-clock" id="focus-clock-display">00:00:00</span>
             <span class="focus-timer-duration" id="focus-duration-display">Sisa Waktu</span>
           </div>
-        </div>
-        
-        <div class="focus-hoot-box">
-          <div id="focus-hoot-svg" style="width: 54px; height: 54px;">
-            <!-- Render Hoot SVG here, matching current productivity -->
-          </div>
-          <div class="focus-hoot-motivation-text" id="focus-hoot-motivation-text">Keep going! Single-tasking is your superpower.</div>
         </div>
       </div>
       
       <!-- Right side: Current active task card and subtasks checklist -->
       <div class="focus-info-block">
-        <div class="card focus-task-card glow-blue">
-          <div class="focus-priority-indicator" id="focus-task-priority">🔴 Tinggi</div>
-          <h2 class="focus-task-name" id="focus-task-title">Mengerjakan Laporan Bulanan Keuangan</h2>
-          <div class="focus-task-time" id="focus-task-time-range">08:00 - 17:00 (Sisa 4 jam 20 menit)</div>
-          
-          <div class="focus-subtasks-section">
-            <h4 class="widget-sub-title">Checklist Subtask:</h4>
-            <div class="focus-subtasks-list" id="focus-subtask-checklist">
-              <!-- Subtasks loaded here as large touch-friendly check elements -->
-            </div>
-          </div>
-          
-          <div class="focus-notes-section" id="focus-task-notes-container">
-            <h4 class="widget-sub-title">Catatan:</h4>
-            <p class="focus-task-notes-text" id="focus-task-notes">Pastikan data pengeluaran dari tim operasional sudah disinkronisasi.</p>
-          </div>
-          
-          <div class="focus-complete-action-wrapper">
-            <button class="btn btn-success btn-large btn-glow-green full-width" id="focus-complete-task-btn">
-              ✔ Selesaikan Tugas Ini
-            </button>
-          </div>
+        <div id="focus-active-tasks-container">
+          <!-- Rendered dynamically by Javascript -->
         </div>
         
         <div class="focus-next-up">
@@ -1042,6 +1036,20 @@
             <p class="text-xs text-warning" style="margin: 0; line-height: 1.4; color: var(--danger-red);">⚠️ Izin notifikasi browser belum diberikan. Silakan izinkan notifikasi saat diminta browser Anda.</p>
           </div>
         </div>
+        
+        <!-- Smart Verse / Quote Setting Section -->
+        <div class="settings-section margin-top-md" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+          <h4 class="text-sm font-bold margin-bottom-sm">📖 Smart Verse & Kutipan Tokoh</h4>
+          <p class="text-xs text-secondary margin-bottom-md">Pilih jenis konten inspirasi harian yang ingin ditampilkan di Home Dashboard Anda.</p>
+          
+          <div class="form-group">
+            <label for="settings-smart-verse-type">Jenis Konten Harian</label>
+            <select id="settings-smart-verse-type" class="form-control">
+              <option value="quotes">Kata Bijak Tokoh Dunia (Default)</option>
+              <option value="bible">Ayat Alkitab (Bible Verse)</option>
+            </select>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-primary" id="confirm-settings-btn" style="margin-left: auto;">Simpan & Tutup</button>
@@ -1170,7 +1178,81 @@
     </div>
   </div>
 
+  <!-- 8. CUSTOM CONFIRM MODAL -->
+  <div class="modal-overlay" id="custom-confirm-modal" style="z-index: 3000;">
+    <div class="modal-card modal-small text-center" style="max-width: 400px; padding: 24px;">
+      <div class="modal-header" style="border-bottom: none; padding-bottom: 0; justify-content: center;">
+        <h3 class="modal-title" id="custom-confirm-title">Konfirmasi</h3>
+      </div>
+      <div class="modal-body" style="padding-top: 12px; margin-bottom: 20px;">
+        <p id="custom-confirm-message" style="color: var(--text-secondary); font-size: 14px; line-height: 1.5;"></p>
+      </div>
+      <div class="modal-footer" id="custom-confirm-actions" style="justify-content: center; gap: 12px; border-top: none; padding-top: 0;">
+        <button class="btn btn-secondary" id="custom-confirm-cancel">Batal</button>
+        <button class="btn btn-primary" id="custom-confirm-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. RICH TEXT JOURNAL EDITOR MODAL -->
+  <div class="modal-overlay" id="journal-editor-modal" style="z-index: 2500;">
+    <div class="modal-card modal-large journal-editor-card" style="max-width: 800px;">
+      <div class="modal-header" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+          <h3 class="modal-title" id="journal-editor-title" style="margin: 0; font-size: 18px; font-weight: 700;">Jurnal harian</h3>
+          <button class="modal-close-btn" id="close-journal-editor-btn" style="margin-top: -6px;">×</button>
+        </div>
+        <span id="journal-editor-date" style="font-size: 12px; color: var(--text-secondary);">Senin, 1 Juni 2026</span>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px; padding: 20px;">
+        <div class="journal-toolbar" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px; align-items: center;">
+          <button type="button" class="toolbar-btn" data-command="bold" title="Tebal (Bold)" style="font-weight: bold; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer;">B</button>
+          <button type="button" class="toolbar-btn" data-command="italic" title="Miring (Italic)" style="font-style: italic; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer;">I</button>
+          <button type="button" class="toolbar-btn" data-command="underline" title="Garis Bawah (Underline)" style="text-decoration: underline; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer;">U</button>
+          <div style="width: 1px; height: 20px; background: var(--border-color); margin: 0 4px;"></div>
+          <button type="button" class="toolbar-btn" data-command="formatBlock" data-value="h2" style="font-size: 11px; font-weight: 700; height: 32px; padding: 0 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer;">H1</button>
+          <button type="button" class="toolbar-btn" data-command="formatBlock" data-value="h3" style="font-size: 11px; font-weight: 600; height: 32px; padding: 0 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer;">H2</button>
+          <button type="button" class="toolbar-btn" data-command="formatBlock" data-value="p" style="font-size: 11px; height: 32px; padding: 0 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer;">Paragraf</button>
+        </div>
+        <div class="journal-editor-content" id="journal-rich-editor" contenteditable="true" placeholder="Tulis cerita, perasaan, atau rencana Anda hari ini di sini..." style="min-height: 300px; max-height: 450px; overflow-y: auto; padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0, 0, 0, 0.2); color: var(--text-primary); outline: none; line-height: 1.6; font-size: 14px;"></div>
+      </div>
+      <div class="modal-footer" style="padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
+        <button class="btn btn-secondary" id="cancel-journal-btn">Batal</button>
+        <button class="btn btn-primary" id="save-journal-btn">Simpan Jurnal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. EXPORT DATA MODAL -->
+  <div class="modal-overlay" id="export-data-modal" style="z-index: 2500;">
+    <div class="modal-card modal-large" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Export & Cetak Laporan</h3>
+        <button class="modal-close-btn" id="close-export-modal">×</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; padding: 20px;">
+        <p class="text-sm text-muted">Unduh, cetak, atau salin semua data tugas harian dan jurnal yang tersimpan.</p>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+          <button class="btn btn-secondary-outline" id="btn-export-copy" style="font-size: 12px; padding: 10px;">📋 Salin ke Clipboard</button>
+          <button class="btn btn-secondary-outline" id="btn-export-print" style="font-size: 12px; padding: 10px;">🖨️ Cetak / Simpan PDF</button>
+          <button class="btn btn-secondary-outline" id="btn-export-json" style="font-size: 12px; padding: 10px;">💾 Unduh File JSON</button>
+        </div>
+        <div id="export-preview-box" style="border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.3); padding: 16px; max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 11px; white-space: pre-wrap; color: var(--text-secondary); line-height: 1.5;"></div>
+      </div>
+      <div class="modal-footer" style="padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" id="close-export-footer-btn">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" style="position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 5000; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; width: 90%; max-width: 400px;"></div>
+
+  <!-- Background Focus Audio -->
+  <audio id="focus-audio-player" src="focus-music.mp3" loop></audio>
+
   <!-- Core JavaScript -->
+  <script src="quotes.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

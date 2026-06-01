@@ -83,6 +83,7 @@ const State = {
       { text: "Sebab itu, saudara-saudaraku yang kekasih, berdirilah teguh, jangan goyah, dan giatlah selalu dalam pekerjaan Tuhan!", ref: "1 Korintus 15:58" }
     ]
   },
+  smartQuotes: typeof SMART_QUOTES !== 'undefined' ? SMART_QUOTES : [],
   focusActiveTaskId: null,
   focusTimerInterval: null,
   focusTimeRemaining: 0,
@@ -93,6 +94,90 @@ const State = {
   notificationInterval: 'disabled',
   notificationTimer: null
 };
+
+// --- Monkeypatch native window.alert to use our custom showAlert ---
+window.alert = function(msg) {
+  showAlert("Notifikasi", msg);
+};
+
+// --- Custom Notification & Alert System ---
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  
+  let icon = '🔔';
+  if (type === 'success') icon = '✔';
+  else if (type === 'error') icon = '✕';
+  else if (type === 'warning') icon = '⚠️';
+  
+  toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+  container.appendChild(toast);
+  
+  // Remove toast after animation ends
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
+function showAlert(title, message, callback = null) {
+  const modal = document.getElementById('custom-confirm-modal');
+  if (!modal) return;
+  
+  document.getElementById('custom-confirm-title').textContent = title;
+  document.getElementById('custom-confirm-message').textContent = message;
+  
+  const actionsContainer = document.getElementById('custom-confirm-actions');
+  actionsContainer.innerHTML = '';
+  
+  const okBtn = document.createElement('button');
+  okBtn.className = 'btn btn-primary';
+  okBtn.style.padding = '8px 24px';
+  okBtn.textContent = 'OK';
+  okBtn.addEventListener('click', () => {
+    modal.classList.remove('active');
+    if (callback) callback();
+  });
+  
+  actionsContainer.appendChild(okBtn);
+  modal.classList.add('active');
+}
+
+function showConfirm(title, message, onConfirm, onCancel = null) {
+  const modal = document.getElementById('custom-confirm-modal');
+  if (!modal) return;
+  
+  document.getElementById('custom-confirm-title').textContent = title;
+  document.getElementById('custom-confirm-message').textContent = message;
+  
+  const actionsContainer = document.getElementById('custom-confirm-actions');
+  actionsContainer.innerHTML = '';
+  
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-secondary';
+  cancelBtn.style.padding = '8px 20px';
+  cancelBtn.textContent = 'Batal';
+  cancelBtn.addEventListener('click', () => {
+    modal.classList.remove('active');
+    if (onCancel) onCancel();
+  });
+  
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'btn btn-primary';
+  confirmBtn.style.padding = '8px 20px';
+  confirmBtn.textContent = 'Ya, Lanjutkan';
+  confirmBtn.addEventListener('click', () => {
+    modal.classList.remove('active');
+    if (onConfirm) onConfirm();
+  });
+  
+  actionsContainer.appendChild(cancelBtn);
+  actionsContainer.appendChild(confirmBtn);
+  
+  modal.classList.add('active');
+}
 
 // --- Initial Setup & Data Persistence ---
 
@@ -122,6 +207,7 @@ function initApp() {
   renderDailyVerse();
   renderTodayProgressSummary();
   renderDailyTasks();
+  renderDailyJournal();
   renderCalendarInformation();
   renderTemplatesCatalog();
   renderReviewTab();
@@ -130,6 +216,8 @@ function initApp() {
   initGoogleSync();
   initTheme();
   initNotifications();
+  initSmartVerseType();
+  startCloudSyncPolling();
   
   // Restore saved active tab
   const savedTab = localStorage.getItem('yosday_active_tab') || 'home';
@@ -750,14 +838,23 @@ function seedHistoricalData() {
     });
     
     const compRate = calculateCompletionRateForTasks(seededTasks);
-    let verseCategory = 'harapan';
-    if (compRate < 0.6) {
-      verseCategory = Math.random() < 0.5 ? 'ketekunan' : 'disiplin';
-    } else if (compRate >= 0.8) {
-      verseCategory = Math.random() < 0.5 ? 'syukur' : 'konsistensi';
+    const verseType = localStorage.getItem('yosday_smart_verse_type') || 'quotes';
+    let pickedVerse = null;
+    if (verseType === 'bible') {
+      let verseCategory = 'harapan';
+      if (compRate < 0.6) {
+        verseCategory = Math.random() < 0.5 ? 'ketekunan' : 'disiplin';
+      } else if (compRate >= 0.8) {
+        verseCategory = Math.random() < 0.5 ? 'syukur' : 'konsistensi';
+      }
+      const verseList = State.smartVerses[verseCategory];
+      pickedVerse = verseList[Math.floor(Math.random() * verseList.length)];
+    } else {
+      const quoteList = State.smartQuotes || [];
+      if (quoteList.length > 0) {
+        pickedVerse = quoteList[Math.floor(Math.random() * quoteList.length)];
+      }
     }
-    const verseList = State.smartVerses[verseCategory];
-    const pickedVerse = verseList[Math.floor(Math.random() * verseList.length)];
     
     State.history[dateStr] = {
       date: dateStr,
@@ -836,8 +933,17 @@ function checkAndGenerateTodayTasks() {
       });
     });
     
-    const verseList = State.smartVerses['harapan'];
-    const pickedVerse = verseList[Math.floor(Math.random() * verseList.length)];
+    const verseType = localStorage.getItem('yosday_smart_verse_type') || 'quotes';
+    let pickedVerse = null;
+    if (verseType === 'bible') {
+      const verseList = State.smartVerses['harapan'];
+      pickedVerse = verseList[Math.floor(Math.random() * verseList.length)];
+    } else {
+      const quoteList = State.smartQuotes || [];
+      if (quoteList.length > 0) {
+        pickedVerse = quoteList[Math.floor(Math.random() * quoteList.length)];
+      }
+    }
     
     State.history[todayStr] = {
       date: todayStr,
@@ -1062,29 +1168,50 @@ function renderDailyVerse() {
   const todayRecord = State.history[todayStr];
   if (!todayRecord) return;
   
-  const progressRate = calculateWeeklyProgressRate();
-  let category = 'harapan';
+  const verseType = localStorage.getItem('yosday_smart_verse_type') || 'quotes';
+  let pickedVerse = null;
+  let categoryLabel = 'Kutipan Tokoh';
   
-  if (progressRate < 0.6) {
-    category = Math.random() < 0.5 ? 'ketekunan' : 'disiplin';
-  } else if (progressRate >= 0.8) {
-    category = Math.random() < 0.5 ? 'syukur' : 'konsistensi';
+  if (verseType === 'bible') {
+    const progressRate = calculateWeeklyProgressRate();
+    let category = 'harapan';
+    if (progressRate < 0.6) {
+      category = Math.random() < 0.5 ? 'ketekunan' : 'disiplin';
+    } else if (progressRate >= 0.8) {
+      category = Math.random() < 0.5 ? 'syukur' : 'konsistensi';
+    }
+    const list = State.smartVerses[category];
+    if (list && list.length > 0) {
+      let dayHash = 0;
+      for (let i = 0; i < todayStr.length; i++) {
+        dayHash += todayStr.charCodeAt(i);
+      }
+      const verseIndex = dayHash % list.length;
+      pickedVerse = list[verseIndex];
+      categoryLabel = `Smart Verse — ${category.toUpperCase()}`;
+    }
+  } else {
+    const list = State.smartQuotes || [];
+    if (list && list.length > 0) {
+      let dayHash = 0;
+      for (let i = 0; i < todayStr.length; i++) {
+        dayHash += todayStr.charCodeAt(i);
+      }
+      const quoteIndex = dayHash % list.length;
+      pickedVerse = list[quoteIndex];
+      categoryLabel = `Kutipan Tokoh`;
+    }
   }
   
-  const list = State.smartVerses[category];
-  
-  let dayHash = 0;
-  for (let i = 0; i < todayStr.length; i++) {
-    dayHash += todayStr.charCodeAt(i);
+  if (pickedVerse) {
+    todayRecord.verse = pickedVerse;
+    const contextEl = document.getElementById('verse-context-tag');
+    const textEl = document.getElementById('bible-verse-text');
+    const refEl = document.getElementById('bible-verse-ref');
+    if (contextEl) contextEl.textContent = categoryLabel;
+    if (textEl) textEl.textContent = `"${pickedVerse.text}"`;
+    if (refEl) refEl.textContent = pickedVerse.ref;
   }
-  const verseIndex = dayHash % list.length;
-  const pickedVerse = list[verseIndex];
-  
-  todayRecord.verse = pickedVerse;
-  
-  document.getElementById('verse-context-tag').textContent = `Smart Verse — ${category.toUpperCase()}`;
-  document.getElementById('bible-verse-text').textContent = `"${pickedVerse.text}"`;
-  document.getElementById('bible-verse-ref').textContent = pickedVerse.ref;
 }
 
 // --- Weekly Streak Renderer (Section 1) ---
@@ -1329,7 +1456,9 @@ function renderDailyTasks() {
   
   sortedTasks.forEach(task => {
     const isCompleted = task.completed;
-    const isTodayActive = getTaskCategoryIndex(task) === 0;
+    const taskCatIdx = getTaskCategoryIndex(task);
+    const isTodayActive = taskCatIdx === 0;
+    const isTaskMissed = !isCompleted && taskCatIdx === 2;
     
     let subtasksHTML = "";
     if (task.subtasks && task.subtasks.length > 0) {
@@ -1378,6 +1507,7 @@ function renderDailyTasks() {
               </span>
               <span class="task-category-badge">${task.category}</span>
               ${isTodayActive ? '<span class="task-status-now">Aktif Sekarang</span>' : ''}
+              ${isTaskMissed ? '<span class="task-status-missed">Terlewat</span>' : ''}
             </div>
           </div>
           
@@ -1454,15 +1584,17 @@ function toggleSubtasksView(taskId) {
 }
 
 function deleteTask(taskId) {
-  if (!confirm("Apakah Anda yakin ingin menghapus tugas ini khusus hari ini?")) return;
-  
-  const todayStr = getISODateString(State.currentDate);
-  const todayRecord = State.history[todayStr];
-  if (todayRecord) {
-    todayRecord.tasks = todayRecord.tasks.filter(t => t.id !== taskId);
-    saveHistoryToStorage();
-    recalculateDailyOutputs();
-  }
+  showConfirm("Hapus Tugas", "Apakah Anda yakin ingin menghapus tugas ini khusus hari ini?", () => {
+    const todayStr = getISODateString(State.currentDate);
+    const todayRecord = State.history[todayStr];
+    if (todayRecord) {
+      todayRecord.tasks = todayRecord.tasks.filter(t => t.id !== taskId);
+      saveHistoryToStorage();
+      recalculateDailyOutputs();
+      showToast("Tugas berhasil dihapus!", "success");
+      triggerAutoCloudBackup();
+    }
+  });
 }
 
 function recalculateDailyOutputs() {
@@ -1741,11 +1873,18 @@ function loadTemplateToForm(templateId) {
 }
 
 function deleteTemplate(templateId) {
-  if (!confirm("Menghapus template tidak menghapus histori tugas lama, namun tidak akan memicu pembuatan tugas ini di masa mendatang. Lanjutkan?")) return;
-  State.templates = State.templates.filter(t => t.id !== templateId);
-  saveTemplatesToStorage();
-  syncTodayTasksWithTemplates();
-  renderTemplatesCatalog();
+  showConfirm(
+    "Hapus Template",
+    "Menghapus template tidak menghapus histori tugas lama, namun tidak akan memicu pembuatan tugas ini di masa mendatang. Lanjutkan?",
+    () => {
+      State.templates = State.templates.filter(t => t.id !== templateId);
+      saveTemplatesToStorage();
+      syncTodayTasksWithTemplates();
+      renderTemplatesCatalog();
+      showToast("Template berhasil dihapus!", "success");
+      triggerAutoCloudBackup();
+    }
+  );
 }
 
 function addSubtaskRowToBuilder(containerId, value = "") {
@@ -1997,22 +2136,39 @@ function openDayDetailModal(dateStr) {
   }
   
   const notesInput = document.getElementById('day-detail-notes-input');
-  notesInput.value = record.notes || "";
-  notesInput.setAttribute('data-target-date', dateStr);
+  if (notesInput) {
+    notesInput.value = record.notes || "";
+    notesInput.setAttribute('data-target-date', dateStr);
+  }
+  
+  // Render daily journal terformat
+  const journalContentEl = document.getElementById('day-detail-journal-content');
+  if (journalContentEl) {
+    journalContentEl.innerHTML = record.journal || '<span style="font-style: italic; color: var(--text-muted);">Belum ada tulisan jurnal untuk hari ini.</span>';
+  }
+  
+  const editJournalBtn = document.getElementById('day-detail-edit-journal-btn');
+  if (editJournalBtn) {
+    editJournalBtn.onclick = () => {
+      openJournalEditor(dateStr);
+    };
+  }
   
   document.getElementById('day-detail-modal').classList.add('active');
 }
 
 function saveDailyReflectionNotes() {
   const notesInput = document.getElementById('day-detail-notes-input');
+  if (!notesInput) return;
   const dateStr = notesInput.getAttribute('data-target-date');
   const text = notesInput.value.trim();
   
   if (dateStr && State.history[dateStr]) {
     State.history[dateStr].notes = text;
     saveHistoryToStorage();
-    alert("Jurnal refleksi berhasil disimpan!");
+    showToast("Jurnal refleksi berhasil disimpan!", "success");
     document.getElementById('day-detail-modal').classList.remove('active');
+    triggerAutoCloudBackup();
   }
 }
 
@@ -2195,6 +2351,19 @@ function exitFocusMode() {
   clearInterval(State.focusTimerInterval);
   State.focusActiveTaskId = null;
   
+  // Pause focus music on exit
+  const audioPlayer = document.getElementById('focus-audio-player');
+  if (audioPlayer && !audioPlayer.paused) {
+    audioPlayer.pause();
+    const musicText = document.getElementById('focus-music-text');
+    const musicToggle = document.getElementById('focus-music-toggle');
+    if (musicText) musicText.textContent = "Musik: Off";
+    if (musicToggle) {
+      musicToggle.classList.remove('btn-success');
+      musicToggle.classList.add('btn-secondary');
+    }
+  }
+  
   recalculateDailyOutputs();
 }
 
@@ -2203,83 +2372,127 @@ function updateFocusModeDetails() {
   const todayRecord = State.history[todayStr];
   if (!todayRecord) return;
   
-  const task = todayRecord.tasks.find(t => t.id === State.focusActiveTaskId);
-  if (!task) {
+  const getFloatTime = (timeStr) => {
+    const p = timeStr.split(':');
+    return parseInt(p[0]) + (parseInt(p[1]) / 60);
+  };
+  const now = new Date();
+  const nowFloat = now.getHours() + (now.getMinutes() / 60);
+  
+  // Find all uncompleted tasks active now
+  let activeTasks = todayRecord.tasks.filter(t => {
+    const start = getFloatTime(t.startTime);
+    const end = getFloatTime(t.endTime);
+    return !t.completed && nowFloat >= start && nowFloat <= end;
+  });
+  
+  if (activeTasks.length === 0) {
+    const futureTasks = todayRecord.tasks.filter(t => !t.completed).sort((a,b) => getFloatTime(a.startTime) - getFloatTime(b.startTime));
+    if (futureTasks.length > 0) {
+      activeTasks = [futureTasks[0]];
+    }
+  }
+  if (activeTasks.length === 0) {
+    const firstUncompleted = todayRecord.tasks.find(t => !t.completed);
+    if (firstUncompleted) activeTasks = [firstUncompleted];
+  }
+  
+  if (activeTasks.length === 0) {
     exitFocusMode();
     return;
   }
   
-  document.getElementById('focus-task-title').textContent = task.name;
-  document.getElementById('focus-task-time-range').textContent = `⏰ Jadwal: ${task.startTime} - ${task.endTime}`;
-  document.getElementById('focus-task-priority').textContent = `${task.priority === 'Tinggi' ? '🔴 Prioritas Tinggi' : task.priority === 'Sedang' ? '🟡 Prioritas Sedang' : '🔵 Prioritas Rendah'}`;
+  // Set the primary task (the first one) for the countdown ring
+  State.focusActiveTaskId = activeTasks[0].id;
   
-  const rate = calculateWeeklyProgressRate();
-  renderMascot('focus-hoot-svg', rate);
+  const stateEl = document.getElementById('focus-timer-state');
+  if (stateEl) stateEl.innerHTML = "TUGAS<br>SEKARANG";
   
-  const notesContainer = document.getElementById('focus-task-notes-container');
-  if (task.notes) {
-    notesContainer.style.display = "block";
-    document.getElementById('focus-task-notes').textContent = task.notes;
-  } else {
-    notesContainer.style.display = "none";
-  }
-  
-  const subtasksWrap = document.getElementById('focus-subtask-checklist');
-  subtasksWrap.innerHTML = "";
-  if (task.subtasks && task.subtasks.length > 0) {
-    task.subtasks.forEach((st, idx) => {
-      subtasksWrap.insertAdjacentHTML('beforeend', `
-        <div class="focus-check-item ${st.completed ? 'checked' : ''}" onclick="toggleSubvalFocusStatus(${idx})">
-          <label class="task-checkbox-wrapper">
-            <input type="checkbox" class="subtask-checkbox-input" ${st.completed ? 'checked' : ''} style="display:none;">
-            <span class="task-custom-checkbox"></span>
-          </label>
-          <span class="subtask-name" style="font-size:15px; font-weight:600;">${st.name}</span>
+  // Render active tasks container dynamically
+  const container = document.getElementById('focus-active-tasks-container');
+  if (container) {
+    container.innerHTML = "";
+    activeTasks.forEach(task => {
+      let subtasksHTML = "";
+      if (task.subtasks && task.subtasks.length > 0) {
+        subtasksHTML += `
+          <div class="focus-subtasks-section" style="margin-top: 10px; margin-bottom: 8px;">
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">Checklist Subtask:</div>
+            <div class="focus-subtasks-list" style="display: flex; flex-direction: column; gap: 6px;">
+        `;
+        task.subtasks.forEach((st, idx) => {
+          subtasksHTML += `
+            <div class="focus-check-item ${st.completed ? 'checked' : ''}" onclick="toggleFocusSubtaskStatus('${task.id}', ${idx})" style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; padding: 4px 0;">
+              <label class="task-checkbox-wrapper" style="pointer-events: none; margin: 0;">
+                <input type="checkbox" class="subtask-checkbox-input" ${st.completed ? 'checked' : ''} style="display:none;">
+                <span class="task-custom-checkbox"></span>
+              </label>
+              <span class="subtask-name" style="color: ${st.completed ? 'var(--text-muted)' : 'var(--text-primary)'}; text-decoration: ${st.completed ? 'line-through' : 'none'}; font-weight: 500;">${st.name}</span>
+            </div>
+          `;
+        });
+        subtasksHTML += `</div></div>`;
+      }
+      
+      let notesHTML = "";
+      if (task.notes) {
+        notesHTML += `
+          <div style="margin-top: 8px; font-size: 11px; color: var(--text-secondary); border-left: 2px solid var(--border-color); padding-left: 8px; font-style: italic;">
+            <strong>Catatan:</strong> ${task.notes}
+          </div>
+        `;
+      }
+      
+      const priorityLabel = task.priority === 'Tinggi' ? '🔴 Tinggi' : task.priority === 'Sedang' ? '🟡 Sedang' : '🔵 Rendah';
+      
+      container.insertAdjacentHTML('beforeend', `
+        <div class="card focus-task-card glow-blue" style="padding: 12px 14px; border-radius: 12px; margin-bottom: 8px; border: 1px solid rgba(59, 130, 246, 0.15); background: rgba(15, 23, 42, 0.65);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; flex-wrap: wrap; gap: 4px;">
+            <span class="focus-priority-indicator" style="font-size: 10px; font-weight: 700; color: ${task.priority === 'Tinggi' ? 'var(--danger-red)' : task.priority === 'Sedang' ? 'var(--warning-gold)' : 'var(--accent-blue)'};">${priorityLabel}</span>
+            <span style="font-size: 11px; color: var(--text-muted);">⏰ ${task.startTime} - ${task.endTime}</span>
+          </div>
+          <h3 class="focus-task-name" style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; line-height: 1.3;">${task.name}</h3>
+          
+          ${subtasksHTML}
+          ${notesHTML}
+          
+          <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
+            <button class="btn btn-success btn-sm" onclick="confirmCompleteFocusTask('${task.id}')" style="padding: 4px 8px; font-size: 10px; font-weight: 700; border-radius: 6px; cursor: pointer;">
+              Selesai
+            </button>
+          </div>
         </div>
       `);
     });
-  } else {
-    subtasksWrap.innerHTML = `<span class="text-xs text-muted">Tidak ada subtask checklist untuk tugas ini.</span>`;
   }
   
+  // Render next task info
   const nextTask = todayRecord.tasks
-    .filter(t => !t.completed && t.id !== task.id)
-    .sort((a,b) => {
-      const getFloatTime = (timeStr) => {
-        const p = timeStr.split(':');
-        return parseInt(p[0]) + (parseInt(p[1]) / 60);
-      };
-      return getFloatTime(a.startTime) - getFloatTime(b.startTime);
-    })[0];
+    .filter(t => !t.completed && !activeTasks.some(at => at.id === t.id))
+    .sort((a,b) => getFloatTime(a.startTime) - getFloatTime(b.startTime))[0];
     
-  if (nextTask) {
-    document.getElementById('focus-next-task-name').textContent = `${nextTask.name} (${nextTask.startTime} - ${nextTask.endTime})`;
-  } else {
-    document.getElementById('focus-next-task-name').textContent = "Tidak ada tugas berikutnya.";
+  const nextTaskEl = document.getElementById('focus-next-task-name');
+  if (nextTaskEl) {
+    if (nextTask) {
+      nextTaskEl.textContent = `${nextTask.name} (${nextTask.startTime} - ${nextTask.endTime})`;
+    } else {
+      nextTaskEl.textContent = "Tidak ada tugas berikutnya.";
+    }
   }
+  
+  startFocusTimer(activeTasks[0].endTime);
 }
 
-function toggleSubvalFocusStatus(subtaskIdx) {
+function toggleFocusSubtaskStatus(taskId, subtaskIdx) {
   const todayStr = getISODateString(State.currentDate);
   const todayRecord = State.history[todayStr];
   if (!todayRecord) return;
   
-  const task = todayRecord.tasks.find(t => t.id === State.focusActiveTaskId);
+  const task = todayRecord.tasks.find(t => t.id === taskId);
   if (task && task.subtasks && task.subtasks[subtaskIdx]) {
     task.subtasks[subtaskIdx].completed = !task.subtasks[subtaskIdx].completed;
-    
-    const allChecked = task.subtasks.every(s => s.completed);
-    task.completed = allChecked;
-    
     saveHistoryToStorage();
-    updateFocusModeDetails();
-    
-    if (allChecked) {
-      setTimeout(() => {
-        alert("Hebat! Seluruh subtask telah diselesaikan. Tugas utama otomatis selesai.");
-        exitFocusMode();
-      }, 500);
-    }
+    recalculateDailyOutputs();
   }
 }
 
@@ -2303,7 +2516,7 @@ function startFocusTimer(endTimeStr) {
       clearInterval(State.focusTimerInterval);
       document.getElementById('focus-clock-display').textContent = "00:00:00";
       document.getElementById('focus-countdown-ring').style.strokeDashoffset = "282.7";
-      document.getElementById('focus-timer-state').textContent = "TUGAS SELESAI";
+      document.getElementById('focus-timer-state').innerHTML = "TUGAS<br>SELESAI";
       return;
     }
     
@@ -2349,6 +2562,38 @@ function completeActiveFocusTask() {
     exitFocusMode();
   }
 }
+
+function confirmCompleteFocusTask(taskId) {
+  showConfirm(
+    "Selesaikan Tugas",
+    "Apakah Anda yakin ingin menyelesaikan tugas ini?",
+    () => {
+      completeFocusTask(taskId);
+    }
+  );
+}
+
+function completeFocusTask(taskId) {
+  const todayStr = getISODateString(State.currentDate);
+  const todayRecord = State.history[todayStr];
+  if (!todayRecord) return;
+  
+  const task = todayRecord.tasks.find(t => t.id === taskId);
+  if (task) {
+    task.completed = true;
+    if (task.subtasks) {
+      task.subtasks.forEach(s => s.completed = true);
+    }
+    saveHistoryToStorage();
+    showToast("Tugas berhasil diselesaikan!", "success");
+    recalculateDailyOutputs();
+  }
+}
+
+// Bind dynamically to window to avoid scope issues in PWA/modules
+window.confirmCompleteFocusTask = confirmCompleteFocusTask;
+window.toggleFocusSubtaskStatus = toggleFocusSubtaskStatus;
+
 
 // ==========================================================================
 // ADDITIONAL UTILITY: WEEKLY REVIEW (SPOTIFY WRAPPED STYLE SLIDESHOW)
@@ -2732,7 +2977,44 @@ function setupEventListeners() {
   
   document.getElementById('focus-mode-btn').addEventListener('click', enterFocusMode);
   document.getElementById('exit-focus-btn').addEventListener('click', exitFocusMode);
-  document.getElementById('focus-complete-task-btn').addEventListener('click', completeActiveFocusTask);
+  const completeBtn = document.getElementById('focus-complete-task-btn');
+  if (completeBtn) {
+    completeBtn.addEventListener('click', completeActiveFocusTask);
+  }
+
+  // Focus Mode Music Toggle
+  const musicToggle = document.getElementById('focus-music-toggle');
+  const audioPlayer = document.getElementById('focus-audio-player');
+  const musicText = document.getElementById('focus-music-text');
+  
+  if (musicToggle && audioPlayer && musicText) {
+    musicToggle.addEventListener('click', () => {
+      if (audioPlayer.paused) {
+        // Try playing directly first
+        audioPlayer.play().then(() => {
+          musicText.textContent = "Musik: On";
+          musicToggle.classList.add('btn-success');
+          musicToggle.classList.remove('btn-secondary');
+        }).catch(err => {
+          console.warn("Direct play failed, trying to load and play:", err);
+          audioPlayer.load();
+          audioPlayer.play().then(() => {
+            musicText.textContent = "Musik: On";
+            musicToggle.classList.add('btn-success');
+            musicToggle.classList.remove('btn-secondary');
+          }).catch(err2 => {
+            console.error("Audio playback failed after load:", err2);
+            showToast("Gagal memutar musik. Pastikan berkas 'focus-music.mp3' ada di folder website Anda.", "error");
+          });
+        });
+      } else {
+        audioPlayer.pause();
+        musicText.textContent = "Musik: Off";
+        musicToggle.classList.remove('btn-success');
+        musicToggle.classList.add('btn-secondary');
+      }
+    });
+  }
   
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.getElementById('focus-mode-view').classList.contains('active')) {
@@ -2890,33 +3172,53 @@ function setupEventListeners() {
       setNotificationInterval(interval);
     });
   }
+
+  // Smart Verse Selection Change
+  const smartVerseSelect = document.getElementById('settings-smart-verse-type');
+  if (smartVerseSelect) {
+    smartVerseSelect.addEventListener('change', (e) => {
+      const val = e.target.value;
+      localStorage.setItem('yosday_smart_verse_type', val);
+      renderDailyVerse();
+    });
+  }
   
   const btnSeedData = document.getElementById('btn-seed-data');
   if (btnSeedData) {
     btnSeedData.addEventListener('click', () => {
-      if (confirm("Apakah Anda yakin ingin memuat ulang data simulasi 30 hari? Tindakan ini akan menggantikan histori lama.")) {
-        localStorage.removeItem('yosday_seeded');
-        seedHistoricalData();
-        initApp();
-        alert("Data simulasi 30 hari berhasil dimuat!");
-        document.getElementById('google-login-modal').classList.remove('active');
-      }
+      showConfirm(
+        "Muat Data Simulasi",
+        "Apakah Anda yakin ingin memuat ulang data simulasi 30 hari? Tindakan ini akan menggantikan histori lama.",
+        () => {
+          localStorage.removeItem('yosday_seeded');
+          seedHistoricalData();
+          initApp();
+          showToast("Data simulasi 30 hari berhasil dimuat!", "success");
+          document.getElementById('google-login-modal').classList.remove('active');
+          triggerAutoCloudBackup();
+        }
+      );
     });
   }
   const btnClearData = document.getElementById('btn-clear-data');
   if (btnClearData) {
     btnClearData.addEventListener('click', () => {
-      if (confirm("Kosongkan semua data dari localStorage?")) {
-        localStorage.setItem('yosday_templates', '[]');
-        localStorage.setItem('yosday_history', '{}');
-        localStorage.setItem('yosday_seeded', 'cleared');
-        State.history = {};
-        State.templates = [];
-        State.openedSubtaskTasks.clear();
-        initApp();
-        alert("Semua data berhasil dibersihkan.");
-        document.getElementById('google-login-modal').classList.remove('active');
-      }
+      showConfirm(
+        "Kosongkan Semua Data",
+        "Apakah Anda yakin ingin mengosongkan semua data dari localStorage? Tindakan ini tidak dapat dibatalkan.",
+        () => {
+          localStorage.setItem('yosday_templates', '[]');
+          localStorage.setItem('yosday_history', '{}');
+          localStorage.setItem('yosday_seeded', 'cleared');
+          State.history = {};
+          State.templates = [];
+          State.openedSubtaskTasks.clear();
+          initApp();
+          showToast("Semua data berhasil dibersihkan.", "warning");
+          document.getElementById('google-login-modal').classList.remove('active');
+          triggerAutoCloudBackup();
+        }
+      );
     });
   }
   
@@ -3146,7 +3448,10 @@ function setupEventListeners() {
   document.getElementById('close-day-detail-footer-btn').addEventListener('click', () => {
     document.getElementById('day-detail-modal').classList.remove('active');
   });
-  document.getElementById('day-detail-save-notes-btn').addEventListener('click', saveDailyReflectionNotes);
+  const saveNotesBtn = document.getElementById('day-detail-save-notes-btn');
+  if (saveNotesBtn) {
+    saveNotesBtn.addEventListener('click', saveDailyReflectionNotes);
+  }
   
   document.getElementById('cal-prev-month').addEventListener('click', () => {
     if (currentCalMonth === 0) {
@@ -3177,6 +3482,7 @@ function setupEventListeners() {
     });
   });
   
+  setupJournalAndExportEventListeners();
 }
 
 function openEditTaskModal(taskId) {
@@ -3363,9 +3669,13 @@ function setupGoogleAuthEventListeners() {
   const logoutBtn = document.getElementById('btn-google-logout');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-      if (confirm("Apakah Anda yakin ingin memutuskan sambungan akun Google? Data lokal Anda tidak akan terhapus.")) {
-        logoutGoogleOAuth();
-      }
+      showConfirm(
+        "Putus Sambungan Google",
+        "Apakah Anda yakin ingin memutuskan sambungan akun Google? Data lokal Anda tidak akan terhapus.",
+        () => {
+          logoutGoogleOAuth();
+        }
+      );
     });
   }
 
@@ -3387,9 +3697,9 @@ function setupGoogleAuthEventListeners() {
       backupBtn.disabled = true;
       try {
         await backupDataToDriveSilently(token);
-        alert("Backup Berhasil! Data lokal Anda telah diunggah ke Google Drive.");
+        showToast("Backup Berhasil! Data lokal Anda telah diunggah ke Google Drive.", "success");
       } catch (err) {
-        alert("Gagal mencadangkan data ke Google Drive: " + err.message);
+        showToast("Gagal mencadangkan data ke Google Drive: " + err.message, "error");
       } finally {
         backupBtn.textContent = "📤 Backup ke Cloud";
         backupBtn.disabled = false;
@@ -3412,31 +3722,38 @@ function setupGoogleAuthEventListeners() {
         return;
       }
       
-      restoreBtn.textContent = "⌛ Memulihkan...";
-      restoreBtn.disabled = true;
       try {
         const file = await findBackupFile(token);
         if (!file) {
-          alert("Tidak ditemukan berkas cadangan 'yosday_backup.json' di Google Drive Anda. Silakan klik Backup terlebih dahulu.");
+          showToast("Tidak ditemukan berkas cadangan 'yosday_backup.json' di Google Drive.", "warning");
           return;
         }
         
         const content = await readBackupFileContent(token, file.id);
-        if (content && confirm("Berkas cadangan ditemukan! Apakah Anda yakin ingin memulihkan data tersebut? Semua data lokal saat ini akan tertimpa.")) {
-          State.templates = content.templates || [];
-          State.history = content.history || {};
-          
-          localStorage.setItem('yosday_templates', JSON.stringify(State.templates));
-          localStorage.setItem('yosday_history', JSON.stringify(State.history));
-          
-          initApp();
-          alert("Pemulihan Berhasil! Halaman akan memuat ulang data terbaru.");
+        if (content) {
+          showConfirm(
+            "Pemulihan Data",
+            "Berkas cadangan ditemukan! Apakah Anda yakin ingin memulihkan data tersebut? Semua data lokal saat ini akan tertimpa.",
+            () => {
+              restoreBtn.textContent = "⌛ Memulihkan...";
+              restoreBtn.disabled = true;
+              
+              State.templates = content.templates || [];
+              State.history = content.history || {};
+              
+              localStorage.setItem('yosday_templates', JSON.stringify(State.templates));
+              localStorage.setItem('yosday_history', JSON.stringify(State.history));
+              
+              initApp();
+              showToast("Pemulihan Berhasil! Halaman dimuat ulang dengan data terbaru.", "success");
+              
+              restoreBtn.textContent = "📥 Restore dari Cloud";
+              restoreBtn.disabled = false;
+            }
+          );
         }
       } catch (err) {
-        alert("Gagal memulihkan data: " + err.message);
-      } finally {
-        restoreBtn.textContent = "📥 Restore dari Cloud";
-        restoreBtn.disabled = false;
+        showToast("Gagal memulihkan data: " + err.message, "error");
       }
     });
   }
@@ -3508,9 +3825,9 @@ async function handleGoogleLoginSuccess(token, mode) {
       }
       try {
         await backupDataToDriveSilently(token);
-        alert("Backup Berhasil! Data lokal Anda telah diunggah ke Google Drive.");
+        showToast("Backup Berhasil! Data lokal Anda telah diunggah ke Google Drive.", "success");
       } catch (err) {
-        alert("Gagal mencadangkan data ke Google Drive: " + err.message);
+        showToast("Gagal mencadangkan data ke Google Drive: " + err.message, "error");
       } finally {
         if (backupBtn) {
           backupBtn.textContent = "📤 Backup ke Cloud";
@@ -3747,7 +4064,7 @@ async function fetchUserProfile(token) {
 
 async function findBackupFile(token) {
   const query = encodeURIComponent("name = 'yosday_backup.json' and 'appDataFolder' in parents and trashed = false");
-  const url = `https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder&fields=files(id,name)`;
+  const url = `https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder&fields=files(id,name,modifiedTime)`;
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` }
   });
@@ -3897,13 +4214,15 @@ async function backupDataToDriveSilently(token) {
     };
     if (file && file.id) {
       await updateBackupFile(token, file.id, payload);
-      updateSyncStatusIndicator("Tersinkronisasi");
     } else {
-      const fileId = await createBackupFile(token, payload);
-      if (fileId) {
-        updateSyncStatusIndicator("Tersinkronisasi");
-      }
+      await createBackupFile(token, payload);
     }
+    // Fetch updated file metadata to save the cloud modifiedTime locally
+    const fileInfo = await findBackupFile(token);
+    if (fileInfo && fileInfo.modifiedTime) {
+      localStorage.setItem('yosday_last_cloud_sync_time', fileInfo.modifiedTime);
+    }
+    updateSyncStatusIndicator("Tersinkronisasi");
   } catch (err) {
     console.error("Silent auto backup failed:", err);
     updateSyncStatusIndicator("Gagal Sinkronisasi");
@@ -4060,6 +4379,557 @@ function setupNotificationTimer() {
   
   // Run once immediately
   checkAndTriggerNotifications();
+}
+
+// ==========================================================================
+// REAL-TIME CLOUD SYNC POLLING & VISIBILITY OPTIMIZATION
+// ==========================================================================
+let syncPollingInterval = null;
+
+function startCloudSyncPolling() {
+  if (syncPollingInterval) clearInterval(syncPollingInterval);
+  
+  const pollSync = async () => {
+    // Only check when the page is active/visible to save device battery
+    if (document.hidden) return;
+    
+    const token = localStorage.getItem('yosday_google_token');
+    const expiry = localStorage.getItem('yosday_google_token_expiry');
+    const profile = localStorage.getItem('yosday_google_profile');
+    
+    if (!profile || !token || !expiry || Date.now() > parseInt(expiry)) {
+      return; // Disconnected or expired
+    }
+    
+    try {
+      const file = await findBackupFile(token);
+      if (!file) return;
+      
+      const remoteTime = file.modifiedTime || '';
+      const localTime = localStorage.getItem('yosday_last_cloud_sync_time') || '';
+      
+      if (remoteTime && remoteTime !== localTime) {
+        console.log(`Cloud backup is newer (${remoteTime} vs ${localTime}). Pulling updates...`);
+        const content = await readBackupFileContent(token, file.id);
+        if (content) {
+          State.templates = content.templates || [];
+          State.history = content.history || {};
+          
+          localStorage.setItem('yosday_templates', JSON.stringify(State.templates));
+          localStorage.setItem('yosday_history', JSON.stringify(State.history));
+          localStorage.setItem('yosday_last_cloud_sync_time', remoteTime);
+          
+          // Refresh UI
+          checkAndGenerateTodayTasks();
+          renderMascot('sidebar-hoot-mascot-target', calculateWeeklyProgressRate());
+          renderWeeklyStreak();
+          renderDailyVerse();
+          renderTodayProgressSummary();
+          renderDailyTasks();
+          renderDailyJournal();
+          renderCalendarInformation();
+          renderTemplatesCatalog();
+          renderReviewTab();
+          
+          showToast("Data disinkronkan otomatis dari Cloud!", "success");
+        }
+      }
+    } catch (e) {
+      console.warn("Background cloud sync polling failed:", e);
+    }
+  };
+  
+  // Check every 15 seconds
+  syncPollingInterval = setInterval(pollSync, 15000);
+  
+  // Monitor tab focus / active screen states
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      console.log("Tab focused. Triggering immediate cloud sync check...");
+      pollSync();
+    }
+  });
+}
+
+// ==========================================================================
+// DAILY JOURNALING MODULE (RICH-TEXT EDITOR & PREVIEW)
+// ==========================================================================
+let journalEditorOriginalContent = "";
+let journalEditorActiveDate = null;
+
+function stripHtmlTags(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+}
+
+function renderDailyJournal() {
+  const container = document.getElementById('journal-preview-box');
+  if (!container) return;
+  
+  const todayStr = getISODateString(State.currentDate);
+  const todayRecord = State.history[todayStr];
+  const journalContent = (todayRecord && todayRecord.journal) ? todayRecord.journal.trim() : "";
+  
+  if (journalContent) {
+    const plainText = stripHtmlTags(journalContent);
+    container.innerHTML = `
+      <div class="journal-preview-text" id="home-journal-preview">${plainText}</div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">Edit</button>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <p class="text-xs text-muted" style="font-style: italic; margin-bottom: 12px; font-size: 11px;">Ceritakan harimu.</p>
+      <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">Tulis</button>
+    `;
+  }
+  
+  const btn = document.getElementById('btn-home-write-journal');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      openJournalEditor(todayStr);
+    });
+  }
+}
+
+function openJournalEditor(dateStr) {
+  journalEditorActiveDate = dateStr;
+  const modal = document.getElementById('journal-editor-modal');
+  const title = document.getElementById('journal-editor-title');
+  const dateSub = document.getElementById('journal-editor-date');
+  const editor = document.getElementById('journal-rich-editor');
+  if (!modal || !editor) return;
+  
+  const dateObj = new Date(dateStr + 'T00:00:00');
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const formattedDate = dateObj.toLocaleDateString('id-ID', options);
+  
+  if (title) title.textContent = "Jurnal harian";
+  if (dateSub) dateSub.textContent = formattedDate;
+  
+  const record = State.history[dateStr];
+  const content = (record && record.journal) ? record.journal : "";
+  editor.innerHTML = content;
+  journalEditorOriginalContent = content;
+  
+  modal.classList.add('active');
+  editor.focus();
+}
+
+function saveJournal() {
+  const editor = document.getElementById('journal-rich-editor');
+  const dateStr = journalEditorActiveDate;
+  if (!dateStr || !editor) return;
+  
+  const content = editor.innerHTML.trim();
+  
+  if (!State.history[dateStr]) {
+    State.history[dateStr] = {
+      date: dateStr,
+      tasks: [],
+      notes: "",
+      journal: ""
+    };
+  }
+  
+  State.history[dateStr].journal = content;
+  saveHistoryToStorage();
+  
+  renderDailyJournal();
+  
+  // Sync in-view calendar details modal
+  const dayDetailModal = document.getElementById('day-detail-modal');
+  if (dayDetailModal && dayDetailModal.classList.contains('active')) {
+    const detailContentEl = document.getElementById('day-detail-journal-content');
+    if (detailContentEl) {
+      detailContentEl.innerHTML = content || '<span style="font-style: italic; color: var(--text-muted);">Belum ada tulisan jurnal untuk hari ini.</span>';
+    }
+  }
+  
+  document.getElementById('journal-editor-modal').classList.remove('active');
+  showToast("Jurnal harian berhasil disimpan!", "success");
+  
+  triggerAutoCloudBackup();
+}
+
+function closeJournalEditor() {
+  const editor = document.getElementById('journal-rich-editor');
+  if (!editor) return;
+  
+  const currentContent = editor.innerHTML;
+  if (currentContent !== journalEditorOriginalContent) {
+    showConfirm(
+      "Simpan Perubahan?",
+      "Anda memiliki tulisan yang belum disimpan. Simpan perubahan sebelum keluar?",
+      () => {
+        saveJournal();
+      },
+      () => {
+        document.getElementById('journal-editor-modal').classList.remove('active');
+      }
+    );
+  } else {
+    document.getElementById('journal-editor-modal').classList.remove('active');
+  }
+}
+
+// ==========================================================================
+// EXPORT & REPORT GENERATION UTILITY
+// ==========================================================================
+function openExportModal() {
+  const modal = document.getElementById('export-data-modal');
+  const preview = document.getElementById('export-preview-box');
+  if (!modal || !preview) return;
+  
+  const reportText = generateFormattedReportText();
+  preview.textContent = reportText;
+  
+  modal.classList.add('active');
+}
+
+function generateFormattedReportText() {
+  let report = "YOSDAY — PERSONAL LIFE REPORT\n";
+  report += "Generated: " + new Date().toLocaleString('id-ID') + "\n";
+  report += "==================================================\n\n";
+  
+  const sortedDates = Object.keys(State.history).sort();
+  if (sortedDates.length === 0) {
+    report += "Belum ada histori data tercatat.\n";
+    return report;
+  }
+  
+  sortedDates.forEach(dateStr => {
+    const record = State.history[dateStr];
+    const dateObj = new Date(dateStr + 'T00:00:00');
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = dateObj.toLocaleDateString('id-ID', options);
+    
+    report += `### HARI: ${formattedDate} (${dateStr})\n`;
+    
+    const total = record.tasks ? record.tasks.length : 0;
+    const completed = record.tasks ? record.tasks.filter(t => t.completed).length : 0;
+    const completionRate = total === 0 ? 100 : Math.round((completed / total) * 100);
+    
+    report += `Tingkat Penyelesaian: ${completionRate}% (${completed}/${total} Tugas Selesai)\n`;
+    report += `Kondisi Hoot: ${record.hootExpression || 'Normal'}\n`;
+    
+    report += "TUGAS:\n";
+    if (total === 0) {
+      report += "  - Tidak ada tugas.\n";
+    } else {
+      record.tasks.forEach(t => {
+        const check = t.completed ? "[X]" : "[ ]";
+        report += `  ${check} ${t.startTime} - ${t.endTime} : ${t.name} (${t.priority})\n`;
+        if (t.subtasks && t.subtasks.length > 0) {
+          t.subtasks.forEach(st => {
+            const stCheck = st.completed ? "[X]" : "[ ]";
+            report += `      ${stCheck} Subtask: ${st.name}\n`;
+          });
+        }
+      });
+    }
+    
+    if (record.notes) {
+      report += `REFLEKSI & CATATAN: ${record.notes}\n`;
+    }
+    
+    if (record.journal) {
+      const cleanJournal = record.journal.replace(/<\/?[^>]+(>|$)/g, "\n").replace(/\n+/g, "\n").trim();
+      report += `JURNAL HARIAN:\n${cleanJournal}\n`;
+    }
+    
+    report += "--------------------------------------------------\n\n";
+  });
+  
+  report += "Akhir Laporan.\n";
+  report += window.location.origin + window.location.pathname + "\n";
+  return report;
+}
+
+function printReportPDF() {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    showAlert("Akses Terblokir", "Gagal membuka jendela cetak. Pastikan pop-up browser tidak diblokir.");
+    return;
+  }
+  
+  let html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>YOSDAY — Personal Life Report</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+          color: #111827;
+          padding: 40px;
+          line-height: 1.6;
+          background-color: #ffffff;
+        }
+        .print-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 2px solid #111827;
+          padding-bottom: 12px;
+          margin-bottom: 30px;
+        }
+        .logo {
+          font-size: 28px;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+        }
+        .doc-title {
+          font-size: 14px;
+          color: #4b5563;
+          font-weight: 600;
+        }
+        .day-section {
+          margin-bottom: 40px;
+          page-break-inside: avoid;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 24px;
+        }
+        .day-header {
+          font-size: 18px;
+          font-weight: 700;
+          margin-bottom: 10px;
+          color: #111827;
+        }
+        .meta-info {
+          font-size: 13px;
+          color: #4b5563;
+          margin-bottom: 15px;
+        }
+        .tasks-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 15px;
+        }
+        .tasks-table th, .tasks-table td {
+          border: 1px solid #e5e7eb;
+          padding: 8px 12px;
+          text-align: left;
+          font-size: 13px;
+        }
+        .tasks-table th {
+          background-color: #f9fafb;
+          font-weight: 600;
+        }
+        .journal-box {
+          background: #f9fafb;
+          border-left: 3px solid #3b82f6;
+          padding: 12px 16px;
+          font-size: 13px;
+          margin-top: 15px;
+          border-radius: 4px;
+        }
+        .journal-title {
+          font-weight: 600;
+          margin-bottom: 6px;
+        }
+        .print-footer {
+          margin-top: 60px;
+          border-top: 1px solid #111827;
+          padding-top: 16px;
+          text-align: center;
+          font-size: 12px;
+          color: #6b7280;
+        }
+        @media print {
+          body { padding: 0; }
+          .no-print { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="print-header">
+        <span class="logo">YOSDAY</span>
+        <span class="doc-title">PERSONAL LIFE REPORT</span>
+      </div>
+  `;
+  
+  const sortedDates = Object.keys(State.history).sort();
+  if (sortedDates.length === 0) {
+    html += `<p>Belum ada histori data tercatat.</p>`;
+  } else {
+    sortedDates.forEach(dateStr => {
+      const record = State.history[dateStr];
+      const dateObj = new Date(dateStr + 'T00:00:00');
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const formattedDate = dateObj.toLocaleDateString('id-ID', options);
+      
+      const total = record.tasks ? record.tasks.length : 0;
+      const completed = record.tasks ? record.tasks.filter(t => t.completed).length : 0;
+      const completionRate = total === 0 ? 100 : Math.round((completed / total) * 100);
+      
+      html += `
+        <div class="day-section">
+          <div class="day-header">${formattedDate} (${dateStr})</div>
+          <div class="meta-info">
+            <strong>Tingkat Penyelesaian:</strong> ${completionRate}% (${completed}/${total} Selesai) | 
+            <strong>Kondisi Hoot:</strong> ${record.hootExpression || 'Normal'}
+          </div>
+      `;
+      
+      if (total > 0) {
+        html += `
+          <table class="tasks-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">Status</th>
+                <th style="width: 120px;">Waktu</th>
+                <th>Nama Tugas</th>
+                <th style="width: 100px;">Kategori</th>
+                <th style="width: 80px;">Prioritas</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        record.tasks.forEach(t => {
+          const statusText = t.completed ? "Selesai" : "Terlewat";
+          html += `
+            <tr>
+              <td><strong>${statusText}</strong></td>
+              <td>${t.startTime} - ${t.endTime}</td>
+              <td>
+                ${t.name}
+                ${t.subtasks && t.subtasks.length > 0 ? `<br><small style="color: #6b7280;">Subtasks: ${t.subtasks.map(st => `${st.name} (${st.completed ? '✓' : '✕'})`).join(', ')}</small>` : ''}
+              </td>
+              <td>${t.category}</td>
+              <td>${t.priority}</td>
+            </tr>
+          `;
+        });
+        html += `
+            </tbody>
+          </table>
+        `;
+      } else {
+        html += `<p style="font-size: 13px; font-style: italic; color: #6b7280;">Tidak ada tugas terjadwal.</p>`;
+      }
+      
+      if (record.journal) {
+        html += `
+          <div class="journal-box">
+            <div class="journal-title">📝 Jurnal Harian:</div>
+            <div>${record.journal}</div>
+          </div>
+        `;
+      } else if (record.notes) {
+        html += `
+          <div class="journal-box">
+            <div class="journal-title">📝 Catatan Refleksi:</div>
+            <div>${record.notes}</div>
+          </div>
+        `;
+      }
+      
+      html += `</div>`;
+    });
+  }
+  
+  const webUrl = window.location.origin + window.location.pathname;
+  html += `
+      <div class="print-footer">
+        Laporan dibuat otomatis oleh <a href="${webUrl}" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: 600;">YOSDAY</a>
+      </div>
+      <script>
+        window.onload = function() {
+          window.print();
+        }
+      </script>
+    </body>
+    </html>
+  `;
+  
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+
+function downloadReportJSON() {
+  const data = {
+    templates: State.templates,
+    history: State.history
+  };
+  
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'yosday_data_export.json';
+  document.body.appendChild(a);
+  a.click();
+  
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("File data JSON berhasil diunduh!", "success");
+}
+
+function copyReportToClipboard() {
+  const reportText = generateFormattedReportText();
+  navigator.clipboard.writeText(reportText).then(() => {
+    showToast("Laporan berhasil disalin ke clipboard!", "success");
+  }).catch(err => {
+    showToast("Gagal menyalin laporan: " + err, "error");
+  });
+}
+
+function setupJournalAndExportEventListeners() {
+  // Rich Text Editor Commands
+  document.querySelectorAll('.journal-toolbar .toolbar-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const command = btn.getAttribute('data-command');
+      const value = btn.getAttribute('data-value') || null;
+      document.execCommand(command, false, value);
+      document.getElementById('journal-rich-editor').focus();
+    });
+  });
+  
+  // Editor Save/Cancel buttons
+  const saveBtn = document.getElementById('save-journal-btn');
+  if (saveBtn) saveBtn.addEventListener('click', saveJournal);
+  
+  const cancelBtn = document.getElementById('cancel-journal-btn');
+  if (cancelBtn) cancelBtn.addEventListener('click', closeJournalEditor);
+  
+  const closeEditorBtn = document.getElementById('close-journal-editor-btn');
+  if (closeEditorBtn) closeEditorBtn.addEventListener('click', closeJournalEditor);
+  
+  // Export actions
+  const exportDataBtn = document.getElementById('btn-export-data');
+  if (exportDataBtn) exportDataBtn.addEventListener('click', openExportModal);
+  
+  const closeExportBtn = document.getElementById('close-export-modal');
+  if (closeExportBtn) closeExportBtn.addEventListener('click', () => {
+    document.getElementById('export-data-modal').classList.remove('active');
+  });
+  
+  const closeExportFooterBtn = document.getElementById('close-export-footer-btn');
+  if (closeExportFooterBtn) closeExportFooterBtn.addEventListener('click', () => {
+    document.getElementById('export-data-modal').classList.remove('active');
+  });
+  
+  const copyBtn = document.getElementById('btn-export-copy');
+  if (copyBtn) copyBtn.addEventListener('click', copyReportToClipboard);
+  
+  const printBtn = document.getElementById('btn-export-print');
+  if (printBtn) printBtn.addEventListener('click', printReportPDF);
+  
+  const downloadBtn = document.getElementById('btn-export-json');
+  if (downloadBtn) downloadBtn.addEventListener('click', downloadReportJSON);
+}
+
+function initSmartVerseType() {
+  const savedType = localStorage.getItem('yosday_smart_verse_type') || 'quotes';
+  const select = document.getElementById('settings-smart-verse-type');
+  if (select) {
+    select.value = savedType;
+  }
 }
 
 // --- Window load execution init ---
