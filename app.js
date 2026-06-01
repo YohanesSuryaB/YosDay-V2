@@ -2107,7 +2107,15 @@ function openDayDetailModal(dateStr) {
     if (financeList.length === 0) {
       financeContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">Tidak ada catatan keuangan pada hari itu.</span>`;
     } else {
-      financeList.forEach(item => {
+      // Sort with newest transactions displayed first
+      const sortedFinance = [...financeList].sort((a, b) => {
+        const tA = parseInt(a.id.split('-')[1]) || 0;
+        const tB = parseInt(b.id.split('-')[1]) || 0;
+        if (tA !== tB) return tB - tA;
+        return (b.time || '').localeCompare(a.time || '');
+      });
+
+      sortedFinance.forEach(item => {
         const isIncome = item.type === 'pemasukan';
         const typeSign = isIncome ? '+' : '-';
         const amountClass = isIncome ? 'finance-amount income' : 'finance-amount expense';
@@ -4868,6 +4876,7 @@ function startCloudSyncPolling() {
           renderTodayProgressSummary();
           renderDailyTasks();
           renderDailyJournal();
+          renderDailyFinance();
           renderCalendarInformation();
           renderTemplatesCatalog();
           renderReviewTab();
@@ -6180,14 +6189,16 @@ function renderDailyFinance() {
   if (financeList.length === 0) {
     listContainer.innerHTML = `<p class="text-xs text-muted" style="font-style: italic; margin-bottom: 12px; font-size: 11px;">Belum ada transaksi keuangan hari ini.</p>`;
   } else {
-    financeList.forEach(item => {
-      const isIncome = item.type === 'pemasukan';
-      if (isIncome) {
-        totalIncome += Number(item.amount);
-      } else {
-        totalExpense += Number(item.amount);
-      }
+    // Sort with newest transactions displayed first
+    const sortedFinance = [...financeList].sort((a, b) => {
+      const tA = parseInt(a.id.split('-')[1]) || 0;
+      const tB = parseInt(b.id.split('-')[1]) || 0;
+      if (tA !== tB) return tB - tA;
+      return (b.time || '').localeCompare(a.time || '');
+    });
 
+    sortedFinance.forEach(item => {
+      const isIncome = item.type === 'pemasukan';
       const typeSign = isIncome ? '+' : '-';
       const amountClass = isIncome ? 'finance-amount income' : 'finance-amount expense';
       const timeHTML = item.time ? `<div style="font-size: 10px; color: var(--text-muted); text-align: right; margin-top: 2px;">${item.time}</div>` : '';
@@ -6211,6 +6222,16 @@ function renderDailyFinance() {
         </div>
       `;
       listContainer.appendChild(itemRow);
+    });
+
+    // Calculate totals using all items
+    financeList.forEach(item => {
+      const isIncome = item.type === 'pemasukan';
+      if (isIncome) {
+        totalIncome += Number(item.amount);
+      } else {
+        totalExpense += Number(item.amount);
+      }
     });
   }
 

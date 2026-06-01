@@ -2237,6 +2237,22 @@ label {
   border: 1px solid var(--border-color);
   border-radius: 10px;
   font-size: 13px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.detail-task-history-item > div:first-child {
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
+  text-align: left;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.detail-tasks-history-list, #day-detail-finance-list {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .detail-task-history-item.done {
@@ -3616,6 +3632,43 @@ body.focus-mode-active {
     font-size: 9px;
     flex-wrap: wrap;
     gap: 4px;
+  }
+
+  /* Fix Day Detail Modal Overflow on Smartphones */
+  #day-detail-modal .modal-card {
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 16px !important;
+    box-sizing: border-box !important;
+  }
+  #day-detail-modal .modal-overlay {
+    padding: 10px 8px !important;
+    box-sizing: border-box !important;
+  }
+  #day-detail-modal .modal-body {
+    padding: 16px 12px !important;
+    box-sizing: border-box !important;
+  }
+  #day-detail-modal .day-detail-stats-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+  }
+  #day-detail-modal .detail-stat-card {
+    padding: 10px 8px !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+  }
+  #day-detail-modal .detail-stat-card .val {
+    font-size: 16px !important;
+  }
+  #day-detail-modal .detail-stat-card .lbl {
+    font-size: 9px !important;
+  }
+  #day-detail-modal .detail-mascot-preview {
+    width: 32px !important;
+    height: 32px !important;
   }
 }
 
