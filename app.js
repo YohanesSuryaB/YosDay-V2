@@ -4448,7 +4448,13 @@ async function findBackupFile(token) {
   const query = encodeURIComponent("name = 'yosday_backup.json' and 'appDataFolder' in parents and trashed = false");
   const url = `https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder&fields=files(id,name,modifiedTime)`;
   const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` }
+    cache: 'no-store',
+    headers: { 
+      Authorization: `Bearer ${token}`,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
   });
   if (res.ok) {
     const data = await res.json();
@@ -4460,7 +4466,13 @@ async function findBackupFile(token) {
 async function readBackupFileContent(token, fileId) {
   const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
   const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` }
+    cache: 'no-store',
+    headers: { 
+      Authorization: `Bearer ${token}`,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
   });
   if (res.ok) {
     return await res.json();
@@ -4779,6 +4791,7 @@ function setupNotificationTimer() {
 // REAL-TIME CLOUD SYNC POLLING & VISIBILITY OPTIMIZATION
 // ==========================================================================
 let syncPollingInterval = null;
+let isCloudPollingActive = false;
 
 function startCloudSyncPolling() {
   if (syncPollingInterval) clearInterval(syncPollingInterval);
@@ -4786,18 +4799,28 @@ function startCloudSyncPolling() {
   const pollSync = async () => {
     // Only check when the page is active/visible to save device battery
     if (document.hidden) return;
+    if (isCloudPollingActive) {
+      console.log("Cloud sync polling is already in progress, skipping...");
+      return;
+    }
+    
+    isCloudPollingActive = true;
     
     const token = localStorage.getItem('yosday_google_token');
     const expiry = localStorage.getItem('yosday_google_token_expiry');
     const profile = localStorage.getItem('yosday_google_profile');
     
     if (!profile || !token || !expiry || Date.now() > parseInt(expiry)) {
+      isCloudPollingActive = false;
       return; // Disconnected or expired
     }
     
     try {
       const file = await findBackupFile(token);
-      if (!file) return;
+      if (!file) {
+        isCloudPollingActive = false;
+        return;
+      }
       
       const remoteTime = file.modifiedTime || '';
       const localTime = localStorage.getItem('yosday_last_cloud_sync_time') || '';
@@ -4863,11 +4886,13 @@ function startCloudSyncPolling() {
       }
     } catch (e) {
       console.warn("Background cloud sync polling failed:", e);
+    } finally {
+      isCloudPollingActive = false;
     }
   };
   
-  // Check every 3 seconds for fast real-time synchronization
-  syncPollingInterval = setInterval(pollSync, 3000);
+  // Check every 15 seconds for network safety and rate limits
+  syncPollingInterval = setInterval(pollSync, 15000);
   
   // Monitor tab focus / active screen states
   document.addEventListener('visibilitychange', () => {
