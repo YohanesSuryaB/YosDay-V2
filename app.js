@@ -2424,14 +2424,6 @@ function openDayDetailModal(dateStr) {
       };
     }
   }
-  
-  document.getElementById('day-detail-modal').classList.add('active');
-      editJournalBtn.onclick = () => {
-        openJournalEditor(dateStr);
-      };
-    }
-  }
-  
   document.getElementById('day-detail-modal').classList.add('active');
 }
 
