@@ -88,38 +88,7 @@ const State = {
       { text: "Sebab itu, saudara-saudaraku yang kekasih, berdirilah teguh, jangan goyah, dan giatlah selalu dalam pekerjaan Tuhan!", ref: "1 Korintus 15:58" }
     ]
   },
-  smartVersesEn: {
-    ketekunan: [
-      { text: "I can do all things through Christ who strengthens me.", ref: "Philippians 4:13" },
-      { text: "And let us not grow weary of doing good, for in due season we will reap, if we do not give up.", ref: "Galatians 6:9" },
-      { text: "But they who wait for the LORD shall renew their strength; they shall mount up with wings like eagles.", ref: "Isaiah 40:31" }
-    ],
-    disiplin: [
-      { text: "For God gave us a spirit not of fear but of power and love and self-control.", ref: "2 Timothy 1:7" },
-      { text: "For the moment all discipline seems painful rather than pleasant, but later it yields the peaceful fruit of righteousness.", ref: "Hebrews 12:11" },
-      { text: "Go to the ant, O sluggard; consider her ways, and be wise.", ref: "Proverbs 6:6" }
-    ],
-    harapan: [
-      { text: "For I know the plans I have for you, declares the LORD, plans for welfare and not for evil, to give you a future and a hope.", ref: "Jeremiah 29:11" },
-      { text: "But you, take courage! Do not let your hands be weak, for your work shall be rewarded.", ref: "2 Chronicles 15:7" },
-      { text: "Commit your work to the LORD, and your plans will be established.", ref: "Proverbs 16:3" }
-    ],
-    syukur: [
-      { text: "Give thanks in all circumstances; for this is the will of God in Christ Jesus for you.", ref: "1 Thessalonians 5:18" },
-      { text: "Bless the LORD, O my soul, and forget not all his benefits.", ref: "Psalm 103:2" }
-    ],
-    humility: [
-      { text: "Humility goes before honor.", ref: "Proverbs 15:33" },
-      { text: "God opposes the proud but gives grace to the humble.", ref: "James 4:6" }
-    ],
-    konsistensi: [
-      { text: "One who is faithful in a very little is also faithful in much.", ref: "Luke 16:10" },
-      { text: "Therefore, my beloved brothers, be steadfast, immovable, always abounding in the work of the Lord.", ref: "1 Corinthians 15:58" }
-    ]
-  },
   smartQuotes: typeof SMART_QUOTES !== 'undefined' ? SMART_QUOTES : [],
-  smartQuotesEn: typeof SMART_QUOTES_EN !== 'undefined' ? SMART_QUOTES_EN : [],
-  language: 'en',
   focusActiveTaskId: null,
   focusTimerInterval: null,
   focusTimeRemaining: 0,
@@ -128,7 +97,8 @@ const State = {
   googleCalendarEvents: null,
   theme: 'light',
   notificationInterval: 'disabled',
-  notificationTimer: null
+  notificationTimer: null,
+  systemNotificationsEnabled: false
 };
 
 // --- Monkeypatch native window.alert to use our custom showAlert ---
@@ -136,314 +106,7 @@ window.alert = function(msg) {
   showAlert("Notifikasi", msg);
 };
 
-const TRANSLATIONS = {
-  en: {
-    nav_home: "Home Dashboard",
-    nav_custom: "Custom Checklist",
-    nav_review: "Monthly Review",
-    nav_projects: "Projects",
-    nav_settings: "Settings",
-    nav_logout: "Logout Account",
-    nav_login: "Login Account",
-    
-    mode_daily: "Daily Mode",
-    mode_project: "Project Mode",
-    
-    title_streak: "⚡ Weekly Streak",
-    title_summary: "📊 Today's Summary",
-    title_tasks: "📋 Task List",
-    title_quote: "💬 Quote of the Day",
-    title_journal: "📝 Daily Journal",
-    title_finance: "💸 Financial Tracker",
-    title_gcal: "🗓️ Google Calendar",
-    title_calendar: "Calendar",
-    title_concept: "💡 Concept",
-    title_ongoing: "🚀 Ongoing",
-    title_done: "✅ Done",
-    
-    btn_add_task: "Add Task",
-    btn_add_project: "New Project",
-    btn_write: "Write",
-    btn_edit: "Edit",
-    btn_delete: "Delete",
-    btn_save: "Save",
-    btn_cancel: "Cancel",
-    btn_close: "Close",
-    btn_open: "Open",
-    btn_tulis: "Write",
-    btn_buka: "Open",
-    
-    empty_tasks: "No Scheduled Tasks",
-    empty_tasks_desc: "Use the floating button in the bottom right to add a new task.",
-    empty_journal: "Start writing",
-    empty_finance: "No financial records today.",
-    
-    prio_high: "🔴 High",
-    prio_medium: "🟡 Medium",
-    prio_low: "🔵 Low",
-    
-    cat_spiritual: "Spiritual",
-    cat_health: "Health",
-    cat_career: "Career",
-    cat_education: "Education",
-    cat_routine: "Routine",
-    cat_finance: "Finance",
-    cat_social: "Social",
-    cat_other: "Other"
-  },
-  id: {
-    nav_home: "Dashboard Harian",
-    nav_custom: "Daftar Kustom",
-    nav_review: "Review Bulanan",
-    nav_projects: "Projek",
-    nav_settings: "Pengaturan",
-    nav_logout: "Keluar Akun",
-    nav_login: "Masuk Akun",
-    
-    mode_daily: "Mode Harian",
-    mode_project: "Mode Projek",
-    
-    title_streak: "⚡ Weekly Streak",
-    title_summary: "📊 Ringkasan Hari Ini",
-    title_tasks: "📋 Daftar Tugas",
-    title_quote: "💬 Quote Hari Ini",
-    title_journal: "📝 Jurnal Harian",
-    title_finance: "💸 Keuangan Harian",
-    title_gcal: "🗓️ Google Calendar",
-    title_calendar: "Kalender",
-    title_concept: "💡 Konsep",
-    title_ongoing: "🚀 Berjalan",
-    title_done: "✅ Selesai",
-    
-    btn_add_task: "Tambah Tugas",
-    btn_add_project: "Projek Baru",
-    btn_write: "Tulis",
-    btn_edit: "Edit",
-    btn_delete: "Hapus",
-    btn_save: "Simpan",
-    btn_cancel: "Batal",
-    btn_close: "Tutup",
-    btn_open: "Buka",
-    btn_tulis: "Tulis",
-    btn_buka: "Buka",
-    
-    empty_tasks: "Tidak Ada Tugas Terjadwal",
-    empty_tasks_desc: "Gunakan tombol terapung di kanan bawah untuk menambahkan tugas baru secara manual hari ini.",
-    empty_journal: "Mulai tulis",
-    empty_finance: "Tidak ada catatan keuangan pada hari itu.",
-    
-    prio_high: "🔴 Tinggi",
-    prio_medium: "🟡 Sedang",
-    prio_low: "🔵 Rendah",
-    
-    cat_spiritual: "Spiritual",
-    cat_health: "Kesehatan",
-    cat_career: "Karir",
-    cat_education: "Edukasi",
-    cat_routine: "Rutin",
-    cat_finance: "Keuangan",
-    cat_social: "Sosial",
-    cat_other: "Lainnya"
-  }
-};
 
-function getLocalizedCategory(catName) {
-  const lang = State.language || 'en';
-  const keyMap = {
-    'Spiritual': 'cat_spiritual',
-    'Kesehatan': 'cat_health',
-    'Kesehatan/Kebugaran': 'cat_health',
-    'Karir': 'cat_career',
-    'Edukasi': 'cat_education',
-    'Rutin': 'cat_routine',
-    'Keuangan': 'cat_finance',
-    'Sosial': 'cat_social',
-    'Lainnya': 'cat_other'
-  };
-  const translationKey = keyMap[catName];
-  if (translationKey && TRANSLATIONS[lang] && TRANSLATIONS[lang][translationKey]) {
-    return TRANSLATIONS[lang][translationKey];
-  }
-  return catName;
-}
-
-function applyAppLanguage(lang) {
-  State.language = lang;
-  
-  const homeNav = document.querySelector('#nav-home .nav-text-long');
-  if (homeNav) homeNav.textContent = lang === 'id' ? 'Dashboard Harian' : 'Home Dashboard';
-  
-  const customNav = document.querySelector('#nav-custom .nav-text-long');
-  if (customNav) customNav.textContent = lang === 'id' ? 'Daftar Kustom' : 'Custom Checklist';
-  
-  const reviewNav = document.querySelector('#nav-review .nav-text-long');
-  if (reviewNav) reviewNav.textContent = lang === 'id' ? 'Review Bulanan' : 'Monthly Review';
-  
-  const conceptNav = document.querySelector('#nav-concept .nav-text-long');
-  if (conceptNav) conceptNav.textContent = lang === 'id' ? 'Konsep' : 'Concept';
-  
-  const ongoingNav = document.querySelector('#nav-ongoing .nav-text-long');
-  if (ongoingNav) ongoingNav.textContent = lang === 'id' ? 'Berjalan' : 'Ongoing';
-  
-  const doneNav = document.querySelector('#nav-done .nav-text-long');
-  if (doneNav) doneNav.textContent = lang === 'id' ? 'Selesai' : 'Done';
-  
-  const settingsNavText = document.querySelector('#sidebar-settings-btn .settings-text');
-  if (settingsNavText) settingsNavText.textContent = lang === 'id' ? 'Pengaturan' : 'Settings';
-  
-  const modeOptions = document.querySelectorAll('#mode-selector-dropdown .mode-option');
-  if (modeOptions.length >= 2) {
-    modeOptions[0].textContent = lang === 'id' ? 'Mode Harian' : 'Daily Tracker';
-    modeOptions[1].textContent = lang === 'id' ? 'Mode Projek' : 'Project Tracker';
-  }
-  
-  const summaryHeader = document.querySelector('#tab-home .card.glow-blue h4');
-  if (summaryHeader) summaryHeader.textContent = lang === 'id' ? '📊 Ringkasan Hari Ini' : "📊 Today's Summary";
-  
-  const streakHeader = document.querySelector('.concept-streak-section h4');
-  if (streakHeader) streakHeader.textContent = lang === 'id' ? '⚡ Weekly Streak' : '⚡ Weekly Streak';
-  
-  const activeTasksHeader = document.querySelector('.active-tasks-header h3');
-  if (activeTasksHeader) activeTasksHeader.textContent = lang === 'id' ? '📋 Daftar Tugas Hari Ini' : '📋 Today\'s Task List';
-  
-  const journalSecTitle = document.getElementById('journal-section-title');
-  if (journalSecTitle) journalSecTitle.textContent = lang === 'id' ? '📝 Jurnal Hari Ini' : '📝 Daily Journal';
-  
-  const financeSecTitle = document.getElementById('finance-section-title');
-  if (financeSecTitle) financeSecTitle.textContent = lang === 'id' ? '💸 Keuangan Hari Ini' : '💸 Financial Tracker';
-  
-  const calCardTitle = document.getElementById('calendar-card-title');
-  if (calCardTitle) calCardTitle.textContent = lang === 'id' ? 'Kalender' : 'Calendar';
-  
-  const settingsModalTitle = document.querySelector('#settings-modal .modal-title');
-  if (settingsModalTitle) settingsModalTitle.textContent = lang === 'id' ? 'Pengaturan' : 'Settings';
-  
-  const themeTitle = document.querySelector('#settings-modal .settings-section:nth-of-type(1) h4');
-  if (themeTitle) themeTitle.textContent = lang === 'id' ? '🎨 Tema Tampilan' : '🎨 App Theme';
-  const themeDesc = document.querySelector('#settings-modal .settings-section:nth-of-type(1) p');
-  if (themeDesc) themeDesc.textContent = lang === 'id' ? 'Pilih tema tampilan yang nyaman untuk mata Anda.' : 'Choose a visual theme comfortable for your eyes.';
-  const themeLabel = document.querySelector('#settings-modal .toggle-label');
-  if (themeLabel) themeLabel.textContent = lang === 'id' ? 'Mode Terang (Light Mode)' : 'Light Mode';
-  const themeSub = document.querySelector('#settings-modal .toggle-desc');
-  if (themeSub) themeSub.textContent = lang === 'id' ? 'Ubah tampilan aplikasi menjadi mode terang.' : 'Switch application visuals to light mode.';
-
-  const notifTitle = document.querySelector('#settings-modal .settings-section:nth-of-type(2) h4');
-  if (notifTitle) notifTitle.textContent = lang === 'id' ? '🔔 Notifikasi Pengingat Tugas' : '🔔 Task Reminder Notifications';
-  const notifDesc = document.querySelector('#settings-modal .settings-section:nth-of-type(2) p');
-  if (notifDesc) notifDesc.textContent = lang === 'id' ? 'Dapatkan notifikasi desktop/smartphone untuk tugas-tugas aktif yang akan datang dalam interval waktu tertentu.' : 'Receive desktop/mobile notifications for active tasks within a certain interval.';
-  const notifLabel = document.querySelector('#settings-modal .settings-section:nth-of-type(2) label');
-  if (notifLabel) notifLabel.textContent = lang === 'id' ? 'Frekuensi Pengingat' : 'Reminder Frequency';
-
-  const notifOptions = document.querySelectorAll('#settings-notification-interval option');
-  if (notifOptions.length >= 5) {
-    notifOptions[0].textContent = lang === 'id' ? 'Matikan Notifikasi' : 'Disable Notifications';
-    notifOptions[1].textContent = lang === 'id' ? 'Setiap 1 Menit Sekali (Testing)' : 'Every 1 Minute (Testing)';
-    notifOptions[2].textContent = lang === 'id' ? 'Setiap 30 Menit Sekali' : 'Every 30 Minutes';
-    notifOptions[3].textContent = lang === 'id' ? 'Setiap 1 Jam Sekali' : 'Every 1 Hour';
-    notifOptions[4].textContent = lang === 'id' ? 'Setiap 2 Jam Sekali' : 'Every 2 Hours';
-  }
-
-  const verseTitle = document.querySelector('#settings-modal .settings-section:nth-of-type(3) h4');
-  if (verseTitle) verseTitle.textContent = lang === 'id' ? '📖 Smart Verse & Kutipan Tokoh' : '📖 Smart Verse & Quotes';
-  const verseDesc = document.querySelector('#settings-modal .settings-section:nth-of-type(3) p');
-  if (verseDesc) verseDesc.textContent = lang === 'id' ? 'Pilih jenis konten inspirasi harian yang ingin ditampilkan di Home Dashboard Anda.' : 'Choose the type of daily inspiration content to display on your Home Dashboard.';
-  const verseLabel = document.querySelector('#settings-modal .settings-section:nth-of-type(3) label');
-  if (verseLabel) verseLabel.textContent = lang === 'id' ? 'Jenis Konten Harian' : 'Daily Content Type';
-  const verseOptions = document.querySelectorAll('#settings-smart-verse-type option');
-  if (verseOptions.length >= 2) {
-    verseOptions[0].textContent = lang === 'id' ? 'Kata Bijak Tokoh Dunia (Default)' : 'World Figure Quotes (Default)';
-    verseOptions[1].textContent = lang === 'id' ? 'Ayat Alkitab (Bible Verse)' : 'Bible Verse';
-  }
-
-  const langTitle = document.getElementById('setting-lang-title');
-  if (langTitle) langTitle.textContent = lang === 'id' ? '🌐 Bahasa (Language)' : '🌐 Language';
-  const langDesc = document.getElementById('setting-lang-desc');
-  if (langDesc) langDesc.textContent = lang === 'id' ? 'Pilih bahasa aplikasi Anda.' : 'Choose your application language.';
-  const langLabel = document.getElementById('setting-lang-label');
-  if (langLabel) langLabel.textContent = lang === 'id' ? 'Bahasa aplikasi / App Language' : 'App Language';
-
-  const confirmSettingsBtn = document.getElementById('confirm-settings-btn');
-  if (confirmSettingsBtn) confirmSettingsBtn.textContent = lang === 'id' ? 'Simpan & Tutup' : 'Save & Close';
-
-  const taskModalTitle = document.getElementById('task-modal-title');
-  if (taskModalTitle) {
-    if (taskModalTitle.textContent.includes('Tambah') || taskModalTitle.textContent.includes('Add')) {
-      taskModalTitle.textContent = lang === 'id' ? 'Tambah Tugas Baru' : 'Add New Task';
-    } else if (taskModalTitle.textContent.includes('Edit')) {
-      taskModalTitle.textContent = lang === 'id' ? 'Edit Tugas Hari Ini' : 'Edit Today\'s Task';
-    }
-  }
-  
-  const taskNameLabel = document.querySelector('#add-task-form .form-group:nth-of-type(1) label');
-  if (taskNameLabel) taskNameLabel.textContent = lang === 'id' ? 'Nama Tugas' : 'Task Name';
-  const taskStartLabel = document.querySelector('#add-task-form .form-row:nth-of-type(2) .form-group:nth-of-type(1) label');
-  if (taskStartLabel) taskStartLabel.textContent = lang === 'id' ? 'Jam Mulai' : 'Start Time';
-  const taskEndLabel = document.querySelector('#add-task-form .form-row:nth-of-type(2) .form-group:nth-of-type(2) label');
-  if (taskEndLabel) taskEndLabel.textContent = lang === 'id' ? 'Jam Selesai' : 'End Time';
-  const taskCatLabel = document.querySelector('#add-task-form .form-row:nth-of-type(3) .form-group:nth-of-type(1) label');
-  if (taskCatLabel) taskCatLabel.textContent = lang === 'id' ? 'Kategori' : 'Category';
-  const taskPrioLabel = document.querySelector('#add-task-form .form-row:nth-of-type(3) .form-group:nth-of-type(2) label');
-  if (taskPrioLabel) taskPrioLabel.textContent = lang === 'id' ? 'Prioritas' : 'Priority';
-  
-  const taskCatOptions = document.querySelectorAll('#task-category option');
-  if (taskCatOptions.length >= 6) {
-    taskCatOptions[0].textContent = lang === 'id' ? 'Karir & Pekerjaan' : 'Career & Work';
-    taskCatOptions[1].textContent = lang === 'id' ? 'Kesehatan & Olahraga' : 'Health & Fitness';
-    taskCatOptions[2].textContent = lang === 'id' ? 'Spiritual / Ibadah' : 'Spiritual & Worship';
-    taskCatOptions[3].textContent = lang === 'id' ? 'Edukasi & Belajar' : 'Education & Learning';
-    taskCatOptions[4].textContent = lang === 'id' ? 'Sosial & Keluarga' : 'Social & Family';
-    taskCatOptions[5].textContent = lang === 'id' ? 'Rutin / Istirahat' : 'Routine / Rest';
-  }
-  const taskPrioOptions = document.querySelectorAll('#task-priority option');
-  if (taskPrioOptions.length >= 3) {
-    taskPrioOptions[0].textContent = lang === 'id' ? '🔴 Tinggi' : '🔴 High';
-    taskPrioOptions[1].textContent = lang === 'id' ? '🟡 Sedang' : '🟡 Medium';
-    taskPrioOptions[2].textContent = lang === 'id' ? '🔵 Rendah' : '🔵 Low';
-  }
-  
-  const saveTaskBtn = document.getElementById('save-task-modal-btn');
-  if (saveTaskBtn) {
-    if (saveTaskBtn.textContent.includes('Simpan') || saveTaskBtn.textContent.includes('Save')) {
-      saveTaskBtn.textContent = lang === 'id' ? 'Simpan Perubahan' : 'Save Changes';
-    } else {
-      saveTaskBtn.textContent = lang === 'id' ? 'Tambah Tugas' : 'Add Task';
-    }
-  }
-  const cancelTaskBtn = document.getElementById('cancel-task-modal-btn');
-  if (cancelTaskBtn) cancelTaskBtn.textContent = lang === 'id' ? 'Batal' : 'Cancel';
-
-  const detailJournalLabel = document.querySelector('#day-detail-modal .detail-grid-right .card:nth-of-type(2) h5');
-  if (detailJournalLabel) detailJournalLabel.textContent = lang === 'id' ? '📝 Jurnal Harian Terformat' : '📝 Formatted Daily Journal';
-  
-  const detailTasksHeader = document.querySelector('#day-detail-modal .detail-grid-left h4:nth-of-type(1)');
-  if (detailTasksHeader) detailTasksHeader.textContent = lang === 'id' ? '📋 Daftar Tugas Hari Itu' : '📋 Task List of the Day';
-  
-  const detailFinanceHeader = document.querySelector('#day-detail-modal .detail-grid-left h4.day-detail-finance-title');
-  if (detailFinanceHeader) detailFinanceHeader.textContent = lang === 'id' ? '💸 Transaksi Keuangan Hari Itu' : '💸 Financial Transactions';
-  
-  const closeHistoriBtn = document.getElementById('close-day-detail-footer-btn');
-  if (closeHistoriBtn) closeHistoriBtn.textContent = lang === 'id' ? 'Tutup Histori' : 'Close History';
-
-  setupCurrentDateDisplay();
-  renderDailyTasks();
-  renderDailyJournal();
-  renderDailyFinance();
-  renderWeeklyStreak();
-  renderTodayProgressSummary();
-  renderCalendarInformation();
-  renderMonthlyCalendarGrid();
-  renderDailyVerse();
-}
-
-function initLanguage() {
-  const savedLang = localStorage.getItem('yosday_language') || 'en';
-  State.language = savedLang;
-  const select = document.getElementById('settings-language');
-  if (select) {
-    select.value = savedLang;
-  }
-  applyAppLanguage(savedLang);
-}
 
 // --- Custom Notification & Alert System ---
 function showToast(message, type = 'success') {
@@ -576,7 +239,6 @@ function initApp() {
   }
 
   loadDataFromStorage();
-  initLanguage();
   
   // Seed demo data if first-time user and not explicitly cleared
   if (localStorage.getItem('yosday_google_profile') && Object.keys(State.history).length === 0 && localStorage.getItem('yosday_seeded') !== 'cleared') {
@@ -1320,7 +982,6 @@ function calculateCompletionRateForTasks(tasks) {
 
 function checkAndGenerateTodayTasks() {
   const todayStr = getISODateString(State.currentDate);
-  const isEn = State.language === 'en';
   
   if (!State.history[todayStr]) {
     const todayTasks = [];
@@ -1378,10 +1039,10 @@ function checkAndGenerateTodayTasks() {
     const verseType = localStorage.getItem('yosday_smart_verse_type') || 'quotes';
     let pickedVerse = null;
     if (verseType === 'bible') {
-      const verseList = isEn ? State.smartVersesEn['harapan'] : State.smartVerses['harapan'];
+      const verseList = State.smartVerses['harapan'];
       pickedVerse = verseList[Math.floor(Math.random() * verseList.length)];
     } else {
-      const quoteList = isEn ? State.smartQuotesEn : State.smartQuotes || [];
+      const quoteList = State.smartQuotes || [];
       if (quoteList.length > 0) {
         pickedVerse = quoteList[Math.floor(Math.random() * quoteList.length)];
       }
@@ -1465,12 +1126,12 @@ function checkAndGenerateTodayTasks() {
         const verseType = localStorage.getItem('yosday_smart_verse_type') || 'quotes';
         let pickedVerse = null;
         if (verseType === 'bible') {
-          const list = isEn ? State.smartVersesEn['harapan'] : State.smartVerses['harapan'];
+          const list = State.smartVerses['harapan'];
           if (list && list.length > 0) {
             pickedVerse = list[Math.floor(Math.random() * list.length)];
           }
         } else {
-          const quoteList = isEn ? State.smartQuotesEn : State.smartQuotes || [];
+          const quoteList = State.smartQuotes || [];
           if (quoteList.length > 0) {
             pickedVerse = quoteList[Math.floor(Math.random() * quoteList.length)];
           }
@@ -1604,8 +1265,7 @@ function renderDailyVerse() {
   
   const verseType = localStorage.getItem('yosday_smart_verse_type') || 'quotes';
   let pickedVerse = null;
-  const isEn = State.language === 'en';
-  let categoryLabel = isEn ? 'World Figure Quotes' : 'Kutipan Tokoh';
+  let categoryLabel = 'Kutipan Tokoh';
   
   if (verseType === 'bible') {
     const progressRate = calculateWeeklyProgressRate();
@@ -1615,7 +1275,7 @@ function renderDailyVerse() {
     } else if (progressRate >= 0.8) {
       category = Math.random() < 0.5 ? 'syukur' : 'konsistensi';
     }
-    const list = isEn ? State.smartVersesEn[category] : State.smartVerses[category];
+    const list = State.smartVerses[category];
     if (list && list.length > 0) {
       let dayHash = 0;
       for (let i = 0; i < todayStr.length; i++) {
@@ -1626,7 +1286,7 @@ function renderDailyVerse() {
       categoryLabel = `Smart Verse — ${category.toUpperCase()}`;
     }
   } else {
-    const list = isEn ? State.smartQuotesEn : State.smartQuotes;
+    const list = State.smartQuotes;
     if (list && list.length > 0) {
       let dayHash = 0;
       for (let i = 0; i < todayStr.length; i++) {
@@ -1634,7 +1294,7 @@ function renderDailyVerse() {
       }
       const quoteIndex = dayHash % list.length;
       pickedVerse = list[quoteIndex];
-      categoryLabel = isEn ? 'World Figure Quotes' : 'Kutipan Tokoh';
+      categoryLabel = 'Kutipan Tokoh';
     }
   }
   
@@ -2048,18 +1708,14 @@ function toggleSubtasksView(taskId) {
 }
 
 function deleteTask(taskId, targetDateStr) {
-  const isEn = State.language === 'en';
-  const confirmTitle = isEn ? "Delete Task" : "Hapus Tugas";
-  const confirmMsg = isEn ? "Are you sure you want to delete this task?" : "Apakah Anda yakin ingin menghapus tugas ini?";
-  
-  showConfirm(confirmTitle, confirmMsg, () => {
+  showConfirm("Hapus Tugas", "Apakah Anda yakin ingin menghapus tugas ini?", () => {
     const dateStr = targetDateStr || getISODateString(State.currentDate);
     const record = State.history[dateStr];
     if (record) {
       record.tasks = record.tasks.filter(t => t.id !== taskId);
       saveHistoryToStorage();
       recalculateDailyOutputs();
-      showToast(isEn ? "Task deleted successfully!" : "Tugas berhasil dihapus!", "success");
+      showToast("Tugas berhasil dihapus!", "success");
       triggerAutoCloudBackup();
       
       const detailModal = document.getElementById('day-detail-modal');
@@ -2536,15 +2192,12 @@ let currentDetailDate = "";
 function formatFriendlyDate(dateStr) {
   const dateObj = new Date(dateStr + 'T00:00:00');
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  const locale = State.language === 'id' ? 'id-ID' : 'en-US';
-  return dateObj.toLocaleDateString(locale, options);
+  return dateObj.toLocaleDateString('id-ID', options);
 }
 
 function openAddTaskModalForDate(dateStr) {
-  document.getElementById('task-modal-title').textContent = 
-    State.language === 'id' ? `Tambah Tugas (${formatFriendlyDate(dateStr)})` : `Add Task (${formatFriendlyDate(dateStr)})`;
-  document.getElementById('save-task-modal-btn').textContent = 
-    State.language === 'id' ? "Tambah Tugas" : "Add Task";
+  document.getElementById('task-modal-title').textContent = `Tambah Tugas (${formatFriendlyDate(dateStr)})`;
+  document.getElementById('save-task-modal-btn').textContent = "Tambah Tugas";
   document.getElementById('save-task-modal-btn').removeAttribute('data-edit-task-id');
   
   const modalTaskForm = document.getElementById('add-task-form');
@@ -2565,12 +2218,10 @@ function openDayDetailModal(dateStr) {
   if (isFuture) {
     const hasTasks = record && record.tasks && record.tasks.length > 0;
     if (!hasTasks) {
-      const confirmMsg = State.language === 'id' 
-        ? `Ingin menambahkan tugas pada tanggal ${formatFriendlyDate(dateStr)}?`
-        : `Do you want to add a task on ${formatFriendlyDate(dateStr)}?`;
+      const confirmMsg = `Ingin menambahkan tugas pada tanggal ${formatFriendlyDate(dateStr)}?`;
         
       showConfirm(
-        State.language === 'id' ? "Tambah Pengingat Tugas" : "Add Task Reminder",
+        "Tambah Pengingat Tugas",
         confirmMsg,
         () => {
           openAddTaskModalForDate(dateStr);
@@ -2593,10 +2244,9 @@ function openDayDetailModal(dateStr) {
     State.history[dateStr] = record;
   }
   
-  const locale = State.language === 'id' ? 'id-ID' : 'en-US';
-  const formattedDate = new Date(dateStr + 'T00:00:00').toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const formattedDate = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   
-  document.getElementById('day-detail-title').textContent = State.language === 'id' ? `Histori Harian: ${formattedDate}` : `Daily History: ${formattedDate}`;
+  document.getElementById('day-detail-title').textContent = `Histori Harian: ${formattedDate}`;
   
   const modal = document.getElementById('day-detail-modal');
   const tasksContainer = document.getElementById('day-detail-tasks-list');
@@ -2620,12 +2270,12 @@ function openDayDetailModal(dateStr) {
           <div>
             <span class="detail-task-h-title" style="font-weight: 700; color: var(--text-color);">${t.name}</span>
             <div class="detail-task-h-meta" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
-              <span>${timeStr}</span> | <span class="task-category-badge">${getLocalizedCategory(t.category)}</span>
+              <span>${timeStr}</span> | <span class="task-category-badge">${t.category}</span>
             </div>
           </div>
           <div style="display:flex; gap:8px;">
-            <button class="task-action-btn" title="${State.language === 'id' ? 'Edit Tugas' : 'Edit Task'}" onclick="openEditTaskModal('${t.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer;">✏️</button>
-            <button class="task-action-btn btn-delete" title="${State.language === 'id' ? 'Hapus Tugas' : 'Delete Task'}" onclick="deleteTask('${t.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer;">🗑️</button>
+            <button class="task-action-btn" title="Edit Tugas" onclick="openEditTaskModal('${t.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer;">✏️</button>
+            <button class="task-action-btn btn-delete" title="Hapus Tugas" onclick="deleteTask('${t.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer;">🗑️</button>
           </div>
         </div>
       `);
@@ -2634,7 +2284,7 @@ function openDayDetailModal(dateStr) {
     tasksContainer.insertAdjacentHTML('beforeend', `
       <div style="margin-top: 16px; display: flex; justify-content: center;">
         <button class="btn btn-primary" onclick="openAddTaskModalForDate('${dateStr}')" style="padding: 8px 16px; font-size: 13px;">
-          + ${State.language === 'id' ? 'Tambah Tugas' : 'Add Task'}
+          + Tambah Tugas
         </button>
       </div>
     `);
@@ -2654,7 +2304,7 @@ function openDayDetailModal(dateStr) {
     
     tasksContainer.innerHTML = "";
     if (record.tasks.length === 0) {
-      tasksContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">${State.language === 'id' ? 'Tidak ada tugas pada hari itu.' : 'No tasks scheduled that day.'}</span>`;
+      tasksContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">Tidak ada tugas pada hari itu.</span>`;
     } else {
       record.tasks.forEach(t => {
         tasksContainer.insertAdjacentHTML('beforeend', `
@@ -2662,10 +2312,10 @@ function openDayDetailModal(dateStr) {
             <div>
               <span class="detail-task-h-title">${t.name}</span>
               <div class="detail-task-h-meta">
-                <span>⏰ ${t.startTime} - ${t.endTime}</span> | <span class="task-category-badge">${getLocalizedCategory(t.category)}</span>
+                <span>⏰ ${t.startTime} - ${t.endTime}</span> | <span class="task-category-badge">${t.category}</span>
               </div>
             </div>
-            <span class="detail-task-h-status ${t.completed ? 'done' : 'missed'}">${t.completed ? (State.language === 'id' ? 'SELESAI ✔' : 'COMPLETED ✔') : (State.language === 'id' ? 'TERLEWAT ✕' : 'MISSED ✕')}</span>
+            <span class="detail-task-h-status ${t.completed ? 'done' : 'missed'}">${t.completed ? 'SELESAI ✔' : 'TERLEWAT ✕'}</span>
           </div>
         `);
       });
@@ -2679,7 +2329,7 @@ function openDayDetailModal(dateStr) {
     if (!isFuture) {
       const financeList = record.finance || [];
       if (financeList.length === 0) {
-        financeContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">${State.language === 'id' ? 'Tidak ada catatan keuangan pada hari itu.' : 'No financial records today.'}</span>`;
+        financeContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">Tidak ada catatan keuangan pada hari itu.</span>`;
       } else {
         // Calculate totals
         let totalIncome = 0;
@@ -2754,9 +2404,7 @@ function openDayDetailModal(dateStr) {
     if (isFuture) {
       journalContentEl.innerHTML = "";
     } else {
-      journalContentEl.innerHTML = record.journal || (State.language === 'id' 
-        ? '<span style="font-style: italic; color: var(--text-muted);">Belum ada tulisan jurnal untuk hari ini.</span>'
-        : '<span style="font-style: italic; color: var(--text-muted);">No journal entry for this day yet.</span>');
+      journalContentEl.innerHTML = record.journal || '<span style="font-style: italic; color: var(--text-muted);">Belum ada tulisan jurnal untuk hari ini.</span>';
     }
   }
   
@@ -2767,10 +2415,17 @@ function openDayDetailModal(dateStr) {
     } else {
       editJournalBtn.style.display = 'block';
       if (record.journal && record.journal.trim()) {
-        editJournalBtn.textContent = State.language === 'id' ? "Buka" : "Open";
+        editJournalBtn.textContent = "Buka";
       } else {
-        editJournalBtn.textContent = State.language === 'id' ? "Tulis" : "Write";
+        editJournalBtn.textContent = "Tulis";
       }
+      editJournalBtn.onclick = () => {
+        openJournalEditor(dateStr);
+      };
+    }
+  }
+  
+  document.getElementById('day-detail-modal').classList.add('active');
       editJournalBtn.onclick = () => {
         openJournalEditor(dateStr);
       };
@@ -3915,17 +3570,6 @@ function setupEventListeners() {
     });
   }
   
-  // Language Selector Change
-  const languageSelect = document.getElementById('settings-language');
-  if (languageSelect) {
-    languageSelect.addEventListener('change', (e) => {
-      const val = e.target.value;
-      localStorage.setItem('yosday_language', val);
-      applyAppLanguage(val);
-      triggerAutoCloudBackup(); // Sync to cloud!
-    });
-  }
-  
   const btnSeedData = document.getElementById('btn-seed-data');
   if (btnSeedData) {
     btnSeedData.addEventListener('click', () => {
@@ -4516,15 +4160,14 @@ function openEditTaskModal(taskId, targetDateStr) {
   const task = record.tasks.find(t => t.id === taskId);
   if (!task) return;
   
-  const isEn = State.language === 'en';
   const todayStr = getISODateString(State.currentDate);
   if (dateStr === todayStr) {
-    document.getElementById('task-modal-title').textContent = isEn ? "Edit Today's Task" : "Edit Tugas Hari Ini";
+    document.getElementById('task-modal-title').textContent = "Edit Tugas Hari Ini";
   } else {
-    document.getElementById('task-modal-title').textContent = isEn ? `Edit Task (${dateStr})` : `Edit Tugas (${dateStr})`;
+    document.getElementById('task-modal-title').textContent = `Edit Tugas (${dateStr})`;
   }
   
-  document.getElementById('save-task-modal-btn').textContent = isEn ? "Save Changes" : "Simpan Perubahan";
+  document.getElementById('save-task-modal-btn').textContent = "Simpan Perubahan";
   document.getElementById('save-task-modal-btn').setAttribute('data-edit-task-id', taskId);
   
   const modalTaskForm = document.getElementById('add-task-form');
@@ -4802,8 +4445,8 @@ function setupGoogleAuthEventListeners() {
                 if (settings.hiddenCalendarItems) {
                   localStorage.setItem('yosday_hidden_calendar_items', JSON.stringify(settings.hiddenCalendarItems));
                 }
-                if (settings.language) {
-                  localStorage.setItem('yosday_language', settings.language);
+                if (settings.systemNotificationsEnabled !== undefined) {
+                  localStorage.setItem('yosday_system_notifications_enabled', settings.systemNotificationsEnabled);
                 }
               }
               
@@ -4882,12 +4525,8 @@ async function handleGoogleLoginSuccess(token, mode) {
                 State.hiddenCalendarItems = settings.hiddenCalendarItems;
                 localStorage.setItem('yosday_hidden_calendar_items', JSON.stringify(settings.hiddenCalendarItems));
               }
-              if (settings.language) {
-                State.language = settings.language;
-                localStorage.setItem('yosday_language', settings.language);
-                const langSelect = document.getElementById('settings-language');
-                if (langSelect) langSelect.value = settings.language;
-                applyAppLanguage(settings.language);
+              if (settings.systemNotificationsEnabled !== undefined) {
+                localStorage.setItem('yosday_system_notifications_enabled', settings.systemNotificationsEnabled);
               }
             }
             
@@ -4981,8 +4620,8 @@ async function handleGoogleLoginSuccess(token, mode) {
                 if (settings.hiddenCalendarItems) {
                   localStorage.setItem('yosday_hidden_calendar_items', JSON.stringify(settings.hiddenCalendarItems));
                 }
-                if (settings.language) {
-                  localStorage.setItem('yosday_language', settings.language);
+                if (settings.systemNotificationsEnabled !== undefined) {
+                  localStorage.setItem('yosday_system_notifications_enabled', settings.systemNotificationsEnabled);
                 }
               }
               
@@ -5029,10 +4668,7 @@ function logoutGoogleOAuth(quiet = false) {
   renderCalendarInformation();
   
   if (!quiet) {
-    const msg = State.language === 'id' 
-      ? "Akun terputus. Data Anda telah dibersihkan dari perangkat ini."
-      : "Account disconnected. Your data has been cleared from this device.";
-    showToast(msg, "info");
+    showToast("Akun terputus. Data Anda telah dibersihkan dari perangkat ini.", "info");
   }
   
   clearStateAndUI();
@@ -5407,7 +5043,7 @@ async function backupDataToDriveSilently(token) {
         notificationInterval: localStorage.getItem('yosday_notification_interval') || 'disabled',
         smartVerseType: localStorage.getItem('yosday_smart_verse_type') || 'quotes',
         hiddenCalendarItems: JSON.parse(localStorage.getItem('yosday_hidden_calendar_items')) || [],
-        language: State.language || 'en'
+        systemNotificationsEnabled: State.systemNotificationsEnabled
       }
     };
     if (file && file.id) {
@@ -5463,117 +5099,285 @@ function setAppTheme(theme) {
   }
 }
 
+const notifiedStarts = new Set();
+const lastReminderTimes = {};
+
 function initNotifications() {
-  const savedInterval = localStorage.getItem('yosday_notification_interval') || 'disabled';
-  State.notificationInterval = savedInterval;
+  State.notificationInterval = localStorage.getItem('yosday_notification_interval') || 'disabled';
+  State.systemNotificationsEnabled = localStorage.getItem('yosday_system_notifications_enabled') === 'true';
   
   const intervalSelect = document.getElementById('settings-notification-interval');
   if (intervalSelect) {
-    intervalSelect.value = savedInterval;
+    intervalSelect.value = State.notificationInterval;
+    // Rebind to avoid duplication
+    const newSelect = intervalSelect.cloneNode(true);
+    intervalSelect.parentNode.replaceChild(newSelect, intervalSelect);
+    newSelect.addEventListener('change', (e) => {
+      setNotificationInterval(e.target.value);
+    });
   }
-  
-  updateNotificationPermissionWarning();
+
+  const toggleCheckbox = document.getElementById('settings-notifications-enabled');
+  if (toggleCheckbox) {
+    toggleCheckbox.checked = State.systemNotificationsEnabled;
+    const newCheckbox = toggleCheckbox.cloneNode(true);
+    toggleCheckbox.parentNode.replaceChild(newCheckbox, toggleCheckbox);
+    newCheckbox.addEventListener('change', (e) => {
+      setSystemNotificationsEnabled(e.target.checked);
+    });
+  }
+
+  const reqBtn = document.getElementById('btn-request-notification-permission');
+  if (reqBtn) {
+    const newBtn = reqBtn.cloneNode(true);
+    reqBtn.parentNode.replaceChild(newBtn, reqBtn);
+    newBtn.addEventListener('click', () => {
+      requestNotificationPermission();
+    });
+  }
+
+  // Setup Permissions API observer if available
+  if (navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'notifications' }).then(status => {
+      status.onchange = () => {
+        updateSystemNotificationUI();
+        setupNotificationTimer();
+      };
+    }).catch(err => console.log('Permissions query API not fully supported:', err));
+  }
+
+  updateSystemNotificationUI();
   setupNotificationTimer();
+}
+
+function setSystemNotificationsEnabled(enabled) {
+  State.systemNotificationsEnabled = enabled;
+  localStorage.setItem('yosday_system_notifications_enabled', enabled);
+  
+  if (enabled) {
+    requestNotificationPermission();
+  } else {
+    updateSystemNotificationUI();
+    setupNotificationTimer();
+    triggerAutoCloudBackup();
+  }
 }
 
 function setNotificationInterval(interval) {
   State.notificationInterval = interval;
   localStorage.setItem('yosday_notification_interval', interval);
-  
-  if (interval !== 'disabled') {
-    if (typeof Notification !== 'undefined') {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-          updateNotificationPermissionWarning();
-          setupNotificationTimer();
-        });
-      } else {
-        updateNotificationPermissionWarning();
-        setupNotificationTimer();
-      }
-    }
-  } else {
-    setupNotificationTimer();
-  }
-  
-  // Sync changed settings to Google Drive
+  setupNotificationTimer();
   triggerAutoCloudBackup();
 }
 
-function updateNotificationPermissionWarning() {
-  const warningEl = document.getElementById('notification-permission-warning');
-  if (!warningEl) return;
+function requestNotificationPermission() {
+  if (typeof Notification === 'undefined') {
+    showToast("Notifikasi tidak didukung oleh browser ini.", "error");
+    return;
+  }
   
-  if (State.notificationInterval !== 'disabled' && typeof Notification !== 'undefined' && Notification.permission === 'denied') {
-    warningEl.style.display = 'block';
+  Notification.requestPermission().then(permission => {
+    if (permission === 'granted') {
+      showToast("Izin notifikasi sistem berhasil diberikan!", "success");
+      State.systemNotificationsEnabled = true;
+      localStorage.setItem('yosday_system_notifications_enabled', 'true');
+      const toggleCheckbox = document.getElementById('settings-notifications-enabled');
+      if (toggleCheckbox) toggleCheckbox.checked = true;
+    } else {
+      showToast("Izin notifikasi ditolak oleh sistem/browser.", "error");
+      State.systemNotificationsEnabled = false;
+      localStorage.setItem('yosday_system_notifications_enabled', 'false');
+      const toggleCheckbox = document.getElementById('settings-notifications-enabled');
+      if (toggleCheckbox) toggleCheckbox.checked = false;
+    }
+    updateSystemNotificationUI();
+    setupNotificationTimer();
+    triggerAutoCloudBackup();
+  });
+}
+
+function updateSystemNotificationUI() {
+  const badge = document.getElementById('notification-status-badge');
+  const desc = document.getElementById('notification-status-desc');
+  const reqBtn = document.getElementById('btn-request-notification-permission');
+  const toggleCheckbox = document.getElementById('settings-notifications-enabled');
+  
+  if (typeof Notification === 'undefined') {
+    if (badge) {
+      badge.textContent = "Tidak Didukung ✕";
+      badge.style.background = "var(--danger-red)";
+      badge.style.color = "#fff";
+    }
+    if (desc) {
+      desc.textContent = "Browser/perangkat Anda tidak mendukung API notifikasi web. Jika menggunakan iOS Safari, silakan tambahkan web ini ke Layar Utama (Add to Home Screen) untuk menginstal sebagai PWA terlebih dahulu.";
+    }
+    if (reqBtn) reqBtn.style.display = 'none';
+    if (toggleCheckbox) {
+      toggleCheckbox.disabled = true;
+      toggleCheckbox.checked = false;
+    }
+    return;
+  }
+  
+  const perm = Notification.permission;
+  if (toggleCheckbox) {
+    toggleCheckbox.disabled = false;
+  }
+
+  if (perm === 'granted') {
+    if (badge) {
+      badge.textContent = "Diizinkan ✔";
+      badge.style.background = "var(--success-green)";
+      badge.style.color = "#fff";
+    }
+    if (desc) {
+      desc.textContent = "Notifikasi diizinkan secara sistem. Tugas aktif dan pengingat akan muncul di layar pemberitahuan Anda.";
+    }
+    if (reqBtn) reqBtn.style.display = 'none';
+    if (toggleCheckbox) {
+      toggleCheckbox.checked = State.systemNotificationsEnabled;
+    }
+  } else if (perm === 'denied') {
+    if (badge) {
+      badge.textContent = "Diblokir ✕";
+      badge.style.background = "var(--danger-red)";
+      badge.style.color = "#fff";
+    }
+    if (desc) {
+      desc.textContent = "Akses diblokir oleh browser/perangkat. Silakan ketuk ikon gembok/setelan situs di sebelah alamat web browser Anda, lalu izinkan Notifikasi untuk melanjutkan.";
+    }
+    if (reqBtn) reqBtn.style.display = 'none';
+    if (toggleCheckbox) {
+      toggleCheckbox.checked = false;
+    }
   } else {
-    warningEl.style.display = 'none';
+    if (badge) {
+      badge.textContent = "Perlu Izin 🔔";
+      badge.style.background = "rgba(245, 158, 11, 0.2)";
+      badge.style.color = "var(--accent-orange)";
+    }
+    if (desc) {
+      desc.textContent = "YosDay memerlukan izin sistem untuk memunculkan notifikasi tugas. Silakan klik tombol di bawah untuk memberikan akses.";
+    }
+    if (reqBtn) reqBtn.style.display = 'block';
+    if (toggleCheckbox) {
+      toggleCheckbox.checked = false;
+    }
   }
 }
 
-const notifiedItems = new Set();
-
-function checkAndTriggerNotifications() {
-  if (State.notificationInterval === 'disabled') return;
+function showSystemNotification(title, body) {
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
   
-  const minutes = parseInt(State.notificationInterval);
-  const now = new Date();
-  const futureLimit = new Date(now.getTime() + minutes * 60 * 1000);
+  const options = {
+    body: body,
+    icon: "logo.png",
+    badge: "logo.png",
+    tag: "yosday_" + title.replace(/\s+/g, '_'),
+    renotify: true
+  };
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(reg => {
+      reg.showNotification(title, options);
+    }).catch(err => {
+      new Notification(title, options);
+    });
+  } else {
+    new Notification(title, options);
+  }
+}
+
+function checkAndTriggerNotifications() {
+  if (!State.systemNotificationsEnabled) return;
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
   
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
   const todayStr = getISODateString(State.currentDate);
   const todayRecord = State.history[todayStr];
   if (!todayRecord) return;
   
-  const parseTimeToDate = (timeStr) => {
-    const p = timeStr.split(':');
-    const d = new Date();
-    d.setHours(parseInt(p[0]), parseInt(p[1]), 0, 0);
-    return d;
+  const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr) return null;
+    const parts = timeStr.split(':');
+    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
   };
   
-  // Tasks in upcoming interval
-  const upcomingTasks = todayRecord.tasks.filter(t => {
-    if (t.completed) return false;
-    if (notifiedItems.has(t.id)) return false;
-    const startTime = parseTimeToDate(t.startTime);
-    return startTime > now && startTime <= futureLimit;
-  });
+  const nowInMinutes = currentHour * 60 + currentMinute;
   
-  // Reminders starting today
-  const upcomingReminders = State.reminders.filter(r => {
-    if (r.done) return false;
-    const reminderId = `reminder_${r.date}_${r.title}`;
-    if (notifiedItems.has(reminderId)) return false;
+  todayRecord.tasks.forEach(t => {
+    if (t.completed) return;
     
-    // Check if date is today
-    const rDate = new Date(r.date + 'T00:00:00');
-    const startOfToday = new Date();
-    startOfToday.setHours(0,0,0,0);
-    return rDate.getTime() === startOfToday.getTime();
+    const taskStartMinutes = parseTimeToMinutes(t.startTime);
+    const taskEndMinutes = parseTimeToMinutes(t.endTime);
+    
+    // 1. Default Notification: Task starts at exactly the current minute
+    if (taskStartMinutes !== null && taskStartMinutes === nowInMinutes) {
+      const startKey = `${t.id}_start_${todayStr}`;
+      if (!notifiedStarts.has(startKey)) {
+        notifiedStarts.add(startKey);
+        showSystemNotification(
+          "Tugas Memasuki Waktu Kerja",
+          `Waktunya mengerjakan: "${t.name}" (${t.startTime})`
+        );
+        lastReminderTimes[t.id] = now.getTime();
+      }
+    }
+    
+    // 2. Active Running Tasks and Periodic Reminders
+    let isActive = false;
+    if (taskStartMinutes !== null) {
+      if (taskEndMinutes !== null) {
+        isActive = nowInMinutes >= taskStartMinutes && nowInMinutes < taskEndMinutes;
+      } else {
+        isActive = nowInMinutes >= taskStartMinutes;
+      }
+    } else {
+      // Reminders (no schedule time) are active all day
+      isActive = true;
+    }
+    
+    if (isActive) {
+      const lastNotified = lastReminderTimes[t.id];
+      if (!lastNotified) {
+        // First time detecting active task, send active notification
+        lastReminderTimes[t.id] = now.getTime();
+        showSystemNotification(
+          "Tugas Sedang Berjalan",
+          `Ada tugas aktif yang sedang berjalan: "${t.name}"`
+        );
+      } else {
+        // If reminder interval is set, check if interval elapsed to resend reminder
+        if (State.notificationInterval !== 'disabled') {
+          const intervalMinutes = parseInt(State.notificationInterval) || 30;
+          if (now.getTime() - lastNotified >= intervalMinutes * 60 * 1000) {
+            lastReminderTimes[t.id] = now.getTime();
+            showSystemNotification(
+              "Pengingat Tugas Berjalan",
+              `Pengingat: Tugas "${t.name}" masih berjalan.`
+            );
+          }
+        }
+      }
+    }
   });
   
-  let bodyText = "";
-  if (upcomingTasks.length > 0) {
-    bodyText += `Tugas: ${upcomingTasks.map(t => {
-      notifiedItems.add(t.id);
-      return `${t.name} (${t.startTime})`;
-    }).join(', ')}. `;
-  }
-  if (upcomingReminders.length > 0) {
-    bodyText += `Pengingat: ${upcomingReminders.map(r => {
-      const reminderId = `reminder_${r.date}_${r.title}`;
-      notifiedItems.add(reminderId);
-      return r.title;
-    }).join(', ')}.`;
-  }
-  
-  if (bodyText) {
-    new Notification("YosDay Pengingat", {
-      body: bodyText,
-      icon: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%233b82f6%22/><text x=%2250%25%22 y=%2265%25%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22bold%22>🦉</text></svg>"
-    });
-  }
+  // Day Reminders for future/all-day tasks
+  State.reminders.forEach(r => {
+    if (r.done) return;
+    if (r.date === todayStr) {
+      const reminderKey = `reminder_${r.date}_${r.title}`;
+      if (!notifiedStarts.has(reminderKey)) {
+        notifiedStarts.add(reminderKey);
+        showSystemNotification(
+          "Pengingat Hari Ini",
+          `Jangan lupa: ${r.title}`
+        );
+      }
+    }
+  });
 }
 
 function setupNotificationTimer() {
@@ -5582,14 +5386,14 @@ function setupNotificationTimer() {
     State.notificationTimer = null;
   }
   
-  if (State.notificationInterval === 'disabled') return;
+  if (!State.systemNotificationsEnabled) return;
   
-  // Check every 1 minute
+  // Check every 15 seconds to ensure we catch the start-minute precisely
   State.notificationTimer = setInterval(() => {
     checkAndTriggerNotifications();
-  }, 60 * 1000);
+  }, 15 * 1000);
   
-  // Run once immediately
+  // Trigger once immediately
   checkAndTriggerNotifications();
 }
 
@@ -5670,12 +5474,10 @@ function startCloudSyncPolling() {
               State.hiddenCalendarItems = settings.hiddenCalendarItems;
               localStorage.setItem('yosday_hidden_calendar_items', JSON.stringify(settings.hiddenCalendarItems));
             }
-            if (settings.language) {
-              State.language = settings.language;
-              localStorage.setItem('yosday_language', settings.language);
-              const langSelect = document.getElementById('settings-language');
-              if (langSelect) langSelect.value = settings.language;
-              applyAppLanguage(settings.language);
+            if (settings.systemNotificationsEnabled !== undefined) {
+              State.systemNotificationsEnabled = settings.systemNotificationsEnabled;
+              localStorage.setItem('yosday_system_notifications_enabled', settings.systemNotificationsEnabled);
+              initNotifications();
             }
           }
           
@@ -5777,23 +5579,18 @@ function renderDailyJournal() {
   const todayStr = getISODateString(State.currentDate);
   const todayRecord = State.history[todayStr];
   const journalContent = (todayRecord && todayRecord.journal) ? todayRecord.journal.trim() : "";
-  const isEn = State.language === 'en';
-  
   if (journalContent) {
     const plainText = stripHtmlTags(journalContent);
-    const btnLabel = isEn ? 'Open' : 'Buka';
     container.innerHTML = `
       <div class="journal-preview-text" id="home-journal-preview">${plainText}</div>
       <div style="display: flex; gap: 8px;">
-        <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">${btnLabel}</button>
+        <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">Buka</button>
       </div>
     `;
   } else {
-    const placeholder = isEn ? 'Start writing.' : 'Mulai tulis.';
-    const btnLabel = isEn ? 'Write' : 'Tulis';
     container.innerHTML = `
-      <p class="text-xs text-muted" style="font-style: italic; margin-bottom: 12px; font-size: 11px;">${placeholder}</p>
-      <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">${btnLabel}</button>
+      <p class="text-xs text-muted" style="font-style: italic; margin-bottom: 12px; font-size: 11px;">Mulai tulis.</p>
+      <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">Tulis</button>
     `;
   }
   
@@ -7503,5 +7300,15 @@ window.openAddFinanceModal = openAddFinanceModal;
 
 // --- Window load execution init ---
 window.addEventListener('DOMContentLoaded', () => {
+  // Register Service Worker for PWA notifications
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => {
+        console.log('Service Worker registered successfully:', reg);
+      })
+      .catch(err => {
+        console.error('Service Worker registration failed:', err);
+      });
+  }
   initApp();
 });
