@@ -273,6 +273,16 @@ function initApp() {
   // Apply active tracker mode (daily or project) and restore tab silently on load
   applyActiveMode(false);
   history.replaceState({ tab: State.activeTab, mode: State.activeMode }, "", "#" + State.activeTab);
+
+  // Hide PWA Loading Screen with a smooth fade out
+  const loader = document.getElementById('pwa-loading-screen');
+  if (loader) {
+    loader.style.opacity = '0';
+    loader.style.pointerEvents = 'none';
+    setTimeout(() => {
+      loader.style.display = 'none';
+    }, 500);
+  }
 }
 
 function switchTab(tabName, pushState = true) {
@@ -2206,6 +2216,10 @@ function openAddTaskModalForDate(dateStr) {
   
   document.getElementById('modal-subtasks-list').innerHTML = "";
   document.getElementById('add-task-modal').classList.add('active');
+  setTimeout(() => {
+    const taskNameInput = document.getElementById('task-name');
+    if (taskNameInput) taskNameInput.focus();
+  }, 150);
 }
 
 function openDayDetailModal(dateStr) {
@@ -4179,6 +4193,10 @@ function openEditTaskModal(taskId, targetDateStr) {
   }
   
   document.getElementById('add-task-modal').classList.add('active');
+  setTimeout(() => {
+    const taskNameInput = document.getElementById('task-name');
+    if (taskNameInput) taskNameInput.focus();
+  }, 150);
 }
 
 // ==========================================================================
@@ -4189,6 +4207,73 @@ const GOOGLE_CLIENT_ID = '5925055907-ehdklak5fnphnjrmjb77gpnkjkaa6726.apps.googl
 let tokenClient;
 let autoBackupTimeout = null;
 let googleAuthMode = 'silent-load';
+
+function generatePWASessionCode() {
+  const profile = localStorage.getItem('yosday_google_profile');
+  const token = localStorage.getItem('yosday_google_token');
+  const expiry = localStorage.getItem('yosday_google_token_expiry');
+  if (!profile) return '';
+  
+  try {
+    const data = {
+      profile: JSON.parse(profile),
+      token: token || '',
+      expiry: expiry || ''
+    };
+    return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  } catch (e) {
+    console.error("Failed to generate PWA session code", e);
+    return '';
+  }
+}
+
+function applyPWASessionCode(codeStr) {
+  try {
+    const rawData = atob(codeStr.trim());
+    const data = JSON.parse(decodeURIComponent(escape(rawData)));
+    if (!data.profile || !data.token) {
+      return false;
+    }
+    
+    localStorage.setItem('yosday_google_profile', JSON.stringify(data.profile));
+    localStorage.setItem('yosday_google_token', data.token);
+    localStorage.setItem('yosday_google_token_expiry', data.expiry || (Date.now() + 3600000).toString());
+    
+    // Seed set to cleared to prevent overwritten default data
+    localStorage.setItem('yosday_seeded', 'cleared');
+    
+    return true;
+  } catch (e) {
+    console.error("Error applying PWA session code", e);
+    return false;
+  }
+}
+
+function checkPWATransferUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('from_pwa')) {
+    // Open Google Login modal automatically
+    const loginModal = document.getElementById('google-login-modal');
+    if (loginModal) loginModal.classList.add('active');
+    
+    const profile = localStorage.getItem('yosday_google_profile');
+    const transferBox = document.getElementById('pwa-transfer-box');
+    if (transferBox) {
+      transferBox.style.display = 'block';
+      const codeInput = document.getElementById('pwa-session-code-input');
+      if (profile) {
+        if (codeInput) {
+          codeInput.value = generatePWASessionCode();
+        }
+      } else {
+        // Show notice to login first
+        if (codeInput) {
+          codeInput.value = 'Silakan login Google dahulu...';
+        }
+      }
+    }
+  }
+}
 
 function initGoogleSync() {
   setupGoogleAuthEventListeners();
@@ -4229,6 +4314,22 @@ function initGoogleSync() {
   } else {
     logoutGoogleOAuth(true);
   }
+
+  // PWA standalone check and UI adjustment
+  const isPWA = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  const pasteSection = document.getElementById('pwa-paste-section');
+  if (isPWA) {
+    if (pasteSection) {
+      pasteSection.style.display = profile ? 'none' : 'block';
+    }
+  } else {
+    if (pasteSection) {
+      pasteSection.style.display = 'none';
+    }
+  }
+
+  // Run PWA url parameter checks
+  checkPWATransferUrl();
 }
 
 function initializeTokenClient() {
@@ -4327,6 +4428,19 @@ function setupGoogleAuthEventListeners() {
   const loginBtn = document.getElementById('btn-google-login');
   if (loginBtn) {
     loginBtn.addEventListener('click', () => {
+      const isPWA = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+      if (isPWA) {
+        const webUrl = window.location.origin + window.location.pathname + '?from_pwa=true';
+        showConfirm(
+          "Login via Browser Utama",
+          "Untuk kemudahan dan keamanan, Anda akan diarahkan ke browser Safari/Chrome utama agar dapat memilih akun Google yang tersambung di sana secara otomatis. Lanjutkan?",
+          () => {
+            window.open(webUrl, '_blank');
+          }
+        );
+        return;
+      }
+
       if (typeof google === 'undefined') {
         showAlert("Koneksi Google Gagal", "Gagal memuat pustaka Google Identity Services. Periksa koneksi internet Anda atau matikan ad-blocker.");
         return;
@@ -4335,6 +4449,73 @@ function setupGoogleAuthEventListeners() {
       initializeTokenClient();
       if (tokenClient) {
         tokenClient.requestAccessToken();
+      }
+    });
+  }
+
+  // Copy Session Code in Browser View
+  const copySessionBtn = document.getElementById('btn-copy-session');
+  if (copySessionBtn) {
+    copySessionBtn.addEventListener('click', () => {
+      const code = generatePWASessionCode();
+      if (code) {
+        navigator.clipboard.writeText(code)
+          .then(() => showToast("Kode sesi berhasil disalin!", "success"))
+          .catch(() => showToast("Gagal menyalin kode sesi.", "error"));
+      } else {
+        showToast("Anda harus login Google terlebih dahulu.", "warning");
+      }
+    });
+  }
+
+  // Copy PWA Session Code inside the transfer box
+  const copyPwaSessionCodeBtn = document.getElementById('btn-copy-pwa-session-code');
+  if (copyPwaSessionCodeBtn) {
+    copyPwaSessionCodeBtn.addEventListener('click', () => {
+      const codeInput = document.getElementById('pwa-session-code-input');
+      if (codeInput && codeInput.value && codeInput.value !== 'Silakan login Google dahulu...') {
+        navigator.clipboard.writeText(codeInput.value)
+          .then(() => showToast("Kode sesi PWA berhasil disalin!", "success"))
+          .catch(() => showToast("Gagal menyalin kode.", "error"));
+      }
+    });
+  }
+
+  // Redirect to Browser Login inside PWA View
+  const pwaRedirectBtn = document.getElementById('btn-pwa-redirect-login');
+  if (pwaRedirectBtn) {
+    pwaRedirectBtn.addEventListener('click', () => {
+      const webUrl = window.location.origin + window.location.pathname + '?from_pwa=true';
+      window.open(webUrl, '_blank');
+    });
+  }
+
+  // Submit Pasted PWA code inside PWA View
+  const pwaSubmitCodeBtn = document.getElementById('btn-pwa-submit-code');
+  if (pwaSubmitCodeBtn) {
+    pwaSubmitCodeBtn.addEventListener('click', () => {
+      const pastedCodeInput = document.getElementById('pwa-pasted-code');
+      if (!pastedCodeInput || !pastedCodeInput.value.trim()) {
+        showToast("Kolom kode sesi kosong.", "warning");
+        return;
+      }
+      
+      const success = applyPWASessionCode(pastedCodeInput.value.trim());
+      if (success) {
+        showToast("Berhasil terhubung! Mengunduh data dari cloud...", "success");
+        document.getElementById('google-login-modal').classList.remove('active');
+        
+        // Refresh sync state
+        initGoogleSync();
+        
+        // Trigger manual check immediately to pull the user's templates and history
+        if (typeof window.triggerCloudSyncImmediately === 'function') {
+          window.triggerCloudSyncImmediately();
+        } else {
+          initApp();
+        }
+      } else {
+        showAlert("Koneksi Gagal", "Format kode sesi tidak valid. Pastikan Anda menyalin kode dengan benar dari browser utama.");
       }
     });
   }
@@ -4464,14 +4645,29 @@ async function handleGoogleLoginSuccess(token, mode) {
     
     localStorage.setItem('yosday_google_profile', JSON.stringify(profile));
     
+    // Update PWA session transfer box if URL param matches
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('from_pwa')) {
+      const transferBox = document.getElementById('pwa-transfer-box');
+      if (transferBox) {
+        transferBox.style.display = 'block';
+        const codeInput = document.getElementById('pwa-session-code-input');
+        if (codeInput) {
+          codeInput.value = generatePWASessionCode();
+        }
+      }
+    }
+    
     // Toggle UI views
     renderGoogleSignedInUI(profile);
 
-    // Auto close modal immediately on successful interactive login
+    // Auto close modal immediately on successful interactive login (if not from PWA)
     if (mode === 'interactive') {
-      const loginModal = document.getElementById('google-login-modal');
-      if (loginModal) {
-        loginModal.classList.remove('active');
+      if (!urlParams.has('from_pwa')) {
+        const loginModal = document.getElementById('google-login-modal');
+        if (loginModal) {
+          loginModal.classList.remove('active');
+        }
       }
     }
 
@@ -5502,6 +5698,9 @@ function startCloudSyncPolling() {
   // Check every 15 seconds for network safety and rate limits
   syncPollingInterval = setInterval(pollSync, 15000);
   
+  // Trigger immediate sync check on startup
+  pollSync();
+  
   // Monitor tab focus / active screen states
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
@@ -5509,6 +5708,9 @@ function startCloudSyncPolling() {
       pollSync();
     }
   });
+  
+  // Expose pollSync globally to trigger sync manually on PWA login
+  window.triggerCloudSyncImmediately = pollSync;
 }
 
 // ==========================================================================
@@ -7204,6 +7406,10 @@ function openAddFinanceModal(type) {
   populateFinanceCategories(type);
   
   document.getElementById('finance-form-modal').classList.add('active');
+  setTimeout(() => {
+    const amountInput = document.getElementById('finance-amount');
+    if (amountInput) amountInput.focus();
+  }, 150);
 }
 
 function populateFinanceCategories(type, selectedValue = '') {
@@ -7248,6 +7454,10 @@ function openEditFinanceModal(itemId) {
   populateFinanceCategories(item.type, item.category);
   
   document.getElementById('finance-form-modal').classList.add('active');
+  setTimeout(() => {
+    const amountInput = document.getElementById('finance-amount');
+    if (amountInput) amountInput.focus();
+  }, 150);
 }
 
 function confirmDeleteFinance(itemId) {
@@ -7297,10 +7507,21 @@ window.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('service-worker.js')
       .then(reg => {
         console.log('Service Worker registered successfully:', reg);
+        // Force checking for updates immediately on load
+        reg.update();
       })
       .catch(err => {
         console.error('Service Worker registration failed:', err);
       });
+
+    // Reload page when new service worker takes control
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
   }
   initApp();
 });

@@ -23,8 +23,65 @@
   <meta name="theme-color" content="#030712">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <style>
+    #pwa-loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #020617;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    body.light-theme #pwa-loading-screen {
+      background-color: #f8fafc;
+    }
+    .pwa-loader-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 40px;
+      font-weight: 800;
+      color: #3b82f6;
+      letter-spacing: 4px;
+      margin-bottom: 24px;
+      animation: pulseTitle 2s infinite ease-in-out;
+    }
+    .pwa-loader-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(59, 130, 246, 0.15);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spinLoader 1s linear infinite;
+    }
+    @keyframes pulseTitle {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.04); opacity: 1; text-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+    }
+    @keyframes spinLoader {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body class="light-theme">
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('yosday_theme') || 'light';
+      if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+      } else {
+        document.body.classList.remove('light-theme');
+      }
+    })();
+  </script>
+  <div id="pwa-loading-screen">
+    <div class="pwa-loader-title">YOSDAY</div>
+    <div class="pwa-loader-spinner"></div>
+  </div>
 
   <!-- Main Grid Wrapper -->
   <div class="app-container">
@@ -726,6 +783,20 @@
       <div class="modal-body text-center">
         <h1 style="font-family: 'Outfit', sans-serif; font-size: 38px; font-weight: 800; color: var(--accent-blue); margin-bottom: 24px; letter-spacing: 2px;">YOSDAY</h1>
         
+        <!-- SPECIAL PWA SESSION TRANSFER NOTIFICATION -->
+        <div id="pwa-transfer-box" style="display: none; background: rgba(59, 130, 246, 0.08); border: 1px solid var(--accent-blue); padding: 14px; border-radius: 12px; margin-bottom: 16px; text-align: left;">
+          <h4 class="text-sm font-bold" style="color: var(--accent-blue); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            🔑 <span>Hubungkan Sesi ke PWA</span>
+          </h4>
+          <p class="text-xs text-secondary" style="margin-bottom: 8px; line-height: 1.4; font-size: 11px;">
+            Salin kode sesi di bawah ini, lalu buka aplikasi pintasan (PWA) YOSDAY Anda di HP, buka menu login, lalu tempel kode untuk masuk otomatis.
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="pwa-session-code-input" readonly style="flex-grow: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); font-size: 11px; outline: none;" onclick="this.select()">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-copy-pwa-session-code" style="padding: 6px 12px; font-size: 11px;">Salin</button>
+          </div>
+        </div>
+
         <!-- SIGNED OUT VIEW -->
         <div id="google-signed-out-view" style="display: block; width: 100%;">
           <button class="btn btn-primary btn-glow-blue" id="btn-google-login" style="margin: 0 auto; max-width: 280px; width: 100%; padding: 14px 20px; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px;">
@@ -737,6 +808,23 @@
             </svg>
             <span>Login Google</span>
           </button>
+
+          <!-- PWA MANUAL PASTE SECTION -->
+          <div id="pwa-paste-section" style="display: none; margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border-color); text-align: left;">
+            <h4 class="text-sm font-bold" style="margin-bottom: 4px; color: var(--accent-blue); font-size: 13px;">🔑 Masuk via Browser Utama</h4>
+            <p class="text-xs text-secondary" style="margin-bottom: 12px; line-height: 1.4; font-size: 11px;">
+              Karena batasan sistem PWA, silakan login di browser utama terlebih dahulu, lalu salin kode sesi dan tempelkan di bawah ini.
+            </p>
+            <button type="button" class="btn btn-secondary-outline btn-sm" id="btn-pwa-redirect-login" style="width: 100%; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; padding: 8px;">
+              <span>🌐 Buka Browser untuk Login</span>
+            </button>
+            
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">Tempel Kode Sesi:</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="pwa-pasted-code" placeholder="Tempel kode di sini..." style="flex-grow: 1; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-dark); color: var(--text-primary); font-size: 12px; outline: none;">
+              <button type="button" class="btn btn-success btn-sm" id="btn-pwa-submit-code" style="padding: 8px 12px;">Hubungkan</button>
+            </div>
+          </div>
         </div>
 
         <!-- SIGNED IN VIEW -->
@@ -754,8 +842,11 @@
             <h4 class="text-sm font-bold margin-bottom-sm">🔄 Sinkronisasi Google Drive</h4>
             <p class="text-xs text-secondary margin-bottom-sm">Pilih aksi di bawah untuk mencadangkan data lokal ke cloud atau memulihkan data dari cloud.</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-              <button class="btn btn-success btn-sm" id="btn-cloud-backup" title="Kirim data dari perangkat ini untuk menimpa file di cloud Google Drive">📤 Backup ke Cloud</button>
-              <button class="btn btn-warning btn-sm" id="btn-cloud-restore" title="Ambil data dari Google Drive untuk menggantikan data di perangkat ini">📥 Restore dari Cloud</button>
+              <button type="button" class="btn btn-success btn-sm" id="btn-cloud-backup" title="Kirim data dari perangkat ini untuk menimpa file di cloud Google Drive">📤 Backup ke Cloud</button>
+              <button type="button" class="btn btn-warning btn-sm" id="btn-cloud-restore" title="Ambil data dari Google Drive untuk menggantikan data di perangkat ini">📥 Restore dari Cloud</button>
+            </div>
+            <div style="margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 12px;">
+              <button type="button" class="btn btn-secondary-outline btn-sm" id="btn-copy-session" style="width: 100%; font-size: 11px; padding: 8px;" title="Salin kode sesi login Anda untuk digunakan di aplikasi PWA standalone">🔑 Salin Kode Sesi PWA</button>
             </div>
             <p class="text-xs text-muted margin-top-sm" style="text-align: center;"><em>Sistem mencadangkan data secara otomatis setiap kali Anda melakukan perubahan.</em></p>
           </div>
