@@ -1,4 +1,4 @@
-﻿const SMART_QUOTES = [
+const SMART_QUOTES = [
   { text: "Satu-satunya cara untuk melakukan pekerjaan hebat adalah dengan mencintai apa yang Anda lakukan.", ref: "Steve Jobs" },
   { text: "Waktu Anda terbatas, jadi jangan sia-siakan dengan menjalani hidup orang lain.", ref: "Steve Jobs" },
   { text: "Inovasi membedakan antara seorang pemimpin dan pengikut.", ref: "Steve Jobs" },
@@ -500,4 +500,28 @@
   { text: "Jangan berhenti ketika Anda lelah. Berhentilah ketika Anda selesai. (Pelajaran hidup tentang kedisiplinan dan perjuangan) Helen Keller", ref: "" },
   { text: "Bangun dengan tekad. Pergi tidur dengan kepuasan. (Pelajaran hidup tentang kedisiplinan dan perjuangan) Mark Twain", ref: "" },
 ];
+
+const SMART_QUOTES_EN = [
+  { text: "The only way to do great work is to love what you do.", ref: "Steve Jobs" },
+  { text: "Your time is limited, so don't waste it living someone else's life.", ref: "Steve Jobs" },
+  { text: "Innovation distinguishes between a leader and a follower.", ref: "Steve Jobs" },
+  { text: "Stay hungry, stay foolish.", ref: "Steve Jobs" },
+  { text: "If you want to live a happy life, tie it to a goal, not to people or things.", ref: "Albert Einstein" },
+  { text: "In the middle of difficulty lies opportunity.", ref: "Albert Einstein" },
+  { text: "A person who never made a mistake never tried anything new.", ref: "Albert Einstein" },
+  { text: "Try not to become a man of success, but rather try to become a man of value.", ref: "Albert Einstein" },
+  { text: "The secret of getting ahead is getting started.", ref: "Mark Twain" },
+  { text: "Kindness is the language which the deaf can hear and the blind can see.", ref: "Mark Twain" },
+  { text: "Courage is resistance to fear, mastery of fear, not absence of fear.", ref: "Mark Twain" },
+  { text: "Action is the foundational key to all success.", ref: "Pablo Picasso" },
+  { text: "Your future is created by what you do today, not tomorrow.", ref: "Robert Kiyosaki" },
+  { text: "Discipline is the bridge between goals and accomplishment.", ref: "Jim Rohn" },
+  { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", ref: "Winston Churchill" },
+  { text: "The best way to predict the future is to create it.", ref: "Peter Drucker" },
+  { text: "Believe you can and you're halfway there.", ref: "Theodore Roosevelt" },
+  { text: "Do what you can, with what you have, where you are.", ref: "Theodore Roosevelt" },
+  { text: "It always seems impossible until it's done.", ref: "Nelson Mandela" },
+  { text: "It does not matter how slowly you go as long as you do not stop.", ref: "Confucius" }
+];
+
 

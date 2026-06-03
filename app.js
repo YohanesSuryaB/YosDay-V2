@@ -88,7 +88,38 @@ const State = {
       { text: "Sebab itu, saudara-saudaraku yang kekasih, berdirilah teguh, jangan goyah, dan giatlah selalu dalam pekerjaan Tuhan!", ref: "1 Korintus 15:58" }
     ]
   },
+  smartVersesEn: {
+    ketekunan: [
+      { text: "I can do all things through Christ who strengthens me.", ref: "Philippians 4:13" },
+      { text: "And let us not grow weary of doing good, for in due season we will reap, if we do not give up.", ref: "Galatians 6:9" },
+      { text: "But they who wait for the LORD shall renew their strength; they shall mount up with wings like eagles.", ref: "Isaiah 40:31" }
+    ],
+    disiplin: [
+      { text: "For God gave us a spirit not of fear but of power and love and self-control.", ref: "2 Timothy 1:7" },
+      { text: "For the moment all discipline seems painful rather than pleasant, but later it yields the peaceful fruit of righteousness.", ref: "Hebrews 12:11" },
+      { text: "Go to the ant, O sluggard; consider her ways, and be wise.", ref: "Proverbs 6:6" }
+    ],
+    harapan: [
+      { text: "For I know the plans I have for you, declares the LORD, plans for welfare and not for evil, to give you a future and a hope.", ref: "Jeremiah 29:11" },
+      { text: "But you, take courage! Do not let your hands be weak, for your work shall be rewarded.", ref: "2 Chronicles 15:7" },
+      { text: "Commit your work to the LORD, and your plans will be established.", ref: "Proverbs 16:3" }
+    ],
+    syukur: [
+      { text: "Give thanks in all circumstances; for this is the will of God in Christ Jesus for you.", ref: "1 Thessalonians 5:18" },
+      { text: "Bless the LORD, O my soul, and forget not all his benefits.", ref: "Psalm 103:2" }
+    ],
+    humility: [
+      { text: "Humility goes before honor.", ref: "Proverbs 15:33" },
+      { text: "God opposes the proud but gives grace to the humble.", ref: "James 4:6" }
+    ],
+    konsistensi: [
+      { text: "One who is faithful in a very little is also faithful in much.", ref: "Luke 16:10" },
+      { text: "Therefore, my beloved brothers, be steadfast, immovable, always abounding in the work of the Lord.", ref: "1 Corinthians 15:58" }
+    ]
+  },
   smartQuotes: typeof SMART_QUOTES !== 'undefined' ? SMART_QUOTES : [],
+  smartQuotesEn: typeof SMART_QUOTES_EN !== 'undefined' ? SMART_QUOTES_EN : [],
+  language: 'en',
   focusActiveTaskId: null,
   focusTimerInterval: null,
   focusTimeRemaining: 0,
@@ -104,6 +135,315 @@ const State = {
 window.alert = function(msg) {
   showAlert("Notifikasi", msg);
 };
+
+const TRANSLATIONS = {
+  en: {
+    nav_home: "Home Dashboard",
+    nav_custom: "Custom Checklist",
+    nav_review: "Monthly Review",
+    nav_projects: "Projects",
+    nav_settings: "Settings",
+    nav_logout: "Logout Account",
+    nav_login: "Login Account",
+    
+    mode_daily: "Daily Mode",
+    mode_project: "Project Mode",
+    
+    title_streak: "⚡ Weekly Streak",
+    title_summary: "📊 Today's Summary",
+    title_tasks: "📋 Task List",
+    title_quote: "💬 Quote of the Day",
+    title_journal: "📝 Daily Journal",
+    title_finance: "💸 Financial Tracker",
+    title_gcal: "🗓️ Google Calendar",
+    title_calendar: "Calendar",
+    title_concept: "💡 Concept",
+    title_ongoing: "🚀 Ongoing",
+    title_done: "✅ Done",
+    
+    btn_add_task: "Add Task",
+    btn_add_project: "New Project",
+    btn_write: "Write",
+    btn_edit: "Edit",
+    btn_delete: "Delete",
+    btn_save: "Save",
+    btn_cancel: "Cancel",
+    btn_close: "Close",
+    btn_open: "Open",
+    btn_tulis: "Write",
+    btn_buka: "Open",
+    
+    empty_tasks: "No Scheduled Tasks",
+    empty_tasks_desc: "Use the floating button in the bottom right to add a new task.",
+    empty_journal: "Start writing",
+    empty_finance: "No financial records today.",
+    
+    prio_high: "🔴 High",
+    prio_medium: "🟡 Medium",
+    prio_low: "🔵 Low",
+    
+    cat_spiritual: "Spiritual",
+    cat_health: "Health",
+    cat_career: "Career",
+    cat_education: "Education",
+    cat_routine: "Routine",
+    cat_finance: "Finance",
+    cat_social: "Social",
+    cat_other: "Other"
+  },
+  id: {
+    nav_home: "Dashboard Harian",
+    nav_custom: "Daftar Kustom",
+    nav_review: "Review Bulanan",
+    nav_projects: "Projek",
+    nav_settings: "Pengaturan",
+    nav_logout: "Keluar Akun",
+    nav_login: "Masuk Akun",
+    
+    mode_daily: "Mode Harian",
+    mode_project: "Mode Projek",
+    
+    title_streak: "⚡ Weekly Streak",
+    title_summary: "📊 Ringkasan Hari Ini",
+    title_tasks: "📋 Daftar Tugas",
+    title_quote: "💬 Quote Hari Ini",
+    title_journal: "📝 Jurnal Harian",
+    title_finance: "💸 Keuangan Harian",
+    title_gcal: "🗓️ Google Calendar",
+    title_calendar: "Kalender",
+    title_concept: "💡 Konsep",
+    title_ongoing: "🚀 Berjalan",
+    title_done: "✅ Selesai",
+    
+    btn_add_task: "Tambah Tugas",
+    btn_add_project: "Projek Baru",
+    btn_write: "Tulis",
+    btn_edit: "Edit",
+    btn_delete: "Hapus",
+    btn_save: "Simpan",
+    btn_cancel: "Batal",
+    btn_close: "Tutup",
+    btn_open: "Buka",
+    btn_tulis: "Tulis",
+    btn_buka: "Buka",
+    
+    empty_tasks: "Tidak Ada Tugas Terjadwal",
+    empty_tasks_desc: "Gunakan tombol terapung di kanan bawah untuk menambahkan tugas baru secara manual hari ini.",
+    empty_journal: "Mulai tulis",
+    empty_finance: "Tidak ada catatan keuangan pada hari itu.",
+    
+    prio_high: "🔴 Tinggi",
+    prio_medium: "🟡 Sedang",
+    prio_low: "🔵 Rendah",
+    
+    cat_spiritual: "Spiritual",
+    cat_health: "Kesehatan",
+    cat_career: "Karir",
+    cat_education: "Edukasi",
+    cat_routine: "Rutin",
+    cat_finance: "Keuangan",
+    cat_social: "Sosial",
+    cat_other: "Lainnya"
+  }
+};
+
+function getLocalizedCategory(catName) {
+  const lang = State.language || 'en';
+  const keyMap = {
+    'Spiritual': 'cat_spiritual',
+    'Kesehatan': 'cat_health',
+    'Kesehatan/Kebugaran': 'cat_health',
+    'Karir': 'cat_career',
+    'Edukasi': 'cat_education',
+    'Rutin': 'cat_routine',
+    'Keuangan': 'cat_finance',
+    'Sosial': 'cat_social',
+    'Lainnya': 'cat_other'
+  };
+  const translationKey = keyMap[catName];
+  if (translationKey && TRANSLATIONS[lang] && TRANSLATIONS[lang][translationKey]) {
+    return TRANSLATIONS[lang][translationKey];
+  }
+  return catName;
+}
+
+function applyAppLanguage(lang) {
+  State.language = lang;
+  
+  const homeNav = document.querySelector('#nav-home .nav-text-long');
+  if (homeNav) homeNav.textContent = lang === 'id' ? 'Dashboard Harian' : 'Home Dashboard';
+  
+  const customNav = document.querySelector('#nav-custom .nav-text-long');
+  if (customNav) customNav.textContent = lang === 'id' ? 'Daftar Kustom' : 'Custom Checklist';
+  
+  const reviewNav = document.querySelector('#nav-review .nav-text-long');
+  if (reviewNav) reviewNav.textContent = lang === 'id' ? 'Review Bulanan' : 'Monthly Review';
+  
+  const conceptNav = document.querySelector('#nav-concept .nav-text-long');
+  if (conceptNav) conceptNav.textContent = lang === 'id' ? 'Konsep' : 'Concept';
+  
+  const ongoingNav = document.querySelector('#nav-ongoing .nav-text-long');
+  if (ongoingNav) ongoingNav.textContent = lang === 'id' ? 'Berjalan' : 'Ongoing';
+  
+  const doneNav = document.querySelector('#nav-done .nav-text-long');
+  if (doneNav) doneNav.textContent = lang === 'id' ? 'Selesai' : 'Done';
+  
+  const settingsNavText = document.querySelector('#sidebar-settings-btn .settings-text');
+  if (settingsNavText) settingsNavText.textContent = lang === 'id' ? 'Pengaturan' : 'Settings';
+  
+  const modeOptions = document.querySelectorAll('#mode-selector-dropdown .mode-option');
+  if (modeOptions.length >= 2) {
+    modeOptions[0].textContent = lang === 'id' ? 'Mode Harian' : 'Daily Tracker';
+    modeOptions[1].textContent = lang === 'id' ? 'Mode Projek' : 'Project Tracker';
+  }
+  
+  const summaryHeader = document.querySelector('#tab-home .card.glow-blue h4');
+  if (summaryHeader) summaryHeader.textContent = lang === 'id' ? '📊 Ringkasan Hari Ini' : "📊 Today's Summary";
+  
+  const streakHeader = document.querySelector('.concept-streak-section h4');
+  if (streakHeader) streakHeader.textContent = lang === 'id' ? '⚡ Weekly Streak' : '⚡ Weekly Streak';
+  
+  const activeTasksHeader = document.querySelector('.active-tasks-header h3');
+  if (activeTasksHeader) activeTasksHeader.textContent = lang === 'id' ? '📋 Daftar Tugas Hari Ini' : '📋 Today\'s Task List';
+  
+  const journalSecTitle = document.getElementById('journal-section-title');
+  if (journalSecTitle) journalSecTitle.textContent = lang === 'id' ? '📝 Jurnal Hari Ini' : '📝 Daily Journal';
+  
+  const financeSecTitle = document.getElementById('finance-section-title');
+  if (financeSecTitle) financeSecTitle.textContent = lang === 'id' ? '💸 Keuangan Hari Ini' : '💸 Financial Tracker';
+  
+  const calCardTitle = document.getElementById('calendar-card-title');
+  if (calCardTitle) calCardTitle.textContent = lang === 'id' ? 'Kalender' : 'Calendar';
+  
+  const settingsModalTitle = document.querySelector('#settings-modal .modal-title');
+  if (settingsModalTitle) settingsModalTitle.textContent = lang === 'id' ? 'Pengaturan' : 'Settings';
+  
+  const themeTitle = document.querySelector('#settings-modal .settings-section:nth-of-type(1) h4');
+  if (themeTitle) themeTitle.textContent = lang === 'id' ? '🎨 Tema Tampilan' : '🎨 App Theme';
+  const themeDesc = document.querySelector('#settings-modal .settings-section:nth-of-type(1) p');
+  if (themeDesc) themeDesc.textContent = lang === 'id' ? 'Pilih tema tampilan yang nyaman untuk mata Anda.' : 'Choose a visual theme comfortable for your eyes.';
+  const themeLabel = document.querySelector('#settings-modal .toggle-label');
+  if (themeLabel) themeLabel.textContent = lang === 'id' ? 'Mode Terang (Light Mode)' : 'Light Mode';
+  const themeSub = document.querySelector('#settings-modal .toggle-desc');
+  if (themeSub) themeSub.textContent = lang === 'id' ? 'Ubah tampilan aplikasi menjadi mode terang.' : 'Switch application visuals to light mode.';
+
+  const notifTitle = document.querySelector('#settings-modal .settings-section:nth-of-type(2) h4');
+  if (notifTitle) notifTitle.textContent = lang === 'id' ? '🔔 Notifikasi Pengingat Tugas' : '🔔 Task Reminder Notifications';
+  const notifDesc = document.querySelector('#settings-modal .settings-section:nth-of-type(2) p');
+  if (notifDesc) notifDesc.textContent = lang === 'id' ? 'Dapatkan notifikasi desktop/smartphone untuk tugas-tugas aktif yang akan datang dalam interval waktu tertentu.' : 'Receive desktop/mobile notifications for active tasks within a certain interval.';
+  const notifLabel = document.querySelector('#settings-modal .settings-section:nth-of-type(2) label');
+  if (notifLabel) notifLabel.textContent = lang === 'id' ? 'Frekuensi Pengingat' : 'Reminder Frequency';
+
+  const notifOptions = document.querySelectorAll('#settings-notification-interval option');
+  if (notifOptions.length >= 5) {
+    notifOptions[0].textContent = lang === 'id' ? 'Matikan Notifikasi' : 'Disable Notifications';
+    notifOptions[1].textContent = lang === 'id' ? 'Setiap 1 Menit Sekali (Testing)' : 'Every 1 Minute (Testing)';
+    notifOptions[2].textContent = lang === 'id' ? 'Setiap 30 Menit Sekali' : 'Every 30 Minutes';
+    notifOptions[3].textContent = lang === 'id' ? 'Setiap 1 Jam Sekali' : 'Every 1 Hour';
+    notifOptions[4].textContent = lang === 'id' ? 'Setiap 2 Jam Sekali' : 'Every 2 Hours';
+  }
+
+  const verseTitle = document.querySelector('#settings-modal .settings-section:nth-of-type(3) h4');
+  if (verseTitle) verseTitle.textContent = lang === 'id' ? '📖 Smart Verse & Kutipan Tokoh' : '📖 Smart Verse & Quotes';
+  const verseDesc = document.querySelector('#settings-modal .settings-section:nth-of-type(3) p');
+  if (verseDesc) verseDesc.textContent = lang === 'id' ? 'Pilih jenis konten inspirasi harian yang ingin ditampilkan di Home Dashboard Anda.' : 'Choose the type of daily inspiration content to display on your Home Dashboard.';
+  const verseLabel = document.querySelector('#settings-modal .settings-section:nth-of-type(3) label');
+  if (verseLabel) verseLabel.textContent = lang === 'id' ? 'Jenis Konten Harian' : 'Daily Content Type';
+  const verseOptions = document.querySelectorAll('#settings-smart-verse-type option');
+  if (verseOptions.length >= 2) {
+    verseOptions[0].textContent = lang === 'id' ? 'Kata Bijak Tokoh Dunia (Default)' : 'World Figure Quotes (Default)';
+    verseOptions[1].textContent = lang === 'id' ? 'Ayat Alkitab (Bible Verse)' : 'Bible Verse';
+  }
+
+  const langTitle = document.getElementById('setting-lang-title');
+  if (langTitle) langTitle.textContent = lang === 'id' ? '🌐 Bahasa (Language)' : '🌐 Language';
+  const langDesc = document.getElementById('setting-lang-desc');
+  if (langDesc) langDesc.textContent = lang === 'id' ? 'Pilih bahasa aplikasi Anda.' : 'Choose your application language.';
+  const langLabel = document.getElementById('setting-lang-label');
+  if (langLabel) langLabel.textContent = lang === 'id' ? 'Bahasa aplikasi / App Language' : 'App Language';
+
+  const confirmSettingsBtn = document.getElementById('confirm-settings-btn');
+  if (confirmSettingsBtn) confirmSettingsBtn.textContent = lang === 'id' ? 'Simpan & Tutup' : 'Save & Close';
+
+  const taskModalTitle = document.getElementById('task-modal-title');
+  if (taskModalTitle) {
+    if (taskModalTitle.textContent.includes('Tambah') || taskModalTitle.textContent.includes('Add')) {
+      taskModalTitle.textContent = lang === 'id' ? 'Tambah Tugas Baru' : 'Add New Task';
+    } else if (taskModalTitle.textContent.includes('Edit')) {
+      taskModalTitle.textContent = lang === 'id' ? 'Edit Tugas Hari Ini' : 'Edit Today\'s Task';
+    }
+  }
+  
+  const taskNameLabel = document.querySelector('#add-task-form .form-group:nth-of-type(1) label');
+  if (taskNameLabel) taskNameLabel.textContent = lang === 'id' ? 'Nama Tugas' : 'Task Name';
+  const taskStartLabel = document.querySelector('#add-task-form .form-row:nth-of-type(2) .form-group:nth-of-type(1) label');
+  if (taskStartLabel) taskStartLabel.textContent = lang === 'id' ? 'Jam Mulai' : 'Start Time';
+  const taskEndLabel = document.querySelector('#add-task-form .form-row:nth-of-type(2) .form-group:nth-of-type(2) label');
+  if (taskEndLabel) taskEndLabel.textContent = lang === 'id' ? 'Jam Selesai' : 'End Time';
+  const taskCatLabel = document.querySelector('#add-task-form .form-row:nth-of-type(3) .form-group:nth-of-type(1) label');
+  if (taskCatLabel) taskCatLabel.textContent = lang === 'id' ? 'Kategori' : 'Category';
+  const taskPrioLabel = document.querySelector('#add-task-form .form-row:nth-of-type(3) .form-group:nth-of-type(2) label');
+  if (taskPrioLabel) taskPrioLabel.textContent = lang === 'id' ? 'Prioritas' : 'Priority';
+  
+  const taskCatOptions = document.querySelectorAll('#task-category option');
+  if (taskCatOptions.length >= 6) {
+    taskCatOptions[0].textContent = lang === 'id' ? 'Karir & Pekerjaan' : 'Career & Work';
+    taskCatOptions[1].textContent = lang === 'id' ? 'Kesehatan & Olahraga' : 'Health & Fitness';
+    taskCatOptions[2].textContent = lang === 'id' ? 'Spiritual / Ibadah' : 'Spiritual & Worship';
+    taskCatOptions[3].textContent = lang === 'id' ? 'Edukasi & Belajar' : 'Education & Learning';
+    taskCatOptions[4].textContent = lang === 'id' ? 'Sosial & Keluarga' : 'Social & Family';
+    taskCatOptions[5].textContent = lang === 'id' ? 'Rutin / Istirahat' : 'Routine / Rest';
+  }
+  const taskPrioOptions = document.querySelectorAll('#task-priority option');
+  if (taskPrioOptions.length >= 3) {
+    taskPrioOptions[0].textContent = lang === 'id' ? '🔴 Tinggi' : '🔴 High';
+    taskPrioOptions[1].textContent = lang === 'id' ? '🟡 Sedang' : '🟡 Medium';
+    taskPrioOptions[2].textContent = lang === 'id' ? '🔵 Rendah' : '🔵 Low';
+  }
+  
+  const saveTaskBtn = document.getElementById('save-task-modal-btn');
+  if (saveTaskBtn) {
+    if (saveTaskBtn.textContent.includes('Simpan') || saveTaskBtn.textContent.includes('Save')) {
+      saveTaskBtn.textContent = lang === 'id' ? 'Simpan Perubahan' : 'Save Changes';
+    } else {
+      saveTaskBtn.textContent = lang === 'id' ? 'Tambah Tugas' : 'Add Task';
+    }
+  }
+  const cancelTaskBtn = document.getElementById('cancel-task-modal-btn');
+  if (cancelTaskBtn) cancelTaskBtn.textContent = lang === 'id' ? 'Batal' : 'Cancel';
+
+  const detailJournalLabel = document.querySelector('#day-detail-modal .detail-grid-right .card:nth-of-type(2) h5');
+  if (detailJournalLabel) detailJournalLabel.textContent = lang === 'id' ? '📝 Jurnal Harian Terformat' : '📝 Formatted Daily Journal';
+  
+  const detailTasksHeader = document.querySelector('#day-detail-modal .detail-grid-left h4:nth-of-type(1)');
+  if (detailTasksHeader) detailTasksHeader.textContent = lang === 'id' ? '📋 Daftar Tugas Hari Itu' : '📋 Task List of the Day';
+  
+  const detailFinanceHeader = document.querySelector('#day-detail-modal .detail-grid-left h4.day-detail-finance-title');
+  if (detailFinanceHeader) detailFinanceHeader.textContent = lang === 'id' ? '💸 Transaksi Keuangan Hari Itu' : '💸 Financial Transactions';
+  
+  const closeHistoriBtn = document.getElementById('close-day-detail-footer-btn');
+  if (closeHistoriBtn) closeHistoriBtn.textContent = lang === 'id' ? 'Tutup Histori' : 'Close History';
+
+  setupCurrentDateDisplay();
+  renderDailyTasks();
+  renderDailyJournal();
+  renderDailyFinance();
+  renderWeeklyStreak();
+  renderTodayProgressSummary();
+  renderCalendarInformation();
+  renderMonthlyCalendarGrid();
+  renderDailyVerse();
+}
+
+function initLanguage() {
+  const savedLang = localStorage.getItem('yosday_language') || 'en';
+  State.language = savedLang;
+  const select = document.getElementById('settings-language');
+  if (select) {
+    select.value = savedLang;
+  }
+  applyAppLanguage(savedLang);
+}
 
 // --- Custom Notification & Alert System ---
 function showToast(message, type = 'success') {
@@ -236,9 +576,10 @@ function initApp() {
   }
 
   loadDataFromStorage();
+  initLanguage();
   
   // Seed demo data if first-time user and not explicitly cleared
-  if (Object.keys(State.history).length === 0 && localStorage.getItem('yosday_seeded') !== 'cleared') {
+  if (localStorage.getItem('yosday_google_profile') && Object.keys(State.history).length === 0 && localStorage.getItem('yosday_seeded') !== 'cleared') {
     seedHistoricalData();
   }
   
@@ -247,7 +588,7 @@ function initApp() {
   
 
   
-  checkAndGenerateTodayTasks();
+  syncTodayTasksWithTemplates();
   renderMascot('sidebar-hoot-mascot-target', calculateWeeklyProgressRate());
   renderWeeklyStreak();
   renderDailyVerse();
@@ -321,6 +662,17 @@ function switchTab(tabName, pushState = true) {
 }
 
 function loadDataFromStorage() {
+  const isLoggedIn = !!localStorage.getItem('yosday_google_profile');
+  if (!isLoggedIn) {
+    State.templates = [];
+    State.history = {};
+    State.projects = [];
+    State.projectCategories = [];
+    State.collapsedCategories = [];
+    State.projectCategoryOrder = [];
+    return;
+  }
+  
   const localTemplates = localStorage.getItem('yosday_templates');
   const localHistory = localStorage.getItem('yosday_history');
   State.hiddenCalendarItems = JSON.parse(localStorage.getItem('yosday_hidden_calendar_items')) || [];
@@ -968,6 +1320,7 @@ function calculateCompletionRateForTasks(tasks) {
 
 function checkAndGenerateTodayTasks() {
   const todayStr = getISODateString(State.currentDate);
+  const isEn = State.language === 'en';
   
   if (!State.history[todayStr]) {
     const todayTasks = [];
@@ -1025,10 +1378,10 @@ function checkAndGenerateTodayTasks() {
     const verseType = localStorage.getItem('yosday_smart_verse_type') || 'quotes';
     let pickedVerse = null;
     if (verseType === 'bible') {
-      const verseList = State.smartVerses['harapan'];
+      const verseList = isEn ? State.smartVersesEn['harapan'] : State.smartVerses['harapan'];
       pickedVerse = verseList[Math.floor(Math.random() * verseList.length)];
     } else {
-      const quoteList = State.smartQuotes || [];
+      const quoteList = isEn ? State.smartQuotesEn : State.smartQuotes || [];
       if (quoteList.length > 0) {
         pickedVerse = quoteList[Math.floor(Math.random() * quoteList.length)];
       }
@@ -1039,10 +1392,94 @@ function checkAndGenerateTodayTasks() {
       tasks: todayTasks,
       notes: "",
       verse: pickedVerse,
-      hootExpression: "Ramah"
+      hootExpression: "Ramah",
+      templatesGenerated: true
     };
     
     saveHistoryToStorage();
+  } else {
+    // If the record exists (e.g. created as a future date with reminders),
+    // but templates have NOT been generated yet for this todayStr, we generate them!
+    const record = State.history[todayStr];
+    if (!record.templatesGenerated) {
+      const todayTasks = record.tasks || [];
+      const dayOfWeek = State.currentDate.getDay();
+      const holidayName = isNationalHoliday(todayStr);
+      
+      State.templates.forEach(tpl => {
+        if (!tpl.activeDays.includes(dayOfWeek)) return;
+        if (holidayName && tpl.holidayException) {
+          if (tpl.ruleDayCond === 'holiday' && tpl.ruleDayAction === 'hide') {
+            return;
+          }
+        }
+        
+        let taskName = tpl.name;
+        let hideTask = false;
+        
+        if (tpl.ruleDayCond === 'holiday' && holidayName) {
+          if (tpl.ruleDayAction === 'rename-family') {
+            taskName = "Family Time (Hari Libur)";
+          } else if (tpl.ruleDayAction === 'rename-rest') {
+            taskName = "Self Care / Istirahat";
+          } else if (tpl.ruleDayAction === 'hide') {
+            hideTask = true;
+          }
+        } else if (tpl.ruleDayCond === String(dayOfWeek)) {
+          if (tpl.ruleDayAction === 'hide') {
+            hideTask = true;
+          } else if (tpl.ruleDayAction === 'rename-family') {
+            taskName = "Family Time";
+          } else if (tpl.ruleDayAction === 'rename-rest') {
+            taskName = "Self Care / Istirahat";
+          }
+        }
+        
+        if (hideTask) return;
+        
+        // Avoid duplicate template instantiation if somehow already present
+        if (todayTasks.some(t => t.templateId === tpl.id)) return;
+        
+        const instantiatedSubtasks = tpl.subtasks.map(st => ({ name: st, completed: false }));
+        
+        todayTasks.push({
+          id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          name: taskName,
+          startTime: tpl.startTime,
+          endTime: tpl.endTime,
+          category: tpl.category,
+          priority: tpl.priority,
+          completed: false,
+          subtasks: instantiatedSubtasks,
+          notes: tpl.notes,
+          isFromTemplate: true,
+          templateId: tpl.id
+        });
+      });
+      
+      record.tasks = todayTasks;
+      record.templatesGenerated = true;
+      
+      // Also generate the daily verse if it's missing
+      if (!record.verse) {
+        const verseType = localStorage.getItem('yosday_smart_verse_type') || 'quotes';
+        let pickedVerse = null;
+        if (verseType === 'bible') {
+          const list = isEn ? State.smartVersesEn['harapan'] : State.smartVerses['harapan'];
+          if (list && list.length > 0) {
+            pickedVerse = list[Math.floor(Math.random() * list.length)];
+          }
+        } else {
+          const quoteList = isEn ? State.smartQuotesEn : State.smartQuotes || [];
+          if (quoteList.length > 0) {
+            pickedVerse = quoteList[Math.floor(Math.random() * quoteList.length)];
+          }
+        }
+        record.verse = pickedVerse;
+      }
+      
+      saveHistoryToStorage();
+    }
   }
 }
 
@@ -1167,7 +1604,8 @@ function renderDailyVerse() {
   
   const verseType = localStorage.getItem('yosday_smart_verse_type') || 'quotes';
   let pickedVerse = null;
-  let categoryLabel = 'Kutipan Tokoh';
+  const isEn = State.language === 'en';
+  let categoryLabel = isEn ? 'World Figure Quotes' : 'Kutipan Tokoh';
   
   if (verseType === 'bible') {
     const progressRate = calculateWeeklyProgressRate();
@@ -1177,7 +1615,7 @@ function renderDailyVerse() {
     } else if (progressRate >= 0.8) {
       category = Math.random() < 0.5 ? 'syukur' : 'konsistensi';
     }
-    const list = State.smartVerses[category];
+    const list = isEn ? State.smartVersesEn[category] : State.smartVerses[category];
     if (list && list.length > 0) {
       let dayHash = 0;
       for (let i = 0; i < todayStr.length; i++) {
@@ -1188,7 +1626,7 @@ function renderDailyVerse() {
       categoryLabel = `Smart Verse — ${category.toUpperCase()}`;
     }
   } else {
-    const list = State.smartQuotes || [];
+    const list = isEn ? State.smartQuotesEn : State.smartQuotes;
     if (list && list.length > 0) {
       let dayHash = 0;
       for (let i = 0; i < todayStr.length; i++) {
@@ -1196,7 +1634,7 @@ function renderDailyVerse() {
       }
       const quoteIndex = dayHash % list.length;
       pickedVerse = list[quoteIndex];
-      categoryLabel = `Kutipan Tokoh`;
+      categoryLabel = isEn ? 'World Figure Quotes' : 'Kutipan Tokoh';
     }
   }
   
@@ -1609,16 +2047,25 @@ function toggleSubtasksView(taskId) {
   }
 }
 
-function deleteTask(taskId) {
-  showConfirm("Hapus Tugas", "Apakah Anda yakin ingin menghapus tugas ini khusus hari ini?", () => {
-    const todayStr = getISODateString(State.currentDate);
-    const todayRecord = State.history[todayStr];
-    if (todayRecord) {
-      todayRecord.tasks = todayRecord.tasks.filter(t => t.id !== taskId);
+function deleteTask(taskId, targetDateStr) {
+  const isEn = State.language === 'en';
+  const confirmTitle = isEn ? "Delete Task" : "Hapus Tugas";
+  const confirmMsg = isEn ? "Are you sure you want to delete this task?" : "Apakah Anda yakin ingin menghapus tugas ini?";
+  
+  showConfirm(confirmTitle, confirmMsg, () => {
+    const dateStr = targetDateStr || getISODateString(State.currentDate);
+    const record = State.history[dateStr];
+    if (record) {
+      record.tasks = record.tasks.filter(t => t.id !== taskId);
       saveHistoryToStorage();
       recalculateDailyOutputs();
-      showToast("Tugas berhasil dihapus!", "success");
+      showToast(isEn ? "Task deleted successfully!" : "Tugas berhasil dihapus!", "success");
       triggerAutoCloudBackup();
+      
+      const detailModal = document.getElementById('day-detail-modal');
+      if (detailModal && detailModal.classList.contains('active')) {
+        openDayDetailModal(dateStr);
+      }
     }
   });
 }
@@ -2084,111 +2531,213 @@ function renderMonthlyCalendarGrid() {
 
 // --- Deep Daily Record Modal ---
 
-function openDayDetailModal(dateStr) {
-  const record = State.history[dateStr];
-  if (!record) return;
-  
+let currentDetailDate = "";
+
+function formatFriendlyDate(dateStr) {
+  const dateObj = new Date(dateStr + 'T00:00:00');
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  const formattedDate = new Date(dateStr).toLocaleDateString('id-ID', options);
+  const locale = State.language === 'id' ? 'id-ID' : 'en-US';
+  return dateObj.toLocaleDateString(locale, options);
+}
+
+function openAddTaskModalForDate(dateStr) {
+  document.getElementById('task-modal-title').textContent = 
+    State.language === 'id' ? `Tambah Tugas (${formatFriendlyDate(dateStr)})` : `Add Task (${formatFriendlyDate(dateStr)})`;
+  document.getElementById('save-task-modal-btn').textContent = 
+    State.language === 'id' ? "Tambah Tugas" : "Add Task";
+  document.getElementById('save-task-modal-btn').removeAttribute('data-edit-task-id');
   
-  document.getElementById('day-detail-title').textContent = `Histori Harian: ${formattedDate}`;
+  const modalTaskForm = document.getElementById('add-task-form');
+  modalTaskForm.reset();
+  modalTaskForm.setAttribute('data-target-date', dateStr);
   
-  const total = record.tasks.length;
-  const completed = record.tasks.filter(t => t.completed).length;
-  const rate = total === 0 ? 1.0 : completed / total;
+  document.getElementById('modal-subtasks-list').innerHTML = "";
+  document.getElementById('add-task-modal').classList.add('active');
+}
+
+function openDayDetailModal(dateStr) {
+  currentDetailDate = dateStr;
+  const todayStr = getISODateString(State.currentDate);
+  const isFuture = dateStr > todayStr;
   
-  document.getElementById('day-detail-completion').textContent = `${Math.round(rate * 100)}%`;
-  document.getElementById('day-detail-productive').textContent = `${calculateProductiveHoursForDay(record).toFixed(1)} Jam`;
-  document.getElementById('day-detail-count').textContent = `${completed} / ${total}`;
+  let record = State.history[dateStr];
   
-  renderMascot('day-detail-mascot-svg', rate, record.hootExpression);
-  document.getElementById('day-detail-expression').textContent = record.hootExpression || calculateMascotExpressionForRate(rate);
+  if (isFuture) {
+    const hasTasks = record && record.tasks && record.tasks.length > 0;
+    if (!hasTasks) {
+      const confirmMsg = State.language === 'id' 
+        ? `Ingin menambahkan tugas pada tanggal ${formatFriendlyDate(dateStr)}?`
+        : `Do you want to add a task on ${formatFriendlyDate(dateStr)}?`;
+        
+      showConfirm(
+        State.language === 'id' ? "Tambah Pengingat Tugas" : "Add Task Reminder",
+        confirmMsg,
+        () => {
+          openAddTaskModalForDate(dateStr);
+        }
+      );
+      return;
+    }
+  }
+
+  if (!record) {
+    record = {
+      date: dateStr,
+      tasks: [],
+      finance: [],
+      notes: "",
+      journal: "",
+      verse: null,
+      hootExpression: "Senang"
+    };
+    State.history[dateStr] = record;
+  }
   
+  const locale = State.language === 'id' ? 'id-ID' : 'en-US';
+  const formattedDate = new Date(dateStr + 'T00:00:00').toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  
+  document.getElementById('day-detail-title').textContent = State.language === 'id' ? `Histori Harian: ${formattedDate}` : `Daily History: ${formattedDate}`;
+  
+  const modal = document.getElementById('day-detail-modal');
   const tasksContainer = document.getElementById('day-detail-tasks-list');
-  tasksContainer.innerHTML = "";
   
-  if (record.tasks.length === 0) {
-    tasksContainer.innerHTML = `<span class="text-xs text-muted text-center">Tidak ada tugas pada hari itu.</span>`;
-  } else {
+  if (isFuture) {
+    modal.classList.add('is-future-day');
+    tasksContainer.innerHTML = "";
+    
     record.tasks.forEach(t => {
+      let timeStr = "";
+      if (t.startTime && t.endTime) {
+        timeStr = `⏰ ${t.startTime} - ${t.endTime}`;
+      } else if (t.startTime) {
+        timeStr = `⏰ ${t.startTime}`;
+      } else {
+        timeStr = `🔔 Reminder`;
+      }
+      
       tasksContainer.insertAdjacentHTML('beforeend', `
-        <div class="detail-task-history-item ${t.completed ? 'done' : 'missed'}">
+        <div class="detail-task-history-item" style="display:flex; justify-content:space-between; align-items:center; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;">
           <div>
-            <span class="detail-task-h-title">${t.name}</span>
-            <div class="detail-task-h-meta">
-              <span>⏰ ${t.startTime} - ${t.endTime}</span> | <span class="task-category-badge">${t.category}</span>
+            <span class="detail-task-h-title" style="font-weight: 700; color: var(--text-color);">${t.name}</span>
+            <div class="detail-task-h-meta" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+              <span>${timeStr}</span> | <span class="task-category-badge">${getLocalizedCategory(t.category)}</span>
             </div>
           </div>
-          <span class="detail-task-h-status ${t.completed ? 'done' : 'missed'}">${t.completed ? 'SELESAI ✔' : 'TERLEWAT ✕'}</span>
+          <div style="display:flex; gap:8px;">
+            <button class="task-action-btn" title="${State.language === 'id' ? 'Edit Tugas' : 'Edit Task'}" onclick="openEditTaskModal('${t.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer;">✏️</button>
+            <button class="task-action-btn btn-delete" title="${State.language === 'id' ? 'Hapus Tugas' : 'Delete Task'}" onclick="deleteTask('${t.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer;">🗑️</button>
+          </div>
         </div>
       `);
     });
-  }
-  
-  // Render daily finance inside Day Detail Modal
-  const financeContainer = document.getElementById('day-detail-finance-list');
-  if (financeContainer) {
-    financeContainer.innerHTML = "";
-    const financeList = record.finance || [];
-    if (financeList.length === 0) {
-      financeContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">Tidak ada catatan keuangan pada hari itu.</span>`;
+    
+    tasksContainer.insertAdjacentHTML('beforeend', `
+      <div style="margin-top: 16px; display: flex; justify-content: center;">
+        <button class="btn btn-primary" onclick="openAddTaskModalForDate('${dateStr}')" style="padding: 8px 16px; font-size: 13px;">
+          + ${State.language === 'id' ? 'Tambah Tugas' : 'Add Task'}
+        </button>
+      </div>
+    `);
+  } else {
+    modal.classList.remove('is-future-day');
+    
+    const total = record.tasks.length;
+    const completed = record.tasks.filter(t => t.completed).length;
+    const rate = total === 0 ? 1.0 : completed / total;
+    
+    document.getElementById('day-detail-completion').textContent = `${Math.round(rate * 100)}%`;
+    document.getElementById('day-detail-productive').textContent = `${calculateProductiveHoursForDay(record).toFixed(1)} Jam`;
+    document.getElementById('day-detail-count').textContent = `${completed} / ${total}`;
+    
+    renderMascot('day-detail-mascot-svg', rate, record.hootExpression);
+    document.getElementById('day-detail-expression').textContent = record.hootExpression || calculateMascotExpressionForRate(rate);
+    
+    tasksContainer.innerHTML = "";
+    if (record.tasks.length === 0) {
+      tasksContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">${State.language === 'id' ? 'Tidak ada tugas pada hari itu.' : 'No tasks scheduled that day.'}</span>`;
     } else {
-      // Calculate totals
-      let totalIncome = 0;
-      let totalExpense = 0;
-      financeList.forEach(item => {
-        if (item.type === 'pemasukan') {
-          totalIncome += Number(item.amount) || 0;
-        } else {
-          totalExpense += Number(item.amount) || 0;
-        }
-      });
-
-      // Render summary row at the top
-      financeContainer.insertAdjacentHTML('beforeend', `
-        <div style="display: flex; gap: 10px; margin-bottom: 8px; width: 100%; box-sizing: border-box;">
-          <div style="flex: 1; padding: 8px 12px; background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 8px; text-align: center; min-width: 0;">
-            <div style="color: var(--text-muted); font-size: 9px; text-transform: uppercase; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Total Pemasukan</div>
-            <div class="finance-amount income" style="font-size: 12px; font-weight: 800; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">+ ${formatRupiah(totalIncome)}</div>
-          </div>
-          <div style="flex: 1; padding: 8px 12px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; text-align: center; min-width: 0;">
-            <div style="color: var(--text-muted); font-size: 9px; text-transform: uppercase; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Total Pengeluaran</div>
-            <div class="finance-amount expense" style="font-size: 12px; font-weight: 800; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">- ${formatRupiah(totalExpense)}</div>
-          </div>
-        </div>
-      `);
-
-      // Sort with newest transactions displayed first
-      const sortedFinance = [...financeList].sort((a, b) => {
-        const tA = parseInt(a.id.split('-')[1]) || 0;
-        const tB = parseInt(b.id.split('-')[1]) || 0;
-        if (tA !== tB) return tB - tA;
-        return (b.time || '').localeCompare(a.time || '');
-      });
-
-      sortedFinance.forEach(item => {
-        const isIncome = item.type === 'pemasukan';
-        const typeSign = isIncome ? '+' : '-';
-        const amountClass = isIncome ? 'finance-amount income' : 'finance-amount expense';
-        const timeStr = item.time ? ` (${item.time})` : '';
-        const descStr = item.description ? ` - ${item.description}` : '';
-        
-        financeContainer.insertAdjacentHTML('beforeend', `
-          <div class="detail-task-history-item" style="border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 10px;">
+      record.tasks.forEach(t => {
+        tasksContainer.insertAdjacentHTML('beforeend', `
+          <div class="detail-task-history-item ${t.completed ? 'done' : 'missed'}">
             <div>
-              <span class="detail-task-h-title" style="font-weight: 700;">${item.category.charAt(0).toUpperCase() + item.category.slice(1)}</span>
-              <div class="detail-task-h-meta" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
-                <span>${descStr ? descStr.substring(3) : 'Tanpa keterangan'}</span>${timeStr ? ` | <span>${timeStr.substring(2, timeStr.length - 1)}</span>` : ''}
+              <span class="detail-task-h-title">${t.name}</span>
+              <div class="detail-task-h-meta">
+                <span>⏰ ${t.startTime} - ${t.endTime}</span> | <span class="task-category-badge">${getLocalizedCategory(t.category)}</span>
               </div>
             </div>
-            <span class="${amountClass}" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 13px;">${typeSign} ${formatRupiah(item.amount)}</span>
+            <span class="detail-task-h-status ${t.completed ? 'done' : 'missed'}">${t.completed ? (State.language === 'id' ? 'SELESAI ✔' : 'COMPLETED ✔') : (State.language === 'id' ? 'TERLEWAT ✕' : 'MISSED ✕')}</span>
           </div>
         `);
       });
     }
   }
+
+  // Render daily finance inside Day Detail Modal
+  const financeContainer = document.getElementById('day-detail-finance-list');
+  if (financeContainer) {
+    financeContainer.innerHTML = "";
+    if (!isFuture) {
+      const financeList = record.finance || [];
+      if (financeList.length === 0) {
+        financeContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">${State.language === 'id' ? 'Tidak ada catatan keuangan pada hari itu.' : 'No financial records today.'}</span>`;
+      } else {
+        // Calculate totals
+        let totalIncome = 0;
+        let totalExpense = 0;
+        financeList.forEach(item => {
+          if (item.type === 'pemasukan') {
+            totalIncome += Number(item.amount) || 0;
+          } else {
+            totalExpense += Number(item.amount) || 0;
+          }
+        });
+
+        // Render summary row at the top
+        financeContainer.insertAdjacentHTML('beforeend', `
+          <div style="display: flex; gap: 10px; margin-bottom: 8px; width: 100%; box-sizing: border-box;">
+            <div style="flex: 1; padding: 8px 12px; background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 8px; text-align: center; min-width: 0;">
+              <div style="color: var(--text-muted); font-size: 9px; text-transform: uppercase; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Total Pemasukan</div>
+              <div class="finance-amount income" style="font-size: 12px; font-weight: 800; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">+ ${formatRupiah(totalIncome)}</div>
+            </div>
+            <div style="flex: 1; padding: 8px 12px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; text-align: center; min-width: 0;">
+              <div style="color: var(--text-muted); font-size: 9px; text-transform: uppercase; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Total Pengeluaran</div>
+              <div class="finance-amount expense" style="font-size: 12px; font-weight: 800; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">- ${formatRupiah(totalExpense)}</div>
+            </div>
+          </div>
+        `);
+
+        // Sort with newest transactions displayed first
+        const sortedFinance = [...financeList].sort((a, b) => {
+          const tA = parseInt(a.id.split('-')[1]) || 0;
+          const tB = parseInt(b.id.split('-')[1]) || 0;
+          if (tA !== tB) return tB - tA;
+          return (b.time || '').localeCompare(a.time || '');
+        });
+
+        sortedFinance.forEach(item => {
+          const isIncome = item.type === 'pemasukan';
+          const typeSign = isIncome ? '+' : '-';
+          const amountClass = isIncome ? 'finance-amount income' : 'finance-amount expense';
+          const timeStr = item.time ? ` (${item.time})` : '';
+          const descStr = item.description ? ` - ${item.description}` : '';
+          
+          financeContainer.insertAdjacentHTML('beforeend', `
+            <div class="detail-task-history-item" style="border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 10px;">
+              <div>
+                <span class="detail-task-h-title" style="font-weight: 700;">${item.category.charAt(0).toUpperCase() + item.category.slice(1)}</span>
+                <div class="detail-task-h-meta" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                  <span>${descStr ? descStr.substring(3) : 'Tanpa keterangan'}</span>${timeStr ? ` | <span>${timeStr.substring(2, timeStr.length - 1)}</span>` : ''}
+                </div>
+              </div>
+              <span class="${amountClass}" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 13px;">${typeSign} ${formatRupiah(item.amount)}</span>
+            </div>
+          `);
+        });
+      }
+    }
+  }
   
-  if (record.verse) {
+  if (!isFuture && record.verse) {
     document.getElementById('day-detail-verse').textContent = `"${record.verse.text}"`;
     document.getElementById('day-detail-verse-ref').textContent = record.verse.ref;
   }
@@ -2202,19 +2751,30 @@ function openDayDetailModal(dateStr) {
   // Render daily journal terformat
   const journalContentEl = document.getElementById('day-detail-journal-content');
   if (journalContentEl) {
-    journalContentEl.innerHTML = record.journal || '<span style="font-style: italic; color: var(--text-muted);">Belum ada tulisan jurnal untuk hari ini.</span>';
+    if (isFuture) {
+      journalContentEl.innerHTML = "";
+    } else {
+      journalContentEl.innerHTML = record.journal || (State.language === 'id' 
+        ? '<span style="font-style: italic; color: var(--text-muted);">Belum ada tulisan jurnal untuk hari ini.</span>'
+        : '<span style="font-style: italic; color: var(--text-muted);">No journal entry for this day yet.</span>');
+    }
   }
   
   const editJournalBtn = document.getElementById('day-detail-edit-journal-btn');
   if (editJournalBtn) {
-    if (record.journal && record.journal.trim()) {
-      editJournalBtn.textContent = "Buka";
+    if (isFuture) {
+      editJournalBtn.style.display = 'none';
     } else {
-      editJournalBtn.textContent = "Tulis";
+      editJournalBtn.style.display = 'block';
+      if (record.journal && record.journal.trim()) {
+        editJournalBtn.textContent = State.language === 'id' ? "Buka" : "Open";
+      } else {
+        editJournalBtn.textContent = State.language === 'id' ? "Tulis" : "Write";
+      }
+      editJournalBtn.onclick = () => {
+        openJournalEditor(dateStr);
+      };
     }
-    editJournalBtn.onclick = () => {
-      openJournalEditor(dateStr);
-    };
   }
   
   document.getElementById('day-detail-modal').classList.add('active');
@@ -3094,6 +3654,28 @@ function setupEventListeners() {
   if (appListenersAttached) return;
   appListenersAttached = true;
   
+  const prevDetailBtn = document.getElementById('day-detail-prev-btn');
+  if (prevDetailBtn) {
+    prevDetailBtn.addEventListener('click', () => {
+      if (!currentDetailDate) return;
+      const d = new Date(currentDetailDate + 'T00:00:00');
+      d.setDate(d.getDate() - 1);
+      const newDateStr = getISODateString(d);
+      openDayDetailModal(newDateStr);
+    });
+  }
+
+  const nextDetailBtn = document.getElementById('day-detail-next-btn');
+  if (nextDetailBtn) {
+    nextDetailBtn.addEventListener('click', () => {
+      if (!currentDetailDate) return;
+      const d = new Date(currentDetailDate + 'T00:00:00');
+      d.setDate(d.getDate() + 1);
+      const newDateStr = getISODateString(d);
+      openDayDetailModal(newDateStr);
+    });
+  }
+  
   const sidebar = document.getElementById('app-sidebar');
   const toggleBtn = document.getElementById('sidebar-collapse-trigger');
   if (toggleBtn) {
@@ -3333,6 +3915,17 @@ function setupEventListeners() {
     });
   }
   
+  // Language Selector Change
+  const languageSelect = document.getElementById('settings-language');
+  if (languageSelect) {
+    languageSelect.addEventListener('change', (e) => {
+      const val = e.target.value;
+      localStorage.setItem('yosday_language', val);
+      applyAppLanguage(val);
+      triggerAutoCloudBackup(); // Sync to cloud!
+    });
+  }
+  
   const btnSeedData = document.getElementById('btn-seed-data');
   if (btnSeedData) {
     btnSeedData.addEventListener('click', () => {
@@ -3560,14 +4153,25 @@ function setupEventListeners() {
       if (val) subtasks.push({ name: val, completed: false });
     });
     
-    const todayStr = getISODateString(State.currentDate);
-    const todayRecord = State.history[todayStr];
-    if (!todayRecord) return;
+    const targetDateStr = modalTaskForm.getAttribute('data-target-date') || getISODateString(State.currentDate);
+    let targetRecord = State.history[targetDateStr];
+    if (!targetRecord) {
+      targetRecord = {
+        date: targetDateStr,
+        tasks: [],
+        finance: [],
+        notes: "",
+        journal: "",
+        verse: null,
+        hootExpression: "Senang"
+      };
+      State.history[targetDateStr] = targetRecord;
+    }
     
     const editTaskId = document.getElementById('save-task-modal-btn').getAttribute('data-edit-task-id');
     
     if (editTaskId) {
-      const task = todayRecord.tasks.find(t => t.id === editTaskId);
+      const task = targetRecord.tasks.find(t => t.id === editTaskId);
       if (task) {
         task.name = name;
         task.startTime = startTime;
@@ -3587,11 +4191,16 @@ function setupEventListeners() {
         id: `task_${Date.now()}`,
         name, startTime, endTime, category, priority, completed: false, subtasks, notes, isFromTemplate: false
       };
-      todayRecord.tasks.push(newTask);
+      targetRecord.tasks.push(newTask);
     }
     
     saveHistoryToStorage();
     recalculateDailyOutputs();
+    
+    const detailModal = document.getElementById('day-detail-modal');
+    if (detailModal && detailModal.classList.contains('active')) {
+      openDayDetailModal(targetDateStr);
+    }
     
     document.getElementById('add-task-modal').classList.remove('active');
   });
@@ -3899,17 +4508,27 @@ function setupEventListeners() {
   });
 }
 
-function openEditTaskModal(taskId) {
-  const todayStr = getISODateString(State.currentDate);
-  const todayRecord = State.history[todayStr];
-  if (!todayRecord) return;
+function openEditTaskModal(taskId, targetDateStr) {
+  const dateStr = targetDateStr || getISODateString(State.currentDate);
+  const record = State.history[dateStr];
+  if (!record) return;
   
-  const task = todayRecord.tasks.find(t => t.id === taskId);
+  const task = record.tasks.find(t => t.id === taskId);
   if (!task) return;
   
-  document.getElementById('task-modal-title').textContent = "Edit Tugas Hari Ini";
-  document.getElementById('save-task-modal-btn').textContent = "Simpan Perubahan";
+  const isEn = State.language === 'en';
+  const todayStr = getISODateString(State.currentDate);
+  if (dateStr === todayStr) {
+    document.getElementById('task-modal-title').textContent = isEn ? "Edit Today's Task" : "Edit Tugas Hari Ini";
+  } else {
+    document.getElementById('task-modal-title').textContent = isEn ? `Edit Task (${dateStr})` : `Edit Tugas (${dateStr})`;
+  }
+  
+  document.getElementById('save-task-modal-btn').textContent = isEn ? "Save Changes" : "Simpan Perubahan";
   document.getElementById('save-task-modal-btn').setAttribute('data-edit-task-id', taskId);
+  
+  const modalTaskForm = document.getElementById('add-task-form');
+  modalTaskForm.setAttribute('data-target-date', dateStr);
   
   document.getElementById('task-name').value = task.name;
   document.getElementById('task-start-time').value = task.startTime;
@@ -3989,7 +4608,13 @@ function initializeTokenClient() {
         const expiry = Date.now() + (tokenResponse.expires_in * 1000);
         localStorage.setItem('yosday_google_token_expiry', expiry);
         
-        handleGoogleLoginSuccess(token, googleAuthMode);
+        if (googleAuthMode === 'silent-backup') {
+          backupDataToDriveSilently(token);
+        } else if (googleAuthMode === 'silent-load') {
+          syncGoogleCalendarAndHolidays(token).catch(err => console.error(err));
+        } else {
+          handleGoogleLoginSuccess(token, googleAuthMode);
+        }
       } else if (tokenResponse && tokenResponse.error) {
         console.warn("Google Auth token request failed/cancelled:", tokenResponse.error);
         if (googleAuthMode === 'silent-load' || googleAuthMode === 'silent-backup') {
@@ -4166,6 +4791,22 @@ function setupGoogleAuthEventListeners() {
               localStorage.setItem('yosday_collapsed_categories', JSON.stringify(State.collapsedCategories));
               localStorage.setItem('yosday_category_order', JSON.stringify(State.projectCategoryOrder));
               
+              if (content.settings) {
+                const settings = content.settings;
+                if (settings.notificationInterval) {
+                  localStorage.setItem('yosday_notification_interval', settings.notificationInterval);
+                }
+                if (settings.smartVerseType) {
+                  localStorage.setItem('yosday_smart_verse_type', settings.smartVerseType);
+                }
+                if (settings.hiddenCalendarItems) {
+                  localStorage.setItem('yosday_hidden_calendar_items', JSON.stringify(settings.hiddenCalendarItems));
+                }
+                if (settings.language) {
+                  localStorage.setItem('yosday_language', settings.language);
+                }
+              }
+              
               initApp();
               showToast("Pemulihan Berhasil! Halaman dimuat ulang dengan data terbaru.", "success");
               
@@ -4222,6 +4863,33 @@ async function handleGoogleLoginSuccess(token, mode) {
             localStorage.setItem('yosday_project_categories', JSON.stringify(State.projectCategories));
             localStorage.setItem('yosday_collapsed_categories', JSON.stringify(State.collapsedCategories));
             localStorage.setItem('yosday_category_order', JSON.stringify(State.projectCategoryOrder));
+            
+            if (content.settings) {
+              const settings = content.settings;
+              if (settings.notificationInterval) {
+                State.notificationInterval = settings.notificationInterval;
+                localStorage.setItem('yosday_notification_interval', settings.notificationInterval);
+                const intervalSelect = document.getElementById('settings-notification-interval');
+                if (intervalSelect) intervalSelect.value = settings.notificationInterval;
+                setupNotificationTimer();
+              }
+              if (settings.smartVerseType) {
+                localStorage.setItem('yosday_smart_verse_type', settings.smartVerseType);
+                const smartVerseSelect = document.getElementById('settings-smart-verse-type');
+                if (smartVerseSelect) smartVerseSelect.value = settings.smartVerseType;
+              }
+              if (settings.hiddenCalendarItems) {
+                State.hiddenCalendarItems = settings.hiddenCalendarItems;
+                localStorage.setItem('yosday_hidden_calendar_items', JSON.stringify(settings.hiddenCalendarItems));
+              }
+              if (settings.language) {
+                State.language = settings.language;
+                localStorage.setItem('yosday_language', settings.language);
+                const langSelect = document.getElementById('settings-language');
+                if (langSelect) langSelect.value = settings.language;
+                applyAppLanguage(settings.language);
+              }
+            }
             
             // Re-render UI dashboard lists
             checkAndGenerateTodayTasks();
@@ -4302,6 +4970,22 @@ async function handleGoogleLoginSuccess(token, mode) {
               localStorage.setItem('yosday_collapsed_categories', JSON.stringify(State.collapsedCategories));
               localStorage.setItem('yosday_category_order', JSON.stringify(State.projectCategoryOrder));
               
+              if (content.settings) {
+                const settings = content.settings;
+                if (settings.notificationInterval) {
+                  localStorage.setItem('yosday_notification_interval', settings.notificationInterval);
+                }
+                if (settings.smartVerseType) {
+                  localStorage.setItem('yosday_smart_verse_type', settings.smartVerseType);
+                }
+                if (settings.hiddenCalendarItems) {
+                  localStorage.setItem('yosday_hidden_calendar_items', JSON.stringify(settings.hiddenCalendarItems));
+                }
+                if (settings.language) {
+                  localStorage.setItem('yosday_language', settings.language);
+                }
+              }
+              
               initApp();
               showAlert("Pemulihan Berhasil", "Data berhasil dipulihkan dari Google Drive. Halaman telah dimuat ulang dengan data terbaru.");
               if (restoreBtn) {
@@ -4334,13 +5018,24 @@ function logoutGoogleOAuth(quiet = false) {
   localStorage.removeItem('yosday_google_token');
   localStorage.removeItem('yosday_google_token_expiry');
   localStorage.removeItem('yosday_google_profile');
+  localStorage.removeItem('yosday_templates');
+  localStorage.removeItem('yosday_history');
+  localStorage.removeItem('yosday_projects');
+  localStorage.removeItem('yosday_project_categories');
+  localStorage.removeItem('yosday_collapsed_categories');
+  localStorage.removeItem('yosday_category_order');
   
   State.googleCalendarEvents = null;
   renderCalendarInformation();
   
   if (!quiet) {
-    showToast("Akun terputus. Data saat ini akan tetap tersimpan secara lokal.", "info");
+    const msg = State.language === 'id' 
+      ? "Akun terputus. Data Anda telah dibersihkan dari perangkat ini."
+      : "Account disconnected. Your data has been cleared from this device.";
+    showToast(msg, "info");
   }
+  
+  clearStateAndUI();
   
   // Toggle UI views
   const signedOutView = document.getElementById('google-signed-out-view');
@@ -4365,6 +5060,27 @@ function logoutGoogleOAuth(quiet = false) {
   }
   
   updateSidebarProfile(null);
+}
+
+function clearStateAndUI() {
+  State.templates = [];
+  State.history = {};
+  State.projects = [];
+  State.projectCategories = [];
+  State.collapsedCategories = [];
+  State.projectCategoryOrder = [];
+  
+  renderDailyTasks();
+  renderMascot('sidebar-hoot-mascot-target', 0);
+  renderWeeklyStreak();
+  renderDailyVerse();
+  renderTodayProgressSummary();
+  renderDailyJournal();
+  renderDailyFinance();
+  renderCalendarInformation();
+  renderTemplatesCatalog();
+  renderReviewTab();
+  renderProjects();
 }
 
 async function fetchRealGoogleCalendarEvents(token) {
@@ -4690,7 +5406,8 @@ async function backupDataToDriveSilently(token) {
       settings: {
         notificationInterval: localStorage.getItem('yosday_notification_interval') || 'disabled',
         smartVerseType: localStorage.getItem('yosday_smart_verse_type') || 'quotes',
-        hiddenCalendarItems: JSON.parse(localStorage.getItem('yosday_hidden_calendar_items')) || []
+        hiddenCalendarItems: JSON.parse(localStorage.getItem('yosday_hidden_calendar_items')) || [],
+        language: State.language || 'en'
       }
     };
     if (file && file.id) {
@@ -4953,6 +5670,13 @@ function startCloudSyncPolling() {
               State.hiddenCalendarItems = settings.hiddenCalendarItems;
               localStorage.setItem('yosday_hidden_calendar_items', JSON.stringify(settings.hiddenCalendarItems));
             }
+            if (settings.language) {
+              State.language = settings.language;
+              localStorage.setItem('yosday_language', settings.language);
+              const langSelect = document.getElementById('settings-language');
+              if (langSelect) langSelect.value = settings.language;
+              applyAppLanguage(settings.language);
+            }
           }
           
           // Refresh UI
@@ -5053,19 +5777,23 @@ function renderDailyJournal() {
   const todayStr = getISODateString(State.currentDate);
   const todayRecord = State.history[todayStr];
   const journalContent = (todayRecord && todayRecord.journal) ? todayRecord.journal.trim() : "";
+  const isEn = State.language === 'en';
   
   if (journalContent) {
     const plainText = stripHtmlTags(journalContent);
+    const btnLabel = isEn ? 'Open' : 'Buka';
     container.innerHTML = `
       <div class="journal-preview-text" id="home-journal-preview">${plainText}</div>
       <div style="display: flex; gap: 8px;">
-        <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">Buka</button>
+        <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">${btnLabel}</button>
       </div>
     `;
   } else {
+    const placeholder = isEn ? 'Start writing.' : 'Mulai tulis.';
+    const btnLabel = isEn ? 'Write' : 'Tulis';
     container.innerHTML = `
-      <p class="text-xs text-muted" style="font-style: italic; margin-bottom: 12px; font-size: 11px;">Ceritakan harimu.</p>
-      <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">Tulis</button>
+      <p class="text-xs text-muted" style="font-style: italic; margin-bottom: 12px; font-size: 11px;">${placeholder}</p>
+      <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">${btnLabel}</button>
     `;
   }
   

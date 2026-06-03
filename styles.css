@@ -3199,6 +3199,11 @@ body.focus-mode-active {
 
 /* Mobile Devices (Max 768px Viewport Adjustments) */
 @media (max-width: 768px) {
+  .modal-card {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+  
   /* Fix Day Detail Modal Overflow on iPhone and other smartphones */
   #day-detail-modal {
     padding: 10px 6px !important;
@@ -4974,5 +4979,27 @@ body:not(.light-theme) .streak-icon.day-status-less-solid {
 /* Today highlight using inset box-shadow to prevent border conflicts */
 .streak-day-box.active {
   box-shadow: inset 0 0 0 1.5px var(--accent-blue) !important;
+}
+
+/* Future day modal simplification */
+#day-detail-modal.is-future-day .day-detail-stats-row {
+  display: none !important;
+}
+#day-detail-modal.is-future-day .day-detail-grid-layout {
+  display: block !important;
+}
+#day-detail-modal.is-future-day .detail-grid-right {
+  display: none !important;
+}
+#day-detail-modal.is-future-day .detail-grid-left {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+#day-detail-modal.is-future-day #day-detail-finance-list,
+#day-detail-modal.is-future-day .day-detail-finance-title {
+  display: none !important;
+}
+#day-detail-modal.is-future-day #day-detail-tasks-list {
+  max-height: 400px !important;
 }
 
