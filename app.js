@@ -267,17 +267,22 @@ function initApp() {
   initSmartVerseType();
   startCloudSyncPolling();
   
-  // Apply active tracker mode (daily or project) and restore tab
-  applyActiveMode();
+  // Apply active tracker mode (daily or project) and restore tab silently on load
+  applyActiveMode(false);
+  history.replaceState({ tab: State.activeTab, mode: State.activeMode }, "", "#" + State.activeTab);
 }
 
-function switchTab(tabName) {
+function switchTab(tabName, pushState = true) {
   State.activeTab = tabName;
   localStorage.setItem('yosday_active_tab', tabName);
   if (['home', 'custom', 'review'].includes(tabName)) {
     localStorage.setItem('yosday_active_tab_daily', tabName);
   } else if (['concept', 'ongoing', 'done'].includes(tabName)) {
     localStorage.setItem('yosday_active_tab_project', tabName);
+  }
+
+  if (pushState) {
+    history.pushState({ tab: tabName, mode: State.activeMode }, "", "#" + tabName);
   }
 
   // Update nav-item active state — search all nav items regardless of parent visibility
@@ -771,19 +776,34 @@ function syncTodayTasksWithTemplates() {
         task.endTime = tplData.endTime;
         task.category = tplData.category;
         task.priority = tplData.priority;
-        task.notes = tplData.notes;
         
+        // Preserve user's custom notes if set
+        if (!task.notes || task.notes.trim() === "") {
+          task.notes = tplData.notes;
+        }
+        
+        // Map subtasks to keep completed state and preserve manually added custom subtasks
         const currentSubtasksMap = new Map();
-        task.subtasks.forEach(st => {
-          currentSubtasksMap.set(st.name, st.completed);
-        });
+        const customSubtasks = [];
+        
+        if (task.subtasks) {
+          task.subtasks.forEach(st => {
+            if (tplData.subtasks.includes(st.name)) {
+              currentSubtasksMap.set(st.name, st.completed);
+            } else {
+              customSubtasks.push(st);
+            }
+          });
+        }
 
-        task.subtasks = tplData.subtasks.map(stName => {
+        const updatedSubtasks = tplData.subtasks.map(stName => {
           return {
             name: stName,
             completed: currentSubtasksMap.has(stName) ? currentSubtasksMap.get(stName) : false
           };
         });
+
+        task.subtasks = [...updatedSubtasks, ...customSubtasks];
 
         updatedTasks.push(task);
         processedTemplateIds.add(tplId);
@@ -1214,7 +1234,7 @@ function renderWeeklyStreak() {
     
     const dayRecord = State.history[dateStr];
     let icon = "○";
-    let classModifier = "day-status-less";
+    let classModifier = "day-status-empty";
     
     if (dayRecord && dayRecord.tasks.length > 0) {
       const compRate = calculateCompletionRateForTasks(dayRecord.tasks);
@@ -1227,16 +1247,22 @@ function renderWeeklyStreak() {
       } else if (compRate >= 0.70) {
         icon = "✔";
         classModifier = "day-status-check";
+      } else {
+        icon = "●";
+        classModifier = "day-status-less-solid";
       }
     } else if (curDate > State.currentDate) {
       icon = "○";
       classModifier = "day-status-future";
+    } else {
+      icon = "○";
+      classModifier = "day-status-empty";
     }
     
     const boxHTML = `
-      <div class="streak-day-box ${isToday ? 'active' : ''}" onclick="openDayDetailModal('${dateStr}')">
+      <div class="streak-day-box ${classModifier} ${isToday ? 'active' : ''}" onclick="openDayDetailModal('${dateStr}')">
         <span class="streak-day-name">${dayLabels[i]}</span>
-        <span class="streak-icon" title="Completion Status: ${icon}">${icon}</span>
+        <span class="streak-icon ${classModifier}" title="Completion Status: ${icon}">${icon}</span>
       </div>
     `;
     weeklyContainer.insertAdjacentHTML('beforeend', boxHTML);
@@ -2181,6 +2207,11 @@ function openDayDetailModal(dateStr) {
   
   const editJournalBtn = document.getElementById('day-detail-edit-journal-btn');
   if (editJournalBtn) {
+    if (record.journal && record.journal.trim()) {
+      editJournalBtn.textContent = "Buka";
+    } else {
+      editJournalBtn.textContent = "Tulis";
+    }
     editJournalBtn.onclick = () => {
       openJournalEditor(dateStr);
     };
@@ -2510,7 +2541,7 @@ function updateFocusModeDetails() {
   
   // Render next task info
   const nextTask = todayRecord.tasks
-    .filter(t => !t.completed && !activeTasks.some(at => at.id === t.id))
+    .filter(t => !t.completed && !activeTasks.some(at => at.id === t.id) && getFloatTime(t.startTime) > nowFloat)
     .sort((a,b) => getFloatTime(a.startTime) - getFloatTime(b.startTime))[0];
     
   const nextTaskEl = document.getElementById('focus-next-task-name');
@@ -3080,9 +3111,8 @@ function setupEventListeners() {
 
   const logoTrigger = document.getElementById('logo-sync-trigger');
   if (logoTrigger) {
-    logoTrigger.addEventListener('click', () => {
-      document.getElementById('google-login-modal').classList.add('active');
-    });
+    logoTrigger.style.cursor = 'default';
+    logoTrigger.removeAttribute('title');
   }
   
   const navItems = document.querySelectorAll('.nav-item');
@@ -3854,6 +3884,19 @@ function setupEventListeners() {
   document.getElementById('close-finance-chart-footer-btn')?.addEventListener('click', () => {
     document.getElementById('monthly-finance-chart-modal').classList.remove('active');
   });
+
+  // Browser back button navigation (popstate) support
+  window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.tab) {
+      if (e.state.mode && e.state.mode !== State.activeMode) {
+        State.activeMode = e.state.mode;
+        localStorage.setItem('yosday_active_mode', e.state.mode);
+        applyActiveMode(false);
+      } else {
+        switchTab(e.state.tab, false);
+      }
+    }
+  });
 }
 
 function openEditTaskModal(taskId) {
@@ -4311,6 +4354,14 @@ function logoutGoogleOAuth(quiet = false) {
   const mobileProfile = document.getElementById('mobile-profile-trigger');
   if (mobileProfile) {
     mobileProfile.classList.remove('logged-in');
+    const mobileAvatarImg = document.getElementById('mobile-user-avatar-img');
+    if (mobileAvatarImg) {
+      if (State.theme === 'light') {
+        mobileAvatarImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='background:%23e5e7eb'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>";
+      } else {
+        mobileAvatarImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='background:%231f2937'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>";
+      }
+    }
   }
   
   updateSidebarProfile(null);
@@ -4682,6 +4733,17 @@ function setAppTheme(theme) {
   } else {
     document.body.classList.remove('light-theme');
   }
+  
+  // Theme-aware avatar for logged-out state
+  const mobileProfile = document.getElementById('mobile-profile-trigger');
+  const mobileAvatarImg = document.getElementById('mobile-user-avatar-img');
+  if (mobileProfile && mobileAvatarImg && !mobileProfile.classList.contains('logged-in')) {
+    if (theme === 'light') {
+      mobileAvatarImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='background:%23e5e7eb'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>";
+    } else {
+      mobileAvatarImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='background:%231f2937'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>";
+    }
+  }
 }
 
 function initNotifications() {
@@ -4936,6 +4998,47 @@ function startCloudSyncPolling() {
 // ==========================================================================
 let journalEditorOriginalContent = "";
 let journalEditorActiveDate = null;
+let isJournalEditMode = false;
+
+function setJournalModalEditMode(isEdit) {
+  isJournalEditMode = isEdit;
+  
+  const toolbar = document.getElementById('journal-toolbar');
+  const editor = document.getElementById('journal-rich-editor');
+  const editBtn = document.getElementById('edit-journal-mode-btn');
+  const closeViewBtn = document.getElementById('close-journal-view-btn');
+  const cancelBtn = document.getElementById('cancel-journal-btn');
+  const saveBtn = document.getElementById('save-journal-btn');
+  
+  if (isEdit) {
+    if (toolbar) toolbar.style.display = 'flex';
+    if (editor) {
+      editor.setAttribute('contenteditable', 'true');
+      const hasPlaceholder = editor.querySelector('.journal-placeholder-text');
+      if (hasPlaceholder || editor.innerHTML.includes('Belum ada tulisan jurnal')) {
+        editor.innerHTML = '';
+      }
+      editor.focus();
+    }
+    if (editBtn) editBtn.style.display = 'none';
+    if (closeViewBtn) closeViewBtn.style.display = 'none';
+    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+    if (saveBtn) saveBtn.style.display = 'inline-block';
+  } else {
+    if (toolbar) toolbar.style.display = 'none';
+    if (editor) {
+      editor.setAttribute('contenteditable', 'false');
+      const text = editor.innerHTML.trim();
+      if (!text || text === '<br>' || text === '<div><br></div>') {
+        editor.innerHTML = `<span class="journal-placeholder-text" style="font-style: italic; color: var(--text-muted);">Belum ada tulisan jurnal untuk hari ini. Silakan tekan tombol Edit di bawah untuk menulis.</span>`;
+      }
+    }
+    if (editBtn) editBtn.style.display = 'inline-block';
+    if (closeViewBtn) closeViewBtn.style.display = 'inline-block';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (saveBtn) saveBtn.style.display = 'none';
+  }
+}
 
 function stripHtmlTags(html) {
   const tmp = document.createElement('div');
@@ -4956,7 +5059,7 @@ function renderDailyJournal() {
     container.innerHTML = `
       <div class="journal-preview-text" id="home-journal-preview">${plainText}</div>
       <div style="display: flex; gap: 8px;">
-        <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">Edit</button>
+        <button class="btn btn-secondary-outline btn-sm" id="btn-home-write-journal">Buka</button>
       </div>
     `;
   } else {
@@ -4995,7 +5098,7 @@ function openJournalEditor(dateStr) {
   journalEditorOriginalContent = content;
   
   modal.classList.add('active');
-  editor.focus();
+  setJournalModalEditMode(false); // Open in read-only mode by default
 }
 
 function saveJournal() {
@@ -5039,17 +5142,22 @@ function closeJournalEditor() {
   if (!editor) return;
   
   const currentContent = editor.innerHTML;
-  if (currentContent !== journalEditorOriginalContent) {
-    showConfirm(
-      "Simpan Perubahan?",
-      "Anda memiliki tulisan yang belum disimpan. Simpan perubahan sebelum keluar?",
-      () => {
-        saveJournal();
-      },
-      () => {
-        document.getElementById('journal-editor-modal').classList.remove('active');
-      }
-    );
+  if (isJournalEditMode) {
+    if (currentContent !== journalEditorOriginalContent) {
+      showConfirm(
+        "Simpan Perubahan?",
+        "Anda memiliki tulisan yang belum disimpan. Simpan perubahan sebelum keluar?",
+        () => {
+          saveJournal();
+        },
+        () => {
+          editor.innerHTML = journalEditorOriginalContent;
+          setJournalModalEditMode(false);
+        }
+      );
+    } else {
+      setJournalModalEditMode(false);
+    }
   } else {
     document.getElementById('journal-editor-modal').classList.remove('active');
   }
@@ -5409,6 +5517,17 @@ function setupJournalAndExportEventListeners() {
   
   const closeEditorBtn = document.getElementById('close-journal-editor-btn');
   if (closeEditorBtn) closeEditorBtn.addEventListener('click', closeJournalEditor);
+
+  // New buttons for read-only view
+  const editJournalModeBtn = document.getElementById('edit-journal-mode-btn');
+  if (editJournalModeBtn) {
+    editJournalModeBtn.addEventListener('click', () => {
+      setJournalModalEditMode(true);
+    });
+  }
+
+  const closeJournalViewBtn = document.getElementById('close-journal-view-btn');
+  if (closeJournalViewBtn) closeJournalViewBtn.addEventListener('click', closeJournalEditor);
   
   // Export actions
   const exportDataBtn = document.getElementById('btn-export-data');
@@ -5445,7 +5564,7 @@ function initSmartVerseType() {
 // PROJECT TRACKER ENGINE
 // ==========================================================================
 
-function applyActiveMode() {
+function applyActiveMode(pushState = true) {
   const dailyNav = document.getElementById('nav-list-daily');
   const projectNav = document.getElementById('nav-list-project');
 
@@ -5495,7 +5614,7 @@ function applyActiveMode() {
 
     // Switch to saved daily tab
     const savedDailyTab = localStorage.getItem('yosday_active_tab_daily') || 'home';
-    switchTab(savedDailyTab);
+    switchTab(savedDailyTab, pushState);
 
   } else {
     // Show project nav, hide daily nav
@@ -5519,7 +5638,7 @@ function applyActiveMode() {
 
     // Switch to saved project tab
     const savedProjectTab = localStorage.getItem('yosday_active_tab_project') || 'concept';
-    switchTab(savedProjectTab);
+    switchTab(savedProjectTab, pushState);
   }
 }
 

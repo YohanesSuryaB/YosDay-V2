@@ -3783,7 +3783,7 @@ body.focus-mode-active {
 }
 
 @media (max-width: 768px) {
-  .mobile-profile-avatar.logged-in {
+  .mobile-profile-avatar {
     display: flex !important;
   }
 }
@@ -4929,5 +4929,50 @@ body.light-theme .project-timeline-bar-wrapper {
 .monthly-finance-card:hover {
   border-color: var(--accent-blue) !important;
   transform: translateY(-2px);
+}
+
+.streak-icon.day-status-less-solid {
+  color: #000000 !important;
+}
+body:not(.light-theme) .streak-icon.day-status-less-solid {
+  color: #ffffff !important;
+}
+
+/* Weekly Streak Day Box Completion Colors matching monthly calendar */
+.streak-day-box.day-status-full {
+  background-color: rgba(34, 197, 94, 0.1) !important;
+  border: 1px solid rgba(34, 197, 94, 0.2) !important;
+}
+.streak-day-box.day-status-full .streak-day-name {
+  color: var(--success-green) !important;
+}
+
+.streak-day-box.day-status-star {
+  background-color: rgba(245, 158, 11, 0.08) !important;
+  border: 1px solid rgba(245, 158, 11, 0.15) !important;
+}
+.streak-day-box.day-status-star .streak-day-name {
+  color: var(--warning-gold) !important;
+}
+
+.streak-day-box.day-status-check {
+  background-color: rgba(59, 130, 246, 0.08) !important;
+  border: 1px solid rgba(59, 130, 246, 0.15) !important;
+}
+.streak-day-box.day-status-check .streak-day-name {
+  color: var(--accent-blue) !important;
+}
+
+.streak-day-box.day-status-less-solid {
+  background-color: rgba(239, 68, 68, 0.05) !important;
+  border: 1px solid rgba(239, 68, 68, 0.1) !important;
+}
+.streak-day-box.day-status-less-solid .streak-day-name {
+  color: var(--text-muted) !important;
+}
+
+/* Today highlight using inset box-shadow to prevent border conflicts */
+.streak-day-box.active {
+  box-shadow: inset 0 0 0 1.5px var(--accent-blue) !important;
 }
 
