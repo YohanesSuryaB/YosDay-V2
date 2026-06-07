@@ -971,14 +971,26 @@
         <div class="day-detail-grid-layout">
           <!-- Left side: tasks done/missed -->
           <div class="detail-grid-left">
-            <h4>📋 Daftar Tugas Hari Itu</h4>
-            <div class="detail-tasks-history-list" id="day-detail-tasks-list" style="max-height: 180px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <h4 style="margin: 0;">📋 Daftar Tugas Hari Itu</h4>
+              <button type="button" class="btn btn-secondary-outline btn-xs" id="day-detail-edit-tasks-btn">✏️ Edit</button>
+            </div>
+            <div class="detail-tasks-history-list" id="day-detail-tasks-list" style="max-height: 180px; overflow-y: auto;">
               <!-- Javascript will render historical tasks and their states -->
             </div>
+            <div id="day-detail-tasks-add-container" style="display: none; margin-top: 8px; text-align: right;">
+              <button type="button" class="btn btn-primary btn-xs" id="day-detail-add-task-btn">➕ Tambah Tugas</button>
+            </div>
             
-            <h4 class="day-detail-finance-title" style="margin-top: 14px; text-align: left;">💸 Transaksi Keuangan Hari Itu</h4>
+            <div class="day-detail-finance-title" style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px; text-align: left;">
+              <h4 style="margin: 0;">💸 Transaksi Keuangan Hari Itu</h4>
+              <button type="button" class="btn btn-secondary-outline btn-xs" id="day-detail-edit-finance-btn">✏️ Edit</button>
+            </div>
             <div id="day-detail-finance-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; text-align: left;">
               <!-- Dynamic finance list will be rendered here -->
+            </div>
+            <div id="day-detail-finance-add-container" style="display: none; margin-top: 8px; text-align: right;">
+              <button type="button" class="btn btn-primary btn-xs" id="day-detail-add-finance-btn">➕ Tambah Transaksi</button>
             </div>
           </div>
           

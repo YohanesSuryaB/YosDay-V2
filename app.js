@@ -98,7 +98,9 @@ const State = {
   theme: 'light',
   notificationInterval: 'disabled',
   notificationTimer: null,
-  systemNotificationsEnabled: false
+  systemNotificationsEnabled: false,
+  dayDetailEditTasksActive: false,
+  dayDetailEditFinanceActive: false
 };
 
 // --- Monkeypatch native window.alert to use our custom showAlert ---
@@ -1725,12 +1727,12 @@ function deleteTask(taskId, targetDateStr) {
       record.tasks = record.tasks.filter(t => t.id !== taskId);
       saveHistoryToStorage();
       recalculateDailyOutputs();
+      renderReviewTab();
       showToast("Tugas berhasil dihapus!", "success");
-      triggerAutoCloudBackup();
       
       const detailModal = document.getElementById('day-detail-modal');
       if (detailModal && detailModal.classList.contains('active')) {
-        openDayDetailModal(dateStr);
+        openDayDetailModal(dateStr, true);
       }
     }
   });
@@ -2222,16 +2224,26 @@ function openAddTaskModalForDate(dateStr) {
   }, 150);
 }
 
-function openDayDetailModal(dateStr) {
+function openDayDetailModal(dateStr, keepEditState = false) {
   currentDetailDate = dateStr;
   const todayStr = getISODateString(State.currentDate);
   const isFuture = dateStr > todayStr;
+  
+  if (!keepEditState) {
+    State.dayDetailEditTasksActive = false;
+    State.dayDetailEditFinanceActive = false;
+    
+    const editTasksBtn = document.getElementById('day-detail-edit-tasks-btn');
+    if (editTasksBtn) editTasksBtn.textContent = '✏️ Edit';
+    const editFinanceBtn = document.getElementById('day-detail-edit-finance-btn');
+    if (editFinanceBtn) editFinanceBtn.textContent = '✏️ Edit';
+  }
   
   let record = State.history[dateStr];
   
   if (isFuture) {
     const hasTasks = record && record.tasks && record.tasks.length > 0;
-    if (!hasTasks) {
+    if (!hasTasks && !keepEditState) {
       const confirmMsg = `Ingin menambahkan tugas pada tanggal ${formatFriendlyDate(dateStr)}?`;
         
       showConfirm(
@@ -2267,8 +2279,25 @@ function openDayDetailModal(dateStr) {
   
   if (isFuture) {
     modal.classList.add('is-future-day');
-    tasksContainer.innerHTML = "";
-    
+  } else {
+    modal.classList.remove('is-future-day');
+  }
+
+  const total = record.tasks.length;
+  const completed = record.tasks.filter(t => t.completed).length;
+  const rate = total === 0 ? 1.0 : completed / total;
+  
+  document.getElementById('day-detail-completion').textContent = `${Math.round(rate * 100)}%`;
+  document.getElementById('day-detail-productive').textContent = `${calculateProductiveHoursForDay(record).toFixed(1)} Jam`;
+  document.getElementById('day-detail-count').textContent = `${completed} / ${total}`;
+  
+  renderMascot('day-detail-mascot-svg', rate, record.hootExpression);
+  document.getElementById('day-detail-expression').textContent = record.hootExpression || calculateMascotExpressionForRate(rate);
+  
+  tasksContainer.innerHTML = "";
+  if (record.tasks.length === 0) {
+    tasksContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">Tidak ada tugas pada hari itu.</span>`;
+  } else {
     record.tasks.forEach(t => {
       let timeStr = "";
       if (t.startTime && t.endTime) {
@@ -2279,61 +2308,55 @@ function openDayDetailModal(dateStr) {
         timeStr = `🔔 Reminder`;
       }
       
-      tasksContainer.insertAdjacentHTML('beforeend', `
-        <div class="detail-task-history-item" style="display:flex; justify-content:space-between; align-items:center; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;">
-          <div>
-            <span class="detail-task-h-title" style="font-weight: 700; color: var(--text-color);">${t.name}</span>
-            <div class="detail-task-h-meta" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
-              <span>${timeStr}</span> | <span class="task-category-badge">${t.category}</span>
-            </div>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <button class="task-action-btn" title="Edit Tugas" onclick="openEditTaskModal('${t.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer;">✏️</button>
-            <button class="task-action-btn btn-delete" title="Hapus Tugas" onclick="deleteTask('${t.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer;">🗑️</button>
-          </div>
-        </div>
-      `);
-    });
-    
-    tasksContainer.insertAdjacentHTML('beforeend', `
-      <div style="margin-top: 16px; display: flex; justify-content: center;">
-        <button class="btn btn-primary" onclick="openAddTaskModalForDate('${dateStr}')" style="padding: 8px 16px; font-size: 13px;">
-          + Tambah Tugas
-        </button>
-      </div>
-    `);
-  } else {
-    modal.classList.remove('is-future-day');
-    
-    const total = record.tasks.length;
-    const completed = record.tasks.filter(t => t.completed).length;
-    const rate = total === 0 ? 1.0 : completed / total;
-    
-    document.getElementById('day-detail-completion').textContent = `${Math.round(rate * 100)}%`;
-    document.getElementById('day-detail-productive').textContent = `${calculateProductiveHoursForDay(record).toFixed(1)} Jam`;
-    document.getElementById('day-detail-count').textContent = `${completed} / ${total}`;
-    
-    renderMascot('day-detail-mascot-svg', rate, record.hootExpression);
-    document.getElementById('day-detail-expression').textContent = record.hootExpression || calculateMascotExpressionForRate(rate);
-    
-    tasksContainer.innerHTML = "";
-    if (record.tasks.length === 0) {
-      tasksContainer.innerHTML = `<span class="text-xs text-muted text-center" style="display:block; margin-top: 10px; font-style: italic;">Tidak ada tugas pada hari itu.</span>`;
-    } else {
-      record.tasks.forEach(t => {
+      if (State.dayDetailEditTasksActive) {
         tasksContainer.insertAdjacentHTML('beforeend', `
-          <div class="detail-task-history-item ${t.completed ? 'done' : 'missed'}">
+          <div class="detail-task-history-item" style="display:flex; justify-content:space-between; align-items:center; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;">
             <div>
-              <span class="detail-task-h-title">${t.name}</span>
-              <div class="detail-task-h-meta">
-                <span>⏰ ${t.startTime} - ${t.endTime}</span> | <span class="task-category-badge">${t.category}</span>
+              <span class="detail-task-h-title" style="font-weight: 700; color: var(--text-primary);">${t.name}</span>
+              <div class="detail-task-h-meta" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                <span>${timeStr}</span> | <span class="task-category-badge">${t.category}</span>
               </div>
             </div>
-            <span class="detail-task-h-status ${t.completed ? 'done' : 'missed'}">${t.completed ? 'SELESAI ✔' : 'TERLEWAT ✕'}</span>
+            <div style="display:flex; gap:8px;">
+              <button class="task-action-btn" title="Edit Tugas" onclick="openEditTaskModal('${t.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer;">✏️</button>
+              <button class="task-action-btn btn-delete" title="Hapus Tugas" onclick="deleteTask('${t.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer;">🗑️</button>
+            </div>
           </div>
         `);
-      });
-    }
+      } else {
+        if (isFuture) {
+          tasksContainer.insertAdjacentHTML('beforeend', `
+            <div class="detail-task-history-item" style="border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;">
+              <div>
+                <span class="detail-task-h-title" style="font-weight: 700; color: var(--text-primary);">${t.name}</span>
+                <div class="detail-task-h-meta" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                  <span>${timeStr}</span> | <span class="task-category-badge">${t.category}</span>
+                </div>
+              </div>
+              <span class="detail-task-h-status" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">BELUM DIMULAI</span>
+            </div>
+          `);
+        } else {
+          tasksContainer.insertAdjacentHTML('beforeend', `
+            <div class="detail-task-history-item ${t.completed ? 'done' : 'missed'}">
+              <div>
+                <span class="detail-task-h-title">${t.name}</span>
+                <div class="detail-task-h-meta">
+                  <span>${timeStr}</span> | <span class="task-category-badge">${t.category}</span>
+                </div>
+              </div>
+              <span class="detail-task-h-status ${t.completed ? 'done' : 'missed'}">${t.completed ? 'SELESAI ✔' : 'TERLEWAT ✕'}</span>
+            </div>
+          `);
+        }
+      }
+    });
+  }
+
+  // Show/hide tasks add container
+  const tasksAddContainer = document.getElementById('day-detail-tasks-add-container');
+  if (tasksAddContainer) {
+    tasksAddContainer.style.display = State.dayDetailEditTasksActive ? 'block' : 'none';
   }
 
   // Render daily finance inside Day Detail Modal
@@ -2385,20 +2408,46 @@ function openDayDetailModal(dateStr) {
           const timeStr = item.time ? ` (${item.time})` : '';
           const descStr = item.description ? ` - ${item.description}` : '';
           
-          financeContainer.insertAdjacentHTML('beforeend', `
-            <div class="detail-task-history-item" style="border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 10px;">
-              <div>
-                <span class="detail-task-h-title" style="font-weight: 700;">${item.category.charAt(0).toUpperCase() + item.category.slice(1)}</span>
-                <div class="detail-task-h-meta" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
-                  <span>${descStr ? descStr.substring(3) : 'Tanpa keterangan'}</span>${timeStr ? ` | <span>${timeStr.substring(2, timeStr.length - 1)}</span>` : ''}
+          if (State.dayDetailEditFinanceActive) {
+            financeContainer.insertAdjacentHTML('beforeend', `
+              <div class="detail-task-history-item" style="border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 10px;">
+                <div>
+                  <span class="detail-task-h-title" style="font-weight: 700;">${item.category.charAt(0).toUpperCase() + item.category.slice(1)}</span>
+                  <div class="detail-task-h-meta" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                    <span>${descStr ? descStr.substring(3) : 'Tanpa keterangan'}</span>${timeStr ? ` | <span>${timeStr.substring(2, timeStr.length - 1)}</span>` : ''}
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span class="${amountClass}" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 13px;">${typeSign} ${formatRupiah(item.amount)}</span>
+                  <div style="display:flex; gap:6px;">
+                    <button class="task-action-btn" title="Edit Transaksi" onclick="openEditFinanceModal('${item.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer; font-size: 12px; padding: 2px;">✏️</button>
+                    <button class="task-action-btn btn-delete" title="Hapus Transaksi" onclick="confirmDeleteFinance('${item.id}', '${dateStr}')" style="background:none; border:none; cursor:pointer; font-size: 12px; padding: 2px;">🗑️</button>
+                  </div>
                 </div>
               </div>
-              <span class="${amountClass}" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 13px;">${typeSign} ${formatRupiah(item.amount)}</span>
-            </div>
-          `);
+            `);
+          } else {
+            financeContainer.insertAdjacentHTML('beforeend', `
+              <div class="detail-task-history-item" style="border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 10px;">
+                <div>
+                  <span class="detail-task-h-title" style="font-weight: 700;">${item.category.charAt(0).toUpperCase() + item.category.slice(1)}</span>
+                  <div class="detail-task-h-meta" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                    <span>${descStr ? descStr.substring(3) : 'Tanpa keterangan'}</span>${timeStr ? ` | <span>${timeStr.substring(2, timeStr.length - 1)}</span>` : ''}
+                  </div>
+                </div>
+                <span class="${amountClass}" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 13px;">${typeSign} ${formatRupiah(item.amount)}</span>
+              </div>
+            `);
+          }
         });
       }
     }
+  }
+
+  // Show/hide finance add container
+  const financeAddContainer = document.getElementById('day-detail-finance-add-container');
+  if (financeAddContainer) {
+    financeAddContainer.style.display = (!isFuture && State.dayDetailEditFinanceActive) ? 'block' : 'none';
   }
   
   if (!isFuture && record.verse) {
@@ -3336,6 +3385,45 @@ function setupEventListeners() {
       openDayDetailModal(newDateStr);
     });
   }
+
+  // Day Detail Modal Edit/Add Button Listeners
+  const editTasksBtn = document.getElementById('day-detail-edit-tasks-btn');
+  if (editTasksBtn) {
+    editTasksBtn.addEventListener('click', () => {
+      if (!currentDetailDate) return;
+      State.dayDetailEditTasksActive = !State.dayDetailEditTasksActive;
+      editTasksBtn.textContent = State.dayDetailEditTasksActive ? '✓ Selesai' : '✏️ Edit';
+      openDayDetailModal(currentDetailDate, true);
+    });
+  }
+
+  const editFinanceBtn = document.getElementById('day-detail-edit-finance-btn');
+  if (editFinanceBtn) {
+    editFinanceBtn.addEventListener('click', () => {
+      if (!currentDetailDate) return;
+      State.dayDetailEditFinanceActive = !State.dayDetailEditFinanceActive;
+      editFinanceBtn.textContent = State.dayDetailEditFinanceActive ? '✓ Selesai' : '✏️ Edit';
+      openDayDetailModal(currentDetailDate, true);
+    });
+  }
+
+  const detailAddTaskBtn = document.getElementById('day-detail-add-task-btn');
+  if (detailAddTaskBtn) {
+    detailAddTaskBtn.addEventListener('click', () => {
+      if (currentDetailDate) {
+        openAddTaskModalForDate(currentDetailDate);
+      }
+    });
+  }
+
+  const detailAddFinanceBtn = document.getElementById('day-detail-add-finance-btn');
+  if (detailAddFinanceBtn) {
+    detailAddFinanceBtn.addEventListener('click', () => {
+      if (currentDetailDate) {
+        openFinanceChoiceModal(currentDetailDate);
+      }
+    });
+  }
   
   const sidebar = document.getElementById('app-sidebar');
   const toggleBtn = document.getElementById('sidebar-collapse-trigger');
@@ -3846,10 +3934,11 @@ function setupEventListeners() {
     
     saveHistoryToStorage();
     recalculateDailyOutputs();
+    renderReviewTab();
     
     const detailModal = document.getElementById('day-detail-modal');
     if (detailModal && detailModal.classList.contains('active')) {
-      openDayDetailModal(targetDateStr);
+      openDayDetailModal(targetDateStr, true);
     }
     
     document.getElementById('add-task-modal').classList.remove('active');
@@ -4046,10 +4135,12 @@ function setupEventListeners() {
     document.getElementById('finance-choice-modal').classList.remove('active');
   });
   document.getElementById('finance-choice-income-btn')?.addEventListener('click', () => {
-    openAddFinanceModal('pemasukan');
+    const targetDate = document.getElementById('finance-choice-modal').getAttribute('data-target-date') || '';
+    openAddFinanceModal('pemasukan', targetDate);
   });
   document.getElementById('finance-choice-expense-btn')?.addEventListener('click', () => {
-    openAddFinanceModal('pengeluaran');
+    const targetDate = document.getElementById('finance-choice-modal').getAttribute('data-target-date') || '';
+    openAddFinanceModal('pengeluaran', targetDate);
   });
   document.getElementById('close-finance-form-modal')?.addEventListener('click', () => {
     document.getElementById('finance-form-modal').classList.remove('active');
@@ -4083,7 +4174,7 @@ function setupEventListeners() {
       const category = document.getElementById('finance-category').value;
       const description = document.getElementById('finance-description').value.trim();
       
-      const dateStr = getISODateString(State.currentDate);
+      const dateStr = financeForm.getAttribute('data-target-date') || getISODateString(State.currentDate);
       
       if (!State.history[dateStr]) {
         State.history[dateStr] = {
@@ -4091,7 +4182,9 @@ function setupEventListeners() {
           tasks: [],
           notes: "",
           journal: "",
-          finance: []
+          finance: [],
+          verse: null,
+          hootExpression: "Senang"
         };
       }
       if (!State.history[dateStr].finance) {
@@ -4129,6 +4222,13 @@ function setupEventListeners() {
       saveHistoryToStorage();
       renderDailyFinance();
       renderMonthlyFinanceSummary(currentCalMonth, currentCalYear);
+      recalculateDailyOutputs();
+      renderReviewTab();
+      
+      const detailModal = document.getElementById('day-detail-modal');
+      if (detailModal && detailModal.classList.contains('active')) {
+        openDayDetailModal(dateStr, true);
+      }
       
       document.getElementById('finance-form-modal').classList.remove('active');
     });
@@ -7382,16 +7482,29 @@ function openMonthlyFinanceChartModal() {
   }
 }
 
-function openFinanceChoiceModal() {
+function openFinanceChoiceModal(targetDate = '') {
   document.getElementById('add-choice-modal').classList.remove('active');
-  document.getElementById('finance-choice-modal').classList.add('active');
+  const modal = document.getElementById('finance-choice-modal');
+  if (targetDate) {
+    modal.setAttribute('data-target-date', targetDate);
+  } else {
+    modal.removeAttribute('data-target-date');
+  }
+  modal.classList.add('active');
 }
 
 // Ensure the helper is exported to window for SVG inline calls
 window.showFinanceChartDayDetail = showFinanceChartDayDetail;
 
-function openAddFinanceModal(type) {
+function openAddFinanceModal(type, targetDate = '') {
   document.getElementById('finance-choice-modal').classList.remove('active');
+  
+  const formEl = document.getElementById('finance-form');
+  if (targetDate) {
+    formEl.setAttribute('data-target-date', targetDate);
+  } else {
+    formEl.removeAttribute('data-target-date');
+  }
   
   document.getElementById('finance-edit-id').value = '';
   document.getElementById('finance-type').value = type;
@@ -7432,8 +7545,15 @@ function populateFinanceCategories(type, selectedValue = '') {
   });
 }
 
-function openEditFinanceModal(itemId) {
-  const dateStr = getISODateString(State.currentDate);
+function openEditFinanceModal(itemId, targetDate = '') {
+  const formEl = document.getElementById('finance-form');
+  if (targetDate) {
+    formEl.setAttribute('data-target-date', targetDate);
+  } else {
+    formEl.removeAttribute('data-target-date');
+  }
+
+  const dateStr = targetDate || getISODateString(State.currentDate);
   const record = State.history[dateStr];
   if (!record || !record.finance) return;
   
@@ -7460,19 +7580,26 @@ function openEditFinanceModal(itemId) {
   }, 150);
 }
 
-function confirmDeleteFinance(itemId) {
+function confirmDeleteFinance(itemId, targetDateStr = '') {
   showConfirm(
     "Hapus Transaksi",
     "Apakah Anda yakin ingin menghapus transaksi keuangan ini?",
     () => {
-      const dateStr = getISODateString(State.currentDate);
+      const dateStr = targetDateStr || getISODateString(State.currentDate);
       const record = State.history[dateStr];
       if (record && record.finance) {
         record.finance = record.finance.filter(t => t.id !== itemId);
         saveHistoryToStorage();
         renderDailyFinance();
         renderMonthlyFinanceSummary(currentCalMonth, currentCalYear);
+        recalculateDailyOutputs();
+        renderReviewTab();
         showToast("Transaksi berhasil dihapus");
+        
+        const detailModal = document.getElementById('day-detail-modal');
+        if (detailModal && detailModal.classList.contains('active')) {
+          openDayDetailModal(dateStr, true);
+        }
       }
     }
   );

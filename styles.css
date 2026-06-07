@@ -4996,7 +4996,8 @@ body:not(.light-theme) .streak-icon.day-status-less-solid {
   max-width: 100% !important;
 }
 #day-detail-modal.is-future-day #day-detail-finance-list,
-#day-detail-modal.is-future-day .day-detail-finance-title {
+#day-detail-modal.is-future-day .day-detail-finance-title,
+#day-detail-modal.is-future-day #day-detail-finance-add-container {
   display: none !important;
 }
 #day-detail-modal.is-future-day #day-detail-tasks-list {
